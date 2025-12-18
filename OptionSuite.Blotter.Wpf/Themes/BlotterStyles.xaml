@@ -1,0 +1,949 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Easing function för smooth animations -->
+    <QuadraticEase x:Key="EaseOutQuad" EasingMode="EaseOut"/>
+
+    <!-- Bool to Visibility converter -->
+    <BooleanToVisibilityConverter x:Key="BoolToVisConverter"/>
+
+    <!-- =========================
+         BLOTTER: ROW STATE BRUSHES
+         (endast baserat på Shell Tokens)
+         ========================= -->
+
+    <LinearGradientBrush x:Key="Blotter.Brush.RowHover" StartPoint="0,0" EndPoint="1,0">
+        <GradientStop Color="{StaticResource Color.Border}" Offset="0"/>
+        <GradientStop Color="{StaticResource Color.BorderSoft}" Offset="1"/>
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="Blotter.Brush.RowSelected" StartPoint="0,0" EndPoint="1,0">
+        <GradientStop Color="{StaticResource Color.AccentSoft}" Offset="0"/>
+        <GradientStop Color="{StaticResource Color.Transparent}" Offset="1"/>
+    </LinearGradientBrush>
+
+    <!-- Blotter filter rail background -->
+    <LinearGradientBrush x:Key="Blotter.Brush.FilterRail"
+                     StartPoint="0,0"
+                     EndPoint="0,1">
+        <GradientStop Color="#12FFFFFF" Offset="0"/>
+        <GradientStop Color="#06FFFFFF" Offset="1"/>
+    </LinearGradientBrush>
+
+    <!-- Glass / lines (token-only) -->
+    <SolidColorBrush x:Key="Blotter.Brush.RowLine" Color="{StaticResource Color.BorderSoft}"/>
+    <SolidColorBrush x:Key="Blotter.Brush.RowLineStrong" Color="{StaticResource Color.Border}"/>
+
+    <!-- Glass fill for status pills / hover (token-only, använder Transparent + BorderSoft) -->
+    <LinearGradientBrush x:Key="Blotter.Brush.GlassPill" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#12FFFFFF" Offset="0.0"/>
+        <GradientStop Color="#06FFFFFF" Offset="1.0"/>
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="Blotter.Brush.RowHoverGlass" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#10FFFFFF" Offset="0.0"/>
+        <GradientStop Color="{StaticResource Color.Transparent}" Offset="1.0"/>
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="Blotter.Brush.RowSelectedGlass"
+                     StartPoint="0,0" EndPoint="0,1">
+        <!-- Top edge: lite highlight -->
+        <GradientStop Color="#25FFFFFF" Offset="0.00"/>
+        <!-- Mid: mild ljus dimma (själva "glaset") -->
+        <GradientStop Color="#08FFFFFF" Offset="0.55"/>
+        <!-- Bottom edge: lite mörkare för separationskänsla -->
+        <GradientStop Color="#2A000000" Offset="1.00"/>
+    </LinearGradientBrush>
+
+
+
+
+    <!-- =========================
+     BLOTTER: CHROME BACKGROUNDS
+     (byggt enbart av Shell tokens)
+     ========================= -->
+
+    <!-- Soft top-to-bottom chrome (motsvarar den dimmade panelkänslan i målbilden) -->
+    <LinearGradientBrush x:Key="Blotter.Brush.ContentChrome"
+                     StartPoint="0,0" EndPoint="0,1">
+        <!-- Top: lite ljusare -->
+        <GradientStop Color="#1AFFFFFF" Offset="0.0"/>
+        <!-- Mid: tillbaka mot panel -->
+        <GradientStop Color="{StaticResource Color.Transparent}" Offset="0.55"/>
+        <!-- Bottom: lite mörkare -->
+        <GradientStop Color="#14000000" Offset="1.0"/>
+    </LinearGradientBrush>
+
+    <!-- Subtle vignette (ger “soft fog” i kanterna utan nya färger) -->
+    <RadialGradientBrush x:Key="Blotter.Brush.ContentVignette"
+                     Center="0.5,0.35"
+                     GradientOrigin="0.5,0.35"
+                     RadiusX="0.85" RadiusY="0.85">
+        <GradientStop Color="{StaticResource Color.Transparent}" Offset="0.0"/>
+        <GradientStop Color="#1A000000" Offset="1.0"/>
+    </RadialGradientBrush>
+
+
+
+
+    <!-- =========================
+         BLOTTER: TOOLBAR BUTTONS
+         (matchar "chip/button" från preview)
+         ========================= -->
+
+    <Style x:Key="Style.BlotterToolbarButton" TargetType="{x:Type Button}">
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="Foreground" Value="{StaticResource Brush.Text}"/>
+        <Setter Property="Padding" Value="12,8"/>
+        <Setter Property="Background" Value="{StaticResource Brush.PanelChromeTitle}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource Brush.Border}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type Button}">
+                    <Border x:Name="Bd"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="{StaticResource Radius.Button}">
+                        <ContentPresenter Margin="{TemplateBinding Padding}"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"/>
+                    </Border>
+
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource Brush.Surface.Hover}"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource Brush.Surface.Pressed}"/>
+                            <Setter TargetName="Bd" Property="RenderTransform">
+                                <Setter.Value>
+                                    <TranslateTransform Y="1"/>
+                                </Setter.Value>
+                            </Setter>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.55"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Shortcut pill inne i toolbar-knappar (t.ex. Ctrl+B) -->
+    <Style x:Key="Style.BlotterShortcutPill" TargetType="{x:Type Border}">
+        <Setter Property="CornerRadius" Value="7"/>
+        <Setter Property="BorderBrush" Value="{StaticResource Brush.BorderSoft}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Background" Value="{StaticResource Brush.PanelChromeTitle}"/>
+        <Setter Property="Padding" Value="6,2"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+
+    <Style x:Key="Style.BlotterShortcutPillText" TargetType="{x:Type TextBlock}">
+        <Setter Property="FontFamily" Value="{StaticResource Font.Mono}"/>
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="Foreground" Value="{StaticResource Brush.TextMuted}"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+
+
+    <!-- =========================
+         BLOTTER: SEGMENTED STRIP
+         (ska kännas som samma familj som toolbar buttons)
+         ========================= -->
+
+    <!-- Segmented strip: label + pill ska bete sig som målbild -->
+    <Style x:Key="Style.BlotterStripToggle" TargetType="{x:Type RadioButton}">
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="Foreground" Value="{StaticResource Brush.TextMuted2}"/>
+        <Setter Property="Padding" Value="10,7"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type RadioButton}">
+                    <Border x:Name="B"
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="{StaticResource Radius.Button}">
+                        <ContentPresenter Margin="{TemplateBinding Padding}"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center"/>
+                    </Border>
+
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="B" Property="Background" Value="{StaticResource Brush.Surface.Hover}"/>
+                            <Setter Property="Foreground" Value="{StaticResource Brush.TextMuted}"/>
+                        </Trigger>
+
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="B" Property="Background" Value="{StaticResource Brush.Surface.Selected}"/>
+                            <Setter TargetName="B" Property="BorderBrush" Value="{StaticResource Brush.Border}"/>
+                            <Setter Property="Foreground" Value="{StaticResource Brush.Text}"/>
+                        </Trigger>
+
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.5"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+
+    <!-- Count pill: stateful via binding till närmaste RadioButton -->
+    <Style x:Key="Style.BlotterCountPill" TargetType="{x:Type Border}">
+        <Setter Property="CornerRadius" Value="999"/>
+        <Setter Property="Background" Value="{StaticResource Brush.PanelChromeTitle}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource Brush.BorderSoft}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Padding" Value="8,0"/>
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType={x:Type RadioButton}}}"
+                     Value="True">
+                <Setter Property="Background" Value="{StaticResource Brush.Surface.Selected}"/>
+                <Setter Property="BorderBrush" Value="{StaticResource Brush.Border}"/>
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <Style x:Key="Style.BlotterCountPillText" TargetType="{x:Type TextBlock}">
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="Foreground" Value="{StaticResource Brush.TextMuted2}"/>
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType={x:Type RadioButton}}}"
+                     Value="True">
+                <Setter Property="Foreground" Value="{StaticResource Brush.Text}"/>
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- Label i filterstrip: ljusare när INTE selected, vit när selected -->
+    <Style x:Key="Style.BlotterStripLabel" TargetType="{x:Type TextBlock}">
+        <!-- INTE selected: ljusare än idag -->
+        <Setter Property="Foreground" Value="{StaticResource Brush.TextMuted2}"/>
+        <Setter Property="FontSize" Value="12"/>
+
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType={x:Type RadioButton}}}"
+                     Value="True">
+                <Setter Property="Foreground" Value="{StaticResource Brush.Text}"/>
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- =========================
+         BLOTTER: DATAGRID BASE
+         ========================= -->
+
+    <Style x:Key="Style.BlotterDataGrid" TargetType="{x:Type DataGrid}">
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="Foreground" Value="{StaticResource Brush.Text}"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="HeadersVisibility" Value="Column"/>
+        <Setter Property="RowHeaderWidth" Value="0"/>
+        <Setter Property="GridLinesVisibility" Value="None"/>
+        <Setter Property="CanUserAddRows" Value="False"/>
+        <Setter Property="CanUserDeleteRows" Value="False"/>
+        <Setter Property="CanUserReorderColumns" Value="False"/>
+        <Setter Property="CanUserResizeRows" Value="False"/>
+        <Setter Property="SelectionMode" Value="Single"/>
+        <Setter Property="SelectionUnit" Value="FullRow"/>
+        <Setter Property="EnableRowVirtualization" Value="True"/>
+        <Setter Property="EnableColumnVirtualization" Value="True"/>
+        <Setter Property="ScrollViewer.CanContentScroll" Value="True"/>
+        <Setter Property="RowHeight" Value="34"/>
+        <Setter Property="ColumnHeaderHeight" Value="38"/>
+    </Style>
+
+    <Style x:Key="Style.BlotterDataGridHeader" TargetType="{x:Type DataGridColumnHeader}">
+        <Setter Property="Foreground" Value="{StaticResource Brush.TextMuted2}"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Padding" Value="10,9"/>
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+
+        <!-- Viktigt: vi kör egen template för att få en "riktig" bottom line -->
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type DataGridColumnHeader}">
+                    <Grid SnapsToDevicePixels="True">
+
+                        <!-- Header-content -->
+                        <Border Background="{TemplateBinding Background}"
+                            Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                          SnapsToDevicePixels="True"/>
+                        </Border>
+
+                        <!-- Bottom hairline (2px så den syns i fog/gradient) -->
+                        <Border Height="2"
+                            VerticalAlignment="Bottom"
+                            Background="{StaticResource Blotter.Brush.RowLine}"
+                            Opacity="0.95"/>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+
+
+
+
+    <Style x:Key="Style.BlotterDataGridCell" TargetType="{x:Type DataGridCell}">
+        <Setter Property="Padding" Value="10,0"/>
+        <Setter Property="BorderThickness" Value="0,0,0,1"/>
+        <Setter Property="BorderBrush" Value="{StaticResource Brush.BorderSoft}"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="HorizontalContentAlignment" Value="Left"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type DataGridCell}">
+                    <Border x:Name="CellBorder"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            SnapsToDevicePixels="True">
+                        <ContentPresenter Margin="{TemplateBinding Padding}"
+                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                          HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                          SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="CellBorder" Property="Background" Value="Transparent"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="Style.BlotterDataGridRow" TargetType="{x:Type DataGridRow}">
+        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+        <Setter Property="Foreground" Value="{StaticResource Brush.Text}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type DataGridRow}">
+                    <Grid SnapsToDevicePixels="True">
+
+                        <!-- Fill (under allt) -->
+                        <Border x:Name="RowFill"
+                            Background="Transparent"
+                            Panel.ZIndex="0"/>
+
+                        <!-- Flash overlay (för nya trades) -->
+                        <Border x:Name="FlashOverlay"
+                            Background="#592DD4BF"
+                            BorderBrush="#402DD4BF"
+                            BorderThickness="1"
+                            Opacity="0"
+                            Panel.ZIndex="1"/>
+
+                        <!-- Celler (i mitten) -->
+                        <DataGridCellsPresenter Panel.ZIndex="2"/>
+
+                        <!-- Left accent (över celler så den alltid syns) -->
+                        <Border x:Name="LeftAccent"
+                            Width="3"
+                            HorizontalAlignment="Left"
+                            Background="Transparent"
+                            Panel.ZIndex="3"/>
+
+                        <!-- Top/bottom hairlines (över celler) -->
+                        <Border x:Name="TopLine"
+                            Height="1"
+                            VerticalAlignment="Top"
+                            Background="{StaticResource Blotter.Brush.RowLine}"
+                            Opacity="0"
+                            Panel.ZIndex="4"/>
+
+                        <Border x:Name="BottomLine"
+                            Height="1"
+                            VerticalAlignment="Bottom"
+                            Background="{StaticResource Blotter.Brush.RowLine}"
+                            Opacity="0"
+                            Panel.ZIndex="4"/>
+
+                    </Grid>
+
+                    <ControlTemplate.Triggers>
+
+                        <!-- Flash animation för nya trades -->
+                        <DataTrigger Binding="{Binding IsNew}" Value="True">
+                            <DataTrigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <!-- Fade in snabbt, fade out långsamt -->
+                                        <DoubleAnimation Storyboard.TargetName="FlashOverlay"
+                                                     Storyboard.TargetProperty="Opacity"
+                                                     From="1.0"
+                                                     To="0.0"
+                                                     Duration="0:0:2.0"
+                                                     EasingFunction="{StaticResource EaseOutQuad}"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </DataTrigger.EnterActions>
+                        </DataTrigger>
+
+                        <!-- Hover -->
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="RowFill" Property="Background" Value="{StaticResource Blotter.Brush.RowHoverGlass}"/>
+                            <Setter TargetName="TopLine" Property="Opacity" Value="1"/>
+                            <Setter TargetName="BottomLine" Property="Opacity" Value="1"/>
+                            <Setter TargetName="LeftAccent" Property="Background" Value="{StaticResource Brush.AccentSoft}"/>
+                        </Trigger>
+
+                        <!-- Selected -->
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="RowFill" Property="Background" Value="{StaticResource Blotter.Brush.RowSelectedGlass}"/>
+                            <Setter TargetName="TopLine" Property="Opacity" Value="1"/>
+                            <Setter TargetName="BottomLine" Property="Opacity" Value="1"/>
+                            <Setter TargetName="TopLine" Property="Background" Value="{StaticResource Blotter.Brush.RowLineStrong}"/>
+                            <Setter TargetName="BottomLine" Property="Background" Value="{StaticResource Blotter.Brush.RowLineStrong}"/>
+                            <Setter TargetName="LeftAccent" Property="Background" Value="{StaticResource Brush.Accent}"/>
+                            <Setter Property="Foreground" Value="{StaticResource Brush.Text}"/>
+                        </Trigger>
+
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+
+    <!-- Add these updated styles to your BlotterStyles.xaml file -->
+
+    <!-- =========================================================
+     Detail tabs (högerpanelen)
+     ========================================================= -->
+
+    <!-- Tab container style (glass like cards) -->
+    <Style x:Key="Style.BlotterTabContainer" TargetType="{x:Type Border}">
+        <Setter Property="Background">
+            <Setter.Value>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                    <GradientStop Color="#0CFFFFFF" Offset="0.0"/>
+                    <GradientStop Color="#06FFFFFF" Offset="1.0"/>
+                </LinearGradientBrush>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="BorderBrush" Value="{StaticResource Brush.Border}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="{StaticResource Radius.Button}"/>
+        <Setter Property="Padding" Value="6"/>
+    </Style>
+
+    <!-- Tab button style -->
+    <Style x:Key="DetailTabRadioStyle" TargetType="{x:Type RadioButton}" BasedOn="{x:Null}">
+        <Setter Property="OverridesDefaultStyle" Value="True"/>
+        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Padding" Value="14,8"/>
+        <Setter Property="Margin" Value="0,0,6,0"/>
+
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type RadioButton}">
+                    <Border x:Name="Bd"
+                        Background="Transparent"
+                        BorderBrush="Transparent"
+                        BorderThickness="1"
+                        CornerRadius="{StaticResource Radius.Button}"
+                        SnapsToDevicePixels="True">
+                        <TextBlock x:Name="ContentText"
+                               Text="{TemplateBinding Content}"
+                               Margin="{TemplateBinding Padding}"
+                               VerticalAlignment="Center"
+                               HorizontalAlignment="Center"
+                               Foreground="{StaticResource Brush.TextMuted2}"/>
+                    </Border>
+
+                    <ControlTemplate.Triggers>
+
+                        <!-- Hover (unselected): very subtle glass -->
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bd" Property="Background">
+                                <Setter.Value>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                        <GradientStop Color="#08FFFFFF" Offset="0.0"/>
+                                        <GradientStop Color="#04FFFFFF" Offset="1.0"/>
+                                    </LinearGradientBrush>
+                                </Setter.Value>
+                            </Setter>
+                            <Setter TargetName="Bd" Property="BorderBrush">
+                                <Setter.Value>
+                                    <SolidColorBrush Color="#20FFFFFF"/>
+                                </Setter.Value>
+                            </Setter>
+                        </Trigger>
+
+                        <!-- Selected: soft glass fill with visible border -->
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Bd" Property="Background">
+                                <Setter.Value>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                        <GradientStop Color="#18FFFFFF" Offset="0.0"/>
+                                        <GradientStop Color="#0CFFFFFF" Offset="1.0"/>
+                                    </LinearGradientBrush>
+                                </Setter.Value>
+                            </Setter>
+                            <Setter TargetName="Bd" Property="BorderBrush">
+                                <Setter.Value>
+                                    <SolidColorBrush Color="#35FFFFFF"/>
+                                </Setter.Value>
+                            </Setter>
+                            <Setter TargetName="ContentText" Property="Foreground" Value="{StaticResource Brush.Text}"/>
+                        </Trigger>
+
+                        <!-- Selected + hover: slightly stronger -->
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsChecked" Value="True"/>
+                                <Condition Property="IsMouseOver" Value="True"/>
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="Bd" Property="Background">
+                                <Setter.Value>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                        <GradientStop Color="#20FFFFFF" Offset="0.0"/>
+                                        <GradientStop Color="#10FFFFFF" Offset="1.0"/>
+                                    </LinearGradientBrush>
+                                </Setter.Value>
+                            </Setter>
+                            <Setter TargetName="Bd" Property="BorderBrush">
+                                <Setter.Value>
+                                    <SolidColorBrush Color="#45FFFFFF"/>
+                                </Setter.Value>
+                            </Setter>
+                        </MultiTrigger>
+
+                        <!-- Disabled -->
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.55"/>
+                        </Trigger>
+
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+
+    <!-- =========================================================
+     RIGHT PANEL: cards / sections / key-value / chips / events
+     ========================================================= -->
+
+    <!-- Card container (glass + border) -->
+    <Style x:Key="Style.BlotterRightCard" TargetType="{x:Type Border}">
+        <Setter Property="Background">
+            <Setter.Value>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                    <GradientStop Color="#0CFFFFFF" Offset="0.0"/>
+                    <GradientStop Color="#06FFFFFF" Offset="1.0"/>
+                </LinearGradientBrush>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="BorderBrush" Value="{StaticResource Brush.Border}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="{StaticResource Radius.Button}"/>
+        <Setter Property="Padding" Value="14"/>
+        <Setter Property="Margin" Value="0,0,0,12"/>
+    </Style>
+
+    <!-- Section title (e.g. ECONOMICS / ROUTING / LINKS) -->
+    <Style x:Key="Style.BlotterRightSectionTitle" TargetType="{x:Type TextBlock}">
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{StaticResource Brush.TextMuted2}"/>
+        <Setter Property="Margin" Value="0,0,0,12"/>
+        <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
+    </Style>
+
+    <!-- Key/value grid labels/values -->
+    <Style x:Key="Style.BlotterRightKey" TargetType="{x:Type TextBlock}">
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="Foreground" Value="{StaticResource Brush.TextMuted2}"/>
+        <Setter Property="Margin" Value="0,0,12,10"/>
+    </Style>
+
+    <Style x:Key="Style.BlotterRightValue" TargetType="{x:Type TextBlock}">
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="FontWeight" Value="Normal"/>
+        <Setter Property="Foreground" Value="{StaticResource Brush.Text}"/>
+        <Setter Property="Margin" Value="0,0,0,10"/>
+    </Style>
+
+    <!-- "Chip" / status pill (workflow steps etc) -->
+    <Style x:Key="Style.BlotterChip" TargetType="{x:Type Border}">
+        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="{StaticResource Brush.Border}"/>
+        <Setter Property="Background">
+            <Setter.Value>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                    <GradientStop Color="#0CFFFFFF" Offset="0.0"/>
+                    <GradientStop Color="#08FFFFFF" Offset="1.0"/>
+                </LinearGradientBrush>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="Padding" Value="12,6"/>
+        <Setter Property="Margin" Value="0,0,8,8"/>
+    </Style>
+
+    <Style x:Key="Style.BlotterChipText" TargetType="{x:Type TextBlock}">
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="FontWeight" Value="Normal"/>
+        <Setter Property="Foreground" Value="{StaticResource Brush.Text}"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+
+    <!-- Events list row -->
+    <Style x:Key="Style.BlotterEventRow" TargetType="{x:Type Border}">
+        <Setter Property="Background">
+            <Setter.Value>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                    <GradientStop Color="#08FFFFFF" Offset="0.0"/>
+                    <GradientStop Color="#04FFFFFF" Offset="1.0"/>
+                </LinearGradientBrush>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="BorderBrush" Value="{StaticResource Brush.BorderSoft}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="{StaticResource Radius.Button}"/>
+        <Setter Property="Padding" Value="12"/>
+        <Setter Property="Margin" Value="0,0,0,10"/>
+    </Style>
+
+    <Style x:Key="Style.BlotterEventTime" TargetType="{x:Type TextBlock}">
+        <Setter Property="FontFamily" Value="{StaticResource Font.Mono}"/>
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="Foreground" Value="{StaticResource Brush.TextMuted2}"/>
+        <Setter Property="Margin" Value="0,0,0,6"/>
+    </Style>
+
+    <Style x:Key="Style.BlotterEventTitle" TargetType="{x:Type TextBlock}">
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="FontWeight" Value="Normal"/>
+        <Setter Property="Foreground" Value="{StaticResource Brush.Text}"/>
+        <Setter Property="Margin" Value="0,0,0,4"/>
+    </Style>
+
+    <Style x:Key="Style.BlotterEventBody" TargetType="{x:Type TextBlock}">
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="Foreground" Value="{StaticResource Brush.TextMuted}"/>
+        <Setter Property="TextWrapping" Value="Wrap"/>
+    </Style>
+
+    <!-- Raw box -->
+    <Style x:Key="Style.BlotterRawBox" TargetType="{x:Type Border}">
+        <Setter Property="Background">
+            <Setter.Value>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                    <GradientStop Color="#08FFFFFF" Offset="0.0"/>
+                    <GradientStop Color="#04FFFFFF" Offset="1.0"/>
+                </LinearGradientBrush>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="BorderBrush" Value="{StaticResource Brush.BorderSoft}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="{StaticResource Radius.Button}"/>
+        <Setter Property="Padding" Value="12"/>
+        <Setter Property="Margin" Value="0,10,0,0"/>
+    </Style>
+
+    <Style x:Key="Style.BlotterRawText" TargetType="{x:Type TextBlock}">
+        <Setter Property="FontFamily" Value="{StaticResource Font.Mono}"/>
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="Foreground" Value="{StaticResource Brush.TextMuted}"/>
+        <Setter Property="TextWrapping" Value="Wrap"/>
+    </Style>
+
+
+    <!-- System link card (MX3, CALYPSO etc) -->
+    <Style x:Key="Style.BlotterSystemCard" TargetType="{x:Type Border}">
+        <Setter Property="Background">
+            <Setter.Value>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                    <GradientStop Color="#0CFFFFFF" Offset="0.0"/>
+                    <GradientStop Color="#08FFFFFF" Offset="1.0"/>
+                </LinearGradientBrush>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="BorderBrush" Value="{StaticResource Brush.Border}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="{StaticResource Radius.Button}"/>
+        <Setter Property="Padding" Value="14"/>
+        <Setter Property="Margin" Value="0,0,0,10"/>
+    </Style>
+
+    <Style x:Key="Style.BlotterSystemName" TargetType="{x:Type TextBlock}">
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{StaticResource Brush.Text}"/>
+        <Setter Property="Margin" Value="0,0,0,4"/>
+    </Style>
+
+    <Style x:Key="Style.BlotterSystemCode" TargetType="{x:Type TextBlock}">
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="Foreground" Value="{StaticResource Brush.TextMuted2}"/>
+    </Style>
+
+    <!-- Status badge (Pending, Not linked etc) -->
+    <Style x:Key="Style.BlotterStatusBadge" TargetType="{x:Type Border}">
+        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="{StaticResource Brush.Border}"/>
+        <Setter Property="Background">
+            <Setter.Value>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                    <GradientStop Color="#0CFFFFFF" Offset="0.0"/>
+                    <GradientStop Color="#08FFFFFF" Offset="1.0"/>
+                </LinearGradientBrush>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="Padding" Value="10,5"/>
+        <Setter Property="HorizontalAlignment" Value="Left"/>
+    </Style>
+
+    <Style x:Key="Style.BlotterStatusBadgeText" TargetType="{x:Type TextBlock}">
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="Foreground" Value="{StaticResource Brush.Text}"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+
+    <!-- Action button (Retry, Create link) -->
+    <Style x:Key="Style.BlotterActionButton" TargetType="{x:Type Button}">
+        <Setter Property="Background">
+            <Setter.Value>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                    <GradientStop Color="#0CFFFFFF" Offset="0.0"/>
+                    <GradientStop Color="#08FFFFFF" Offset="1.0"/>
+                </LinearGradientBrush>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="BorderBrush" Value="{StaticResource Brush.Border}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Foreground" Value="{StaticResource Brush.Text}"/>
+        <Setter Property="Padding" Value="12,6"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type Button}">
+                    <Border x:Name="Bd"
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="{StaticResource Radius.Button}">
+                        <ContentPresenter Margin="{TemplateBinding Padding}"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource Brush.Surface.Hover}"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource Brush.Surface.Pressed}"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.5"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- =========================================================
+         SCROLLBAR STYLES (minimal, modern)
+         ========================================================= -->
+
+    <!-- ScrollBar Thumb (draggable part) -->
+    <Style x:Key="Style.ScrollBarThumb" TargetType="{x:Type Thumb}">
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+        <Setter Property="OverridesDefaultStyle" Value="True"/>
+        <Setter Property="IsTabStop" Value="False"/>
+        <Setter Property="Focusable" Value="False"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type Thumb}">
+                    <Border x:Name="ThumbBorder"
+                            Background="{StaticResource Brush.BorderSoft}"
+                            CornerRadius="4"
+                            Margin="2"/>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="ThumbBorder" Property="Background" Value="{StaticResource Brush.Border}"/>
+                        </Trigger>
+                        <Trigger Property="IsDragging" Value="True">
+                            <Setter TargetName="ThumbBorder" Property="Background" Value="{StaticResource Brush.TextMuted}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ScrollBar LineButton (up/down arrows - hidden in minimal style) -->
+    <Style x:Key="Style.ScrollBarLineButton" TargetType="{x:Type RepeatButton}">
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+        <Setter Property="OverridesDefaultStyle" Value="True"/>
+        <Setter Property="Focusable" Value="False"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type RepeatButton}">
+                    <Border Width="0" Height="0" Background="Transparent"/>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ScrollBar PageButton (track area) -->
+    <Style x:Key="Style.ScrollBarPageButton" TargetType="{x:Type RepeatButton}">
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+        <Setter Property="OverridesDefaultStyle" Value="True"/>
+        <Setter Property="IsTabStop" Value="False"/>
+        <Setter Property="Focusable" Value="False"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type RepeatButton}">
+                    <Border Background="Transparent"/>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Vertical ScrollBar -->
+    <Style x:Key="Style.VerticalScrollBar" TargetType="{x:Type ScrollBar}">
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+        <Setter Property="OverridesDefaultStyle" Value="True"/>
+        <Setter Property="Width" Value="10"/>
+        <Setter Property="MinWidth" Value="10"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type ScrollBar}">
+                    <Grid Background="Transparent">
+                        <Track x:Name="PART_Track" IsDirectionReversed="True">
+                            <Track.DecreaseRepeatButton>
+                                <RepeatButton Style="{StaticResource Style.ScrollBarPageButton}" Command="ScrollBar.PageUpCommand"/>
+                            </Track.DecreaseRepeatButton>
+                            <Track.Thumb>
+                                <Thumb Style="{StaticResource Style.ScrollBarThumb}"/>
+                            </Track.Thumb>
+                            <Track.IncreaseRepeatButton>
+                                <RepeatButton Style="{StaticResource Style.ScrollBarPageButton}" Command="ScrollBar.PageDownCommand"/>
+                            </Track.IncreaseRepeatButton>
+                        </Track>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Horizontal ScrollBar -->
+    <Style x:Key="Style.HorizontalScrollBar" TargetType="{x:Type ScrollBar}">
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+        <Setter Property="OverridesDefaultStyle" Value="True"/>
+        <Setter Property="Height" Value="10"/>
+        <Setter Property="MinHeight" Value="10"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type ScrollBar}">
+                    <Grid Background="Transparent">
+                        <Track x:Name="PART_Track" IsDirectionReversed="False">
+                            <Track.DecreaseRepeatButton>
+                                <RepeatButton Style="{StaticResource Style.ScrollBarPageButton}" Command="ScrollBar.PageLeftCommand"/>
+                            </Track.DecreaseRepeatButton>
+                            <Track.Thumb>
+                                <Thumb Style="{StaticResource Style.ScrollBarThumb}"/>
+                            </Track.Thumb>
+                            <Track.IncreaseRepeatButton>
+                                <RepeatButton Style="{StaticResource Style.ScrollBarPageButton}" Command="ScrollBar.PageRightCommand"/>
+                            </Track.IncreaseRepeatButton>
+                        </Track>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Default ScrollBar style that applies both vertical and horizontal -->
+    <Style TargetType="{x:Type ScrollBar}" BasedOn="{StaticResource Style.VerticalScrollBar}">
+        <Style.Triggers>
+            <Trigger Property="Orientation" Value="Horizontal">
+                <Setter Property="Width" Value="Auto"/>
+                <Setter Property="MinWidth" Value="0"/>
+                <Setter Property="Height" Value="10"/>
+                <Setter Property="MinHeight" Value="10"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type ScrollBar}">
+                            <Grid Background="Transparent">
+                                <Track x:Name="PART_Track" IsDirectionReversed="False">
+                                    <Track.DecreaseRepeatButton>
+                                        <RepeatButton Style="{StaticResource Style.ScrollBarPageButton}" Command="ScrollBar.PageLeftCommand"/>
+                                    </Track.DecreaseRepeatButton>
+                                    <Track.Thumb>
+                                        <Thumb Style="{StaticResource Style.ScrollBarThumb}"/>
+                                    </Track.Thumb>
+                                    <Track.IncreaseRepeatButton>
+                                        <RepeatButton Style="{StaticResource Style.ScrollBarPageButton}" Command="ScrollBar.PageRightCommand"/>
+                                    </Track.IncreaseRepeatButton>
+                                </Track>
+                            </Grid>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- =========================================================
+     NEW BADGE (matchar HTML .badge.new exakt)
+     ========================================================= -->
+
+    <!-- Färger: motsvarar rgba(45,212,191,0.16) och rgba(45,212,191,0.35) -->
+    <SolidColorBrush x:Key="NewBadgeBackgroundBrush" Color="#292DD4BF"/>
+    <SolidColorBrush x:Key="NewBadgeBorderBrush" Color="#592DD4BF"/>
+
+    <!-- Textfärg: motsvarar rgba(231,238,252,0.92) -->
+    <SolidColorBrush x:Key="NewBadgeTextBrush" Color="#EBE7EEFC"/>
+
+    <Style x:Key="NewBadgeBorderStyle" TargetType="Border">
+        <!-- border-radius: 999px -->
+        <Setter Property="CornerRadius" Value="12"/>
+        <!-- padding: 2px 8px -->
+        <Setter Property="Padding" Value="8,2"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Background" Value="{StaticResource NewBadgeBackgroundBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource NewBadgeBorderBrush}"/>
+    </Style>
+
+    <Style x:Key="NewBadgeTextStyle" TargetType="TextBlock">
+        <!-- font-size: 10.5px -->
+        <Setter Property="FontSize" Value="10.5"/>
+        <Setter Property="Foreground" Value="{StaticResource NewBadgeTextBrush}"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+
+
+</ResourceDictionary>

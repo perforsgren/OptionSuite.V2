@@ -1,0 +1,24 @@
+﻿<Application x:Class="OptionSuite.Blotter.Host.Wpf.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             StartupUri="MainWindow.xaml">
+
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+
+                <!-- Shell theme (låst ordning) -->
+                <ResourceDictionary Source="pack://application:,,,/OptionSuite.Shell.Wpf;component/Theme/Theme.Tokens.xaml"/>
+                <ResourceDictionary Source="pack://application:,,,/OptionSuite.Shell.Wpf;component/Theme/Theme.Effects.xaml"/>
+                <ResourceDictionary Source="pack://application:,,,/OptionSuite.Shell.Wpf;component/Theme/Theme.Styles.xaml"/>
+
+                <!-- Blotter DataTemplates -->
+                <ResourceDictionary Source="pack://application:,,,/OptionSuite.Blotter.Wpf;component/Themes/Generic.xaml"/>
+
+                <ResourceDictionary Source="pack://application:,,,/OptionSuite.Blotter.Wpf;component/Themes/BlotterStyles.xaml"/>
+
+
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

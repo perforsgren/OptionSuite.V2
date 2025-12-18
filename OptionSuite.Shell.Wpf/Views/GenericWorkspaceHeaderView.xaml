@@ -1,0 +1,36 @@
+﻿<UserControl x:Class="OptionSuite.Shell.Wpf.Views.GenericWorkspaceHeaderView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="Transparent">
+
+    <Border Background="{StaticResource Panel2Brush}"
+            CornerRadius="10"
+            BorderBrush="{StaticResource StrokeBrush}"
+            BorderThickness="1">
+
+        <Grid Margin="{StaticResource CardPadding}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Orientation="Vertical">
+                <!-- Titel ska INTE vara kritvit (matcha din test-blotter) -->
+                <TextBlock Text="{Binding Title}"
+                           FontSize="16"
+                           FontWeight="SemiBold"
+                           Foreground="{StaticResource Text2Brush}"/>
+
+                <TextBlock Text="{Binding Subtitle}"
+                           Foreground="{StaticResource Text2Brush}"
+                           Margin="0,2,0,0"/>
+            </StackPanel>
+
+            <Button Grid.Column="1"
+                    Style="{StaticResource PrimaryButton}"
+                    Content="{Binding PrimaryActionText}"
+                    Command="{Binding PrimaryActionCommand}"
+                    Visibility="{Binding HasPrimaryAction, Converter={StaticResource BoolToVis}}"/>
+        </Grid>
+    </Border>
+</UserControl>

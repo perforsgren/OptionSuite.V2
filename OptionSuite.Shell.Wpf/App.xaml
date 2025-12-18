@@ -1,0 +1,32 @@
+﻿<Application x:Class="OptionSuite.Shell.Wpf.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             StartupUri="MainWindow.xaml">
+
+    <Application.Resources>
+        <!--
+        THEME LOAD ORDER (DO NOT REORDER)
+        1) Theme.Tokens  - råa values (Colors/Brushes/Radii/Thickness/Fonts)
+        2) Theme.Effects - effects som kan referera tokens
+        3) Theme.Styles  - styles/templates som refererar tokens + effects
+
+        Om ordningen ändras kan StaticResource-resolvern gå sönder vid load-time.
+    -->
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+
+                <!-- 1. Tokens: råa värden -->
+                <ResourceDictionary Source="Theme/Theme.Tokens.xaml"/>
+
+                <!-- 2. Effects: shadows, gradients, chrome -->
+                <ResourceDictionary Source="Theme/Theme.Effects.xaml"/>
+
+                <!-- 3. Styles: kontroller som använder tokens + effects -->
+                <ResourceDictionary Source="Theme/Theme.Styles.xaml"/>
+
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
+
+
+</Application>

@@ -1,0 +1,18 @@
+﻿<UserControl x:Class="OptionSuite.Shell.Wpf.Views.ModulePlaceholderView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="Transparent">
+
+    <Grid>
+        <StackPanel>
+            <TextBlock Text="Module content host"
+                       FontWeight="SemiBold"
+                       FontSize="13"/>
+
+            <TextBlock Text="Fas 1: Shell-baseline. Här hostas underappens root-view senare."
+                       Margin="0,6,0,0"
+                       Foreground="{StaticResource Brush.TextMuted}"
+                       TextWrapping="Wrap"/>
+        </StackPanel>
+    </Grid>
+</UserControl>

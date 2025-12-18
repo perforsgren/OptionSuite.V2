@@ -1,0 +1,40 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Views\DetachedWorkspaceWindow.xaml.cs" />
+    <Compile Remove="Views\GenericWorkspaceHeaderView.xaml.cs" />
+    <Compile Remove="Views\PricerRootView.xaml.cs" />
+    <Compile Remove="Views\WorkspaceRootView.xaml.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Remove="Views\DetachedWorkspaceWindow.xaml" />
+    <Page Remove="Views\GenericWorkspaceHeaderView.xaml" />
+    <Page Remove="Views\PricerRootView.xaml" />
+    <Page Remove="Views\WorkspaceRootView.xaml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Dirkster.AvalonDock" Version="4.72.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\OptionSuite.Shell.Contracts\OptionSuite.Shell.Contracts.csproj" />
+    <ProjectReference Include="..\OptionSuite.Ui.Wpf\OptionSuite.Ui.Wpf.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Theme\Theme.Effects.xaml" />
+    <Resource Include="Theme\Theme.Styles.xaml" />
+    <Resource Include="Theme\Theme.Tokens.xaml" />
+  </ItemGroup>
+
+</Project>
