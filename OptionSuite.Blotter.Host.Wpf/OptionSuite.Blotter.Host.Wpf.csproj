@@ -9,6 +9,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\libs\FxTradeHub\FxTradeHub.Contracts\FxTradeHub.Contracts.csproj" />
+    <ProjectReference Include="..\libs\FxTradeHub\FxTradeHub.Data.MySql\FxTradeHub.Data.MySql.csproj" />
+    <ProjectReference Include="..\libs\FxTradeHub\FxTradeHub.Domain\FxTradeHub.Domain.csproj" />
+    <ProjectReference Include="..\libs\FxTradeHub\FxTradeHub.Services\FxTradeHub.Services.csproj" />
     <ProjectReference Include="..\OptionSuite.Blotter.Wpf\OptionSuite.Blotter.Wpf.csproj" />
     <ProjectReference Include="..\OptionSuite.Shell.Wpf\OptionSuite.Shell.Wpf.csproj" />
   </ItemGroup>
