@@ -8,11 +8,14 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\OptionSuite.Shell.Contracts\OptionSuite.Shell.Contracts.csproj" />
+    <Compile Remove="Module\**" />
+    <EmbeddedResource Remove="Module\**" />
+    <None Remove="Module\**" />
+    <Page Remove="Module\**" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Module\" />
+    <ProjectReference Include="..\OptionSuite.Shell.Contracts\OptionSuite.Shell.Contracts.csproj" />
   </ItemGroup>
 
 </Project>
