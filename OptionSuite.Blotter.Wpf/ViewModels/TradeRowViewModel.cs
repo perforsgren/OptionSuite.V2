@@ -12,6 +12,9 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
     {
         private bool _isNew;
 
+
+        //Testar git
+
         /// <summary>Trade time (UTC/local enligt källa).</summary>
         public DateTime Time { get; }
 
