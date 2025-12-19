@@ -267,20 +267,28 @@
         <Setter Property="ColumnHeaderHeight" Value="38"/>
     </Style>
 
+    <!-- UPPDATERAD: Starkare column header -->
     <Style x:Key="Style.BlotterDataGridHeader" TargetType="{x:Type DataGridColumnHeader}">
         <Setter Property="Foreground" Value="{StaticResource Brush.TextMuted2}"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
-        <Setter Property="Background" Value="Transparent"/>
         <Setter Property="Padding" Value="10,9"/>
         <Setter Property="SnapsToDevicePixels" Value="True"/>
 
-        <!-- Viktigt: vi kör egen template för att få en "riktig" bottom line -->
+        <Setter Property="Background">
+            <Setter.Value>
+                <!-- Lite ljusare för att särskilja från content -->
+                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                    <GradientStop Color="#25FFFFFF" Offset="0.0"/>
+                    <GradientStop Color="#12FFFFFF" Offset="0.5"/>
+                    <GradientStop Color="#08FFFFFF" Offset="1.0"/>
+                </LinearGradientBrush>
+            </Setter.Value>
+        </Setter>
+
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type DataGridColumnHeader}">
                     <Grid SnapsToDevicePixels="True">
-
-                        <!-- Header-content -->
                         <Border Background="{TemplateBinding Background}"
                             Padding="{TemplateBinding Padding}">
                             <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
@@ -288,17 +296,78 @@
                                           SnapsToDevicePixels="True"/>
                         </Border>
 
-                        <!-- Bottom hairline (2px så den syns i fog/gradient) -->
+                        <!-- STARKARE bottom line med accent-färg -->
                         <Border Height="2"
                             VerticalAlignment="Bottom"
-                            Background="{StaticResource Blotter.Brush.RowLine}"
-                            Opacity="0.95"/>
+                            Background="{StaticResource Brush.Accent}"
+                            Opacity="0.35"/>
                     </Grid>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
     </Style>
 
+    <!-- NYA: Section header style -->
+    <Style x:Key="Style.BlotterSectionHeader" TargetType="{x:Type Border}">
+        <Setter Property="Background" Value="{StaticResource Blotter.Brush.ContentChrome}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource Brush.AccentSoft}"/>
+        <Setter Property="BorderThickness" Value="0,0,0,1"/>
+        <Setter Property="Padding" Value="12,6"/>
+    </Style>
+
+    <Style x:Key="Style.BlotterSectionHeaderText" TargetType="{x:Type TextBlock}">
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{StaticResource Brush.TextMuted}"/>
+        <Setter Property="Opacity" Value="0.8"/>
+    </Style>
+
+
+    <!-- Status pill template -->
+    <DataTemplate x:Key="Template.StatusPill">
+        <Border x:Name="StatusPill"
+            Background="{StaticResource Blotter.Brush.GlassPill}"
+            BorderBrush="{StaticResource Brush.BorderSoft}"
+            BorderThickness="1"
+            CornerRadius="12"
+            Padding="10,4"
+            HorizontalAlignment="Left">
+            <TextBlock Text="{Binding Status}"
+                   FontSize="11"
+                   FontWeight="SemiBold"
+                   Foreground="{StaticResource Brush.Text}"/>
+        </Border>
+
+        <DataTemplate.Triggers>
+            <!-- New = Cyan -->
+            <DataTrigger Binding="{Binding Status}" Value="New">
+                <Setter TargetName="StatusPill" Property="Background" Value="#1A2DD4BF"/>
+                <Setter TargetName="StatusPill" Property="BorderBrush" Value="#402DD4BF"/>
+            </DataTrigger>
+
+            <!-- Pending = Yellow -->
+            <DataTrigger Binding="{Binding Status}" Value="Pending">
+                <Setter TargetName="StatusPill" Property="Background" Value="#1AFBBF24"/>
+                <Setter TargetName="StatusPill" Property="BorderBrush" Value="#40FBBF24"/>
+            </DataTrigger>
+
+            <!-- Booked = Green -->
+            <DataTrigger Binding="{Binding Status}" Value="Booked">
+                <Setter TargetName="StatusPill" Property="Background" Value="#1A10B981"/>
+                <Setter TargetName="StatusPill" Property="BorderBrush" Value="#4010B981"/>
+            </DataTrigger>
+
+            <!-- Error/Rejected = Red -->
+            <DataTrigger Binding="{Binding Status}" Value="Error">
+                <Setter TargetName="StatusPill" Property="Background" Value="#1AEF4444"/>
+                <Setter TargetName="StatusPill" Property="BorderBrush" Value="#40EF4444"/>
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Status}" Value="Rejected">
+                <Setter TargetName="StatusPill" Property="Background" Value="#1AEF4444"/>
+                <Setter TargetName="StatusPill" Property="BorderBrush" Value="#40EF4444"/>
+            </DataTrigger>
+        </DataTemplate.Triggers>
+    </DataTemplate>
 
 
 
@@ -420,6 +489,19 @@
                             <Setter TargetName="LeftAccent" Property="Background" Value="{StaticResource Brush.Accent}"/>
                             <Setter Property="Foreground" Value="{StaticResource Brush.Text}"/>
                         </Trigger>
+
+                        <!-- Selected men grid är inaktiv -->
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsSelected" Value="True"/>
+                                <Condition Property="Selector.IsSelectionActive" Value="False"/>
+                            </MultiTrigger.Conditions>
+                            <Setter Property="Foreground" Value="{StaticResource Brush.Text}"/>
+                            <Setter TargetName="RowFill" Property="Background" Value="{StaticResource Blotter.Brush.RowSelectedGlass}"/>
+                            <Setter TargetName="LeftAccent" Property="Background" Value="{StaticResource Brush.Accent}"/>
+                            <Setter TargetName="TopLine" Property="Opacity" Value="1"/>
+                            <Setter TargetName="BottomLine" Property="Opacity" Value="1"/>
+                        </MultiTrigger>
 
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -944,6 +1026,146 @@
         <Setter Property="FontWeight" Value="SemiBold"/>
         <Setter Property="VerticalAlignment" Value="Center"/>
     </Style>
+
+    <!-- ============================================================
+     GRID-SPECIFIKA ROW STYLES (olika accent-färger)
+     ============================================================ -->
+
+    <!-- OPTIONS: Cyan accent -->
+    <Style x:Key="Style.BlotterDataGridRow.Options" 
+       TargetType="{x:Type DataGridRow}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type DataGridRow}">
+                    <Grid SnapsToDevicePixels="True">
+                        <Border x:Name="RowFill" Background="Transparent" Panel.ZIndex="0"/>
+                        <Border x:Name="FlashOverlay" Background="#592DD4BF" BorderBrush="#402DD4BF" 
+                            BorderThickness="1" Opacity="0" Panel.ZIndex="1"/>
+                        <DataGridCellsPresenter Panel.ZIndex="2"/>
+                        <Border x:Name="LeftAccent" Width="3" HorizontalAlignment="Left" 
+                            Background="Transparent" Panel.ZIndex="3"/>
+                        <Border x:Name="TopLine" Height="1" VerticalAlignment="Top" 
+                            Background="{StaticResource Blotter.Brush.RowLine}" Opacity="0" Panel.ZIndex="4"/>
+                        <Border x:Name="BottomLine" Height="1" VerticalAlignment="Bottom" 
+                            Background="{StaticResource Blotter.Brush.RowLine}" Opacity="0" Panel.ZIndex="4"/>
+                    </Grid>
+
+                    <ControlTemplate.Triggers>
+                        <DataTrigger Binding="{Binding IsNew}" Value="True">
+                            <DataTrigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="FlashOverlay" 
+                                                     Storyboard.TargetProperty="Opacity" 
+                                                     From="1.0" To="0.0" Duration="0:0:2.0"
+                                                     EasingFunction="{StaticResource EaseOutQuad}"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </DataTrigger.EnterActions>
+                        </DataTrigger>
+
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="RowFill" Property="Background" Value="{StaticResource Blotter.Brush.RowHoverGlass}"/>
+                            <Setter TargetName="TopLine" Property="Opacity" Value="1"/>
+                            <Setter TargetName="BottomLine" Property="Opacity" Value="1"/>
+                            <Setter TargetName="LeftAccent" Property="Background" Value="#2DD4BF"/>
+                        </Trigger>
+
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="RowFill" Property="Background" Value="{StaticResource Blotter.Brush.RowSelectedGlass}"/>
+                            <Setter TargetName="TopLine" Property="Opacity" Value="1"/>
+                            <Setter TargetName="BottomLine" Property="Opacity" Value="1"/>
+                            <Setter TargetName="TopLine" Property="Background" Value="{StaticResource Blotter.Brush.RowLineStrong}"/>
+                            <Setter TargetName="BottomLine" Property="Background" Value="{StaticResource Blotter.Brush.RowLineStrong}"/>
+                            <Setter TargetName="LeftAccent" Property="Background" Value="#2DD4BF"/>
+                            <Setter Property="Foreground" Value="{StaticResource Brush.Text}"/>
+                        </Trigger>
+
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsSelected" Value="True"/>
+                                <Condition Property="Selector.IsSelectionActive" Value="False"/>
+                            </MultiTrigger.Conditions>
+                            <Setter Property="Foreground" Value="{StaticResource Brush.Text}"/>
+                            <Setter TargetName="RowFill" Property="Background" Value="{StaticResource Blotter.Brush.RowSelectedGlass}"/>
+                            <Setter TargetName="LeftAccent" Property="Background" Value="#2DD4BF"/>
+                            <Setter TargetName="TopLine" Property="Opacity" Value="0.6"/>
+                            <Setter TargetName="BottomLine" Property="Opacity" Value="0.6"/>
+                        </MultiTrigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- LINEAR: Purple accent -->
+    <Style x:Key="Style.BlotterDataGridRow.Linear" 
+       TargetType="{x:Type DataGridRow}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type DataGridRow}">
+                    <Grid SnapsToDevicePixels="True">
+                        <Border x:Name="RowFill" Background="Transparent" Panel.ZIndex="0"/>
+                        <Border x:Name="FlashOverlay" Background="#592DD4BF" BorderBrush="#402DD4BF" 
+                            BorderThickness="1" Opacity="0" Panel.ZIndex="1"/>
+                        <DataGridCellsPresenter Panel.ZIndex="2"/>
+                        <Border x:Name="LeftAccent" Width="3" HorizontalAlignment="Left" 
+                            Background="Transparent" Panel.ZIndex="3"/>
+                        <Border x:Name="TopLine" Height="1" VerticalAlignment="Top" 
+                            Background="{StaticResource Blotter.Brush.RowLine}" Opacity="0" Panel.ZIndex="4"/>
+                        <Border x:Name="BottomLine" Height="1" VerticalAlignment="Bottom" 
+                            Background="{StaticResource Blotter.Brush.RowLine}" Opacity="0" Panel.ZIndex="4"/>
+                    </Grid>
+
+                    <ControlTemplate.Triggers>
+                        <DataTrigger Binding="{Binding IsNew}" Value="True">
+                            <DataTrigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="FlashOverlay" 
+                                                     Storyboard.TargetProperty="Opacity" 
+                                                     From="1.0" To="0.0" Duration="0:0:2.0"
+                                                     EasingFunction="{StaticResource EaseOutQuad}"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </DataTrigger.EnterActions>
+                        </DataTrigger>
+
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="RowFill" Property="Background" Value="{StaticResource Blotter.Brush.RowHoverGlass}"/>
+                            <Setter TargetName="TopLine" Property="Opacity" Value="1"/>
+                            <Setter TargetName="BottomLine" Property="Opacity" Value="1"/>
+                            <Setter TargetName="LeftAccent" Property="Background" Value="#A78BFA"/>
+                        </Trigger>
+
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="RowFill" Property="Background" Value="{StaticResource Blotter.Brush.RowSelectedGlass}"/>
+                            <Setter TargetName="TopLine" Property="Opacity" Value="1"/>
+                            <Setter TargetName="BottomLine" Property="Opacity" Value="1"/>
+                            <Setter TargetName="TopLine" Property="Background" Value="{StaticResource Blotter.Brush.RowLineStrong}"/>
+                            <Setter TargetName="BottomLine" Property="Background" Value="{StaticResource Blotter.Brush.RowLineStrong}"/>
+                            <Setter TargetName="LeftAccent" Property="Background" Value="#A78BFA"/>
+                            <Setter Property="Foreground" Value="{StaticResource Brush.Text}"/>
+                        </Trigger>
+
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsSelected" Value="True"/>
+                                <Condition Property="Selector.IsSelectionActive" Value="False"/>
+                            </MultiTrigger.Conditions>
+                            <Setter Property="Foreground" Value="{StaticResource Brush.Text}"/>
+                            <Setter TargetName="RowFill" Property="Background" Value="{StaticResource Blotter.Brush.RowSelectedGlass}"/>
+                            <Setter TargetName="LeftAccent" Property="Background" Value="#A78BFA"/>
+                            <Setter TargetName="TopLine" Property="Opacity" Value="0.6"/>
+                            <Setter TargetName="BottomLine" Property="Opacity" Value="0.6"/>
+                        </MultiTrigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+
 
 
 </ResourceDictionary>

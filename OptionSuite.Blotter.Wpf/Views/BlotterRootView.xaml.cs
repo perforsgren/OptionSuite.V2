@@ -1,4 +1,6 @@
-﻿using System.Windows.Controls;
+﻿using OptionSuite.Blotter.Wpf.ViewModels;
+using System.Windows;
+using System.Windows.Controls;
 
 namespace OptionSuite.Blotter.Wpf.Views
 {
@@ -15,5 +17,24 @@ namespace OptionSuite.Blotter.Wpf.Views
         {
             InitializeComponent();
         }
+
+        private void OptionsGrid_GotFocus(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is BlotterRootViewModel vm)
+            {
+                vm.OnOptionGridGotFocus();
+            }
+        }
+
+        private void LinearGrid_GotFocus(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is BlotterRootViewModel vm)
+            {
+                vm.OnLinearGridGotFocus();
+            }
+        }
+
     }
+
+
 }

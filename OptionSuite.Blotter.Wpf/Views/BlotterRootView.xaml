@@ -407,86 +407,111 @@
                             </Grid.ColumnDefinitions>
 
                             <!-- LEFT: DataGrid -->
-                            <DataGrid Grid.Column="0"
-                                      Style="{StaticResource Style.BlotterDataGrid}"
-                                      ItemsSource="{Binding Trades}"
-                                      AutoGenerateColumns="False"
-                                      Background="Transparent"
-                                      BorderThickness="0"
-                                      Margin="0"
-                                      SelectionUnit="FullRow"
-                                      SelectionMode="Single">
+                            <!-- Ersätt din nuvarande DataGrid med detta: -->
 
-                                <!-- Fix för “selected blir svart när fokus försvinner” + tunnare selection -->
-                                <DataGrid.Resources>
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <!-- Section header för options -->
+                                    <RowDefinition Height="Auto"/>
+                                    <!-- Options grid -->
+                                    <RowDefinition Height="*"/>
+                                    <!-- Gap mellan grids -->
+                                    <RowDefinition Height="12"/>
+                                    <!-- Section header för linear -->
+                                    <RowDefinition Height="Auto"/>
+                                    <!-- Linear grid -->
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
 
-                                    <Style TargetType="{x:Type DataGridColumnHeader}"
-                                           BasedOn="{StaticResource Style.BlotterDataGridHeader}">
-                                        <!-- Header ska kännas “integrerad”: låt fog synas igenom -->
-                                        <Setter Property="Background" Value="Transparent"/>
-                                        <Setter Property="BorderThickness" Value="0,0,0,1"/>
-                                        <Setter Property="BorderBrush" Value="{StaticResource Brush.BorderSoft}"/>
-                                        <Setter Property="Foreground" Value="{StaticResource Brush.TextMuted2}"/>
-                                        <Setter Property="TextElement.Foreground" Value="{StaticResource Brush.TextMuted2}"/>
-                                    </Style>
+                                <!-- ==================== OPTIONS SECTION ==================== -->
+                                <Border Grid.Row="0" Style="{StaticResource Style.BlotterSectionHeader}">
+                                    <TextBlock Text="OPTIONS (VANILLA • NDO)" 
+                   Style="{StaticResource Style.BlotterSectionHeaderText}"/>
+                                </Border>
 
-                                    <Style TargetType="{x:Type DataGridCell}"
-                                           BasedOn="{StaticResource Style.BlotterDataGridCell}">
-                                        <!-- Tunnare separators mellan rader -->
-                                        <Setter Property="BorderThickness" Value="0,0,0,1"/>
-                                        <Setter Property="BorderBrush" Value="{StaticResource Brush.BorderSoft}"/>
+                                <!-- OPTIONS GRID -->
+                                <DataGrid Grid.Row="1"
+                                          Style="{StaticResource Style.BlotterDataGrid}"
+                                          ItemsSource="{Binding OptionTrades}"
+                                          SelectedItem="{Binding SelectedTrade, Mode=TwoWay}"
+                                          ColumnHeaderStyle="{StaticResource Style.BlotterDataGridHeader}"
+                                          CellStyle="{StaticResource Style.BlotterDataGridCell}"
+                                          RowStyle="{StaticResource Style.BlotterDataGridRow.Options}"
+                                          GotFocus="OptionsGrid_GotFocus"
+                                          AutoGenerateColumns="False">
+                                    <!-- LÄGG TILL DENNA RAD -->
 
-                                        <!-- Viktigt: håll foreground när selection blir “inactive” -->
-                                        <Style.Triggers>
-                                            <Trigger Property="IsSelected" Value="True">
-                                                <Setter Property="Foreground" Value="{StaticResource Brush.Text}"/>
-                                                <Setter Property="Background" Value="Transparent"/>
-                                            </Trigger>
-                                        </Style.Triggers>
-                                    </Style>
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="TradeID" Binding="{Binding TradeId}" Width="120"/>
+                                        <DataGridTextColumn Header="Counterpart" Binding="{Binding Counterparty}" Width="100"/>
+                                        <DataGridTextColumn Header="Ccy Pair" Binding="{Binding CcyPair}" Width="80"/>
+                                        <DataGridTextColumn Header="Buy/Sell" Binding="{Binding BuySell}" Width="70"/>
+                                        <DataGridTextColumn Header="Call/Put" Binding="{Binding CallPut}" Width="70"/>
+                                        <DataGridTextColumn Header="Strike" Binding="{Binding Strike, StringFormat=F4}" Width="90"/>
+                                        <DataGridTextColumn Header="Expiry Date" Binding="{Binding ExpiryDate, StringFormat=yyyy-MM-dd}" Width="100"/>
+                                        <DataGridTextColumn Header="Notional" Binding="{Binding Notional, StringFormat=N0}" Width="110"/>
+                                        <DataGridTextColumn Header="Notional Ccy" Binding="{Binding NotionalCcy}" Width="90"/>
+                                        <DataGridTextColumn Header="Premium" Binding="{Binding Premium, StringFormat=N2}" Width="100"/>
+                                        <DataGridTextColumn Header="Premium Ccy" Binding="{Binding PremiumCcy}" Width="90"/>
+                                        <DataGridTextColumn Header="Portfolio MX3" Binding="{Binding PortfolioMx3}" Width="110"/>
+                                        <DataGridTextColumn Header="Trader" Binding="{Binding Trader}" Width="80"/>
+                                        <DataGridTemplateColumn Header="Status" Width="180" CellTemplate="{StaticResource StatusPillTemplate}" />
+                                    </DataGrid.Columns>
+                                </DataGrid>
 
-                                    <Style TargetType="{x:Type DataGridRow}"
-                                           BasedOn="{StaticResource Style.BlotterDataGridRow}">
-                                        <!-- Lägg en subtil selection med tunna borders i stället för blockfärg -->
-                                        <Setter Property="BorderThickness" Value="0,0,0,1"/>
-                                        <Setter Property="BorderBrush" Value="{StaticResource Brush.BorderSoft}"/>
-                                        <Setter Property="Foreground" Value="{StaticResource Brush.Text}"/>
+                                <!-- LINEAR GRID -->
+                                <DataGrid Grid.Row="4"
+          Style="{StaticResource Style.BlotterDataGrid}"
+          ItemsSource="{Binding LinearTrades}"
+          SelectedItem="{Binding SelectedTrade, Mode=TwoWay}"
+          ColumnHeaderStyle="{StaticResource Style.BlotterDataGridHeader}"
+          CellStyle="{StaticResource Style.BlotterDataGridCell}"
+          RowStyle="{StaticResource Style.BlotterDataGridRow.Linear}"
+                                          GotFocus="LinearGrid_GotFocus"
+          AutoGenerateColumns="False">
+                                    <!-- LÄGG TILL DENNA RAD -->
 
-                                        <Style.Triggers>
-                                            <!-- Active selection -->
-                                            <Trigger Property="IsSelected" Value="True">
-                                                <Setter Property="Foreground" Value="{StaticResource Brush.Text}"/>
-                                                <Setter Property="Background" Value="{StaticResource Brush.Surface.Selected}"/>
-                                            </Trigger>
+                                    <DataGrid.Columns>
+                                        <!-- Dina linear-kolumner här (specificera senare) -->
+                                    </DataGrid.Columns>
+                                </DataGrid>
 
-                                            <!-- Inactive selection (när fokus lämnar grid) -->
-                                            <MultiTrigger>
-                                                <MultiTrigger.Conditions>
-                                                    <Condition Property="IsSelected" Value="True"/>
-                                                    <Condition Property="IsKeyboardFocusWithin" Value="False"/>
-                                                </MultiTrigger.Conditions>
-                                                <Setter Property="Foreground" Value="{StaticResource Brush.Text}"/>
-                                                <Setter Property="Background" Value="{StaticResource Brush.Surface.Selected}"/>
-                                            </MultiTrigger>
-                                        </Style.Triggers>
-                                    </Style>
 
-                                </DataGrid.Resources>
 
-                                <DataGrid.Columns>
-                                    <DataGridTextColumn Header="Time" Binding="{Binding Time, StringFormat=yyyy-MM-dd HH:mm:ss}" Width="160"/>
-                                    <DataGridTextColumn Header="System" Binding="{Binding System}" Width="100"/>
-                                    <DataGridTextColumn Header="Ext TradeId" Binding="{Binding ExternalTradeId}" Width="140"/>
-                                    <DataGridTextColumn Header="Prod" Binding="{Binding Product}" Width="80"/>
-                                    <DataGridTextColumn Header="Ccy1" Binding="{Binding Ccy1}" Width="60"/>
-                                    <DataGridTextColumn Header="Ccy2" Binding="{Binding Ccy2}" Width="60"/>
-                                    <DataGridTextColumn Header="Side" Binding="{Binding Side}" Width="60"/>
-                                    <DataGridTextColumn Header="Notional" Binding="{Binding Notional, StringFormat=N0}" Width="110"/>
-                                    <DataGridTextColumn Header="Price" Binding="{Binding Price, StringFormat=F4}" Width="90"/>
-                                    <DataGridTemplateColumn Header="Status" Width="180" CellTemplate="{StaticResource StatusPillTemplate}" />
-                                </DataGrid.Columns>
+                                <!-- ==================== LINEAR SECTION ==================== -->
+                                <Border Grid.Row="3" Style="{StaticResource Style.BlotterSectionHeader}">
+                                    <TextBlock Text="LINEAR (SPOT • FWD • SWAP • NDF)" 
+                   Style="{StaticResource Style.BlotterSectionHeaderText}"/>
+                                </Border>
 
-                            </DataGrid>
+                                <DataGrid Grid.Row="4"
+              Style="{StaticResource Style.BlotterDataGrid}"
+              ItemsSource="{Binding LinearTrades}"
+              SelectedItem="{Binding SelectedTrade, Mode=TwoWay}"
+              ColumnHeaderStyle="{StaticResource Style.BlotterDataGridHeader}"
+              CellStyle="{StaticResource Style.BlotterDataGridCell}"
+              RowStyle="{StaticResource Style.BlotterDataGridRow}">
+
+                                    <DataGrid.Columns>
+                                        <!-- Samma kolumner som options (du kan justera senare) -->
+                                        <DataGridTextColumn Header="Time" Binding="{Binding Time, StringFormat='yyyy-MM-dd HH:mm:ss'}" Width="140"/>
+                                        <DataGridTextColumn Header="System" Binding="{Binding System}" Width="110"/>
+                                        <DataGridTextColumn Header="Ext TradeId" Binding="{Binding ExternalTradeId}" Width="*"/>
+                                        <DataGridTextColumn Header="Prod" Binding="{Binding Product}" Width="90"/>
+                                        <DataGridTextColumn Header="Ccy1" Binding="{Binding Ccy1}" Width="55"/>
+                                        <DataGridTextColumn Header="Ccy2" Binding="{Binding Ccy2}" Width="55"/>
+                                        <DataGridTextColumn Header="Side" Binding="{Binding Side}" Width="60"/>
+                                        <DataGridTextColumn Header="Notional" Binding="{Binding Notional, StringFormat=N0}" Width="110"/>
+                                        <DataGridTextColumn Header="Price" Binding="{Binding Price, StringFormat=F4}" Width="85"/>
+                                        <DataGridTemplateColumn Header="Status" Width="180" CellTemplate="{StaticResource StatusPillTemplate}" />
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </Grid>
+
+
+
+
+
 
                             <!-- Column separator -->
                             <Border Grid.Column="1" Background="{StaticResource Brush.BorderSoft}"/>

@@ -1,35 +1,79 @@
 ﻿using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Linq;
 using System.Threading.Tasks;
+using System.Windows.Input;
 using FxTradeHub.Contracts.Dtos;
 using FxTradeHub.Services;
+using OptionSuite.Blotter.Wpf.Infrastructure;
 
 namespace OptionSuite.Blotter.Wpf.ViewModels
 {
     public sealed class BlotterRootViewModel : INotifyPropertyChanged
     {
         private readonly IBlotterReadServiceAsync _readService;
+        private readonly Random _random = new Random();
+        private TradeRowViewModel _selectedTrade;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
         public string Title { get; set; } = "Trade Blotter";
         public string Subtitle { get; set; } = "v2";
 
-        public ObservableCollection<TradeRowViewModel> Trades { get; } =
+        // Två separata collections
+        public ObservableCollection<TradeRowViewModel> OptionTrades { get; } =
             new ObservableCollection<TradeRowViewModel>();
+
+        public ObservableCollection<TradeRowViewModel> LinearTrades { get; } =
+            new ObservableCollection<TradeRowViewModel>();
+
+        // Gemensam selection (båda grids binder till denna)
+        public TradeRowViewModel SelectedTrade
+        {
+            get => _selectedTrade;
+            set
+            {
+                if (_selectedTrade != value)
+                {
+                    _selectedTrade = value;
+                    OnPropertyChanged(nameof(SelectedTrade));
+                }
+            }
+        }
+
+        // Lägg till dessa methods i BlotterRootViewModel
+        public void OnOptionGridGotFocus()
+        {
+            // Om en linear trade är selected, cleara den
+            if (SelectedTrade != null && LinearTrades.Contains(SelectedTrade))
+            {
+                SelectedTrade = null;
+            }
+        }
+
+        public void OnLinearGridGotFocus()
+        {
+            // Om en option trade är selected, cleara den
+            if (SelectedTrade != null && OptionTrades.Contains(SelectedTrade))
+            {
+                SelectedTrade = null;
+            }
+        }
+
+
+        public ICommand RefreshCommand { get; }
 
         public BlotterRootViewModel(IBlotterReadServiceAsync readService)
         {
             _readService = readService ?? throw new ArgumentNullException(nameof(readService));
+            RefreshCommand = new RelayCommand(ExecuteRefresh);
         }
 
         public async Task InitialLoadAsync()
         {
-            // Minimal filter nu – du kan koppla UI-filter senare
             var filter = new BlotterFilter
             {
-                // Exempel: senaste 7 dagarna (du kan ändra)
                 FromTradeDate = DateTime.UtcNow.Date.AddDays(-7),
                 ToTradeDate = DateTime.UtcNow.Date.AddDays(1),
                 MaxRows = 500
@@ -37,36 +81,124 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
 
             var rows = await _readService.GetBlotterTradesAsync(filter).ConfigureAwait(true);
 
-            Trades.Clear();
+            OptionTrades.Clear();
+            LinearTrades.Clear();
 
             foreach (var r in rows)
             {
-                var (ccy1, ccy2) = SplitCcyPair(r.CcyPair);
+                var time = (r.ExecutionTimeUtc ?? r.TradeDate ?? DateTime.UtcNow);
+                var system = !string.IsNullOrWhiteSpace(r.SourceVenueCode)
+                    ? r.SourceVenueCode
+                    : r.SourceType;
+                var status = !string.IsNullOrWhiteSpace(r.Mx3Status)
+                    ? r.Mx3Status
+                    : r.SystemStatus;
 
-                // Price: välj en rimlig primär “pris-källa” för UI-kolumnen
-                // (HedgeRate först, annars SpotRate, annars Strike, annars 0)
-                var price =
-                    (r.HedgeRate ?? r.SpotRate ?? r.Strike ?? 0m);
-
-                var time =
-                    (r.ExecutionTimeUtc ?? r.TradeDate ?? DateTime.UtcNow);
-
-                var system =
-                    !string.IsNullOrWhiteSpace(r.SourceVenueCode) ? r.SourceVenueCode : r.SourceType;
-
-                Trades.Add(new TradeRowViewModel(
+                var trade = new TradeRowViewModel(
+                    tradeId: r.TradeId,
+                    counterparty: r.CounterpartyCode,
+                    ccyPair: r.CcyPair,
+                    buySell: r.BuySell,
+                    callPut: r.CallPut,
+                    strike: r.Strike,
+                    expiryDate: r.ExpiryDate,
+                    notional: r.Notional,
+                    notionalCcy: r.NotionalCcy,
+                    premium: r.Premium,
+                    premiumCcy: r.PremiumCcy,
+                    portfolioMx3: r.PortfolioMx3,
+                    trader: r.TraderId,
+                    status: status,
                     time: time,
                     system: system,
-                    externalTradeId: r.ExternalTradeId,
                     product: r.ProductType,
-                    ccy1: ccy1,
-                    ccy2: ccy2,
-                    side: r.BuySell,
-                    notional: r.Notional,
-                    price: price,
-                    status: !string.IsNullOrWhiteSpace(r.Mx3Status) ? r.Mx3Status : r.SystemStatus
-                ));
+                    spotRate: r.SpotRate,
+                    swapPoints: r.SwapPoints,
+                    settlementDate: r.SettlementDate,
+                    isNew: false
+                );
+
+                if (IsOptionProduct(r.ProductType))
+                {
+                    OptionTrades.Add(trade);
+                }
+                else
+                {
+                    LinearTrades.Add(trade);
+                }
             }
+        }
+
+
+        private void ExecuteRefresh()
+        {
+            var systems = new[] { "VOLBROKER", "RTNS", "ICAP", "BLOOMBERG", "REFINITIV" };
+            var products = new[] { "OPTION", "SPOT", "NDF", "FORWARD" };
+            var ccyPairs = new[] { "EURUSD", "USDJPY", "GBPUSD", "USDSEK", "EURSEK" };
+            var sides = new[] { "Buy", "Sell" };
+            var callPuts = new[] { "Call", "Put" };
+            var counterparties = new[] { "CPTY_A", "CPTY_B", "CPTY_C" };
+            var portfolios = new[] { "FX_OPT_1", "FX_OPT_2", "FX_LIN_1" };
+            var traders = new[] { "JDoe", "ASmith", "MJones" };
+
+            var system = systems[_random.Next(systems.Length)];
+            var product = products[_random.Next(products.Length)];
+            var ccyPair = ccyPairs[_random.Next(ccyPairs.Length)];
+            var side = sides[_random.Next(sides.Length)];
+            var isOption = product == "OPTION";
+
+            var newTrade = new TradeRowViewModel(
+                tradeId: $"{system}-{_random.Next(100000, 999999)}",
+                counterparty: counterparties[_random.Next(counterparties.Length)],
+                ccyPair: ccyPair,
+                buySell: side,
+                callPut: isOption ? callPuts[_random.Next(callPuts.Length)] : string.Empty,
+                strike: isOption ? 100m + (decimal)(_random.NextDouble() * 50) : null,
+                expiryDate: isOption ? DateTime.Now.AddMonths(3) : null,
+                notional: _random.Next(1000000, 50000000),
+                notionalCcy: ccyPair.Substring(0, 3), // First 3 chars
+                premium: isOption ? _random.Next(10000, 500000) : null,
+                premiumCcy: isOption ? ccyPair.Substring(3, 3) : string.Empty, // Last 3 chars
+                portfolioMx3: portfolios[_random.Next(portfolios.Length)],
+                trader: traders[_random.Next(traders.Length)],
+                status: "New",
+                time: DateTime.Now,
+                system: system,
+                product: product,
+                spotRate: !isOption ? 100m + (decimal)(_random.NextDouble() * 10) : null,
+                swapPoints: !isOption && product == "FORWARD" ? (decimal)(_random.NextDouble() * 0.5) : null,
+                settlementDate: !isOption ? DateTime.Now.AddDays(2) : null,
+                isNew: true
+            );
+
+            // Lägg till i rätt collection
+            if (IsOptionProduct(product))
+            {
+                OptionTrades.Insert(0, newTrade);
+            }
+            else
+            {
+                LinearTrades.Insert(0, newTrade);
+            }
+
+            // Dölj badge efter 20 sekunder
+            Task.Delay(20000).ContinueWith(_ =>
+            {
+                System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+                {
+                    newTrade.IsNew = false;
+                });
+            });
+        }
+
+
+        private static bool IsOptionProduct(string productType)
+        {
+            if (string.IsNullOrWhiteSpace(productType))
+                return false;
+
+            var upper = productType.ToUpperInvariant();
+            return upper.Contains("OPTION") || upper.Contains("NDO");
         }
 
         private static (string Ccy1, string Ccy2) SplitCcyPair(string ccyPair)
@@ -74,11 +206,9 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             if (string.IsNullOrWhiteSpace(ccyPair))
                 return (string.Empty, string.Empty);
 
-            // USDJPY
             if (ccyPair.Length == 6 && ccyPair.IndexOfAny(new[] { '/', '-', ' ' }) < 0)
                 return (ccyPair.Substring(0, 3), ccyPair.Substring(3, 3));
 
-            // USD/JPY, USD-JPY, "USD JPY"
             var cleaned = ccyPair.Replace("-", "/").Replace(" ", "/");
             var parts = cleaned.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
 
@@ -87,102 +217,10 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
 
             return (ccyPair, string.Empty);
         }
+
+        private void OnPropertyChanged(string propertyName)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
     }
 }
-
-
-
-
-
-// Skapa command för Refresh
-//RefreshCommand = new RelayCommand(ExecuteRefresh);
-
-
-//public BlotterRootViewModel()
-//{
-//    Title = "Trade Blotter";
-//    Subtitle = "Blotter (Fas 2) – UI skeleton och read-path kommer stegvis.";
-
-//    Trades = new ObservableCollection<TradeRowViewModel>
-//            {
-//                new TradeRowViewModel(
-//                    DateTime.Now.AddMinutes(-2),
-//                    "VOLBROKER",
-//                    "704955891.0.05",
-//                    "OPTION",
-//                    "USD",
-//                    "JPY",
-//                    "Buy",
-//                    25000000m,
-//                    155.2300m,
-//                    "Pending"),
-
-//                new TradeRowViewModel(
-//                    DateTime.Now.AddMinutes(-5),
-//                    "RTNS",
-//                    "RTNS-908132",
-//                    "SPOT",
-//                    "EUR",
-//                    "SEK",
-//                    "Sell",
-//                    10000000m,
-//                    11.4205m,
-//                    "Booked"),
-
-//                new TradeRowViewModel(
-//                    DateTime.Now.AddMinutes(-11),
-//                    "ICAP",
-//                    "ICAP-771020",
-//                    "NDF",
-//                    "USD",
-//                    "BRL",
-//                    "Buy",
-//                    5000000m,
-//                    5.1120m,
-//                    "Rejected")
-//            };
-
-//    // Skapa command för Refresh
-//    RefreshCommand = new RelayCommand(ExecuteRefresh);
-//}
-
-//private void ExecuteRefresh()
-//{
-//    // Simulera ny trade
-//    var systems = new[] { "VOLBROKER", "RTNS", "ICAP", "BLOOMBERG", "REFINITIV" };
-//    var products = new[] { "OPTION", "SPOT", "NDF", "FORWARD" };
-//    var ccyPairs = new[] { ("USD", "JPY"), ("EUR", "SEK"), ("GBP", "USD"), ("USD", "BRL"), ("EUR", "USD") };
-//    var sides = new[] { "Buy", "Sell" };
-
-//    var system = systems[_random.Next(systems.Length)];
-//    var product = products[_random.Next(products.Length)];
-//    var ccyPair = ccyPairs[_random.Next(ccyPairs.Length)];
-//    var side = sides[_random.Next(sides.Length)];
-
-//    var newTrade = new TradeRowViewModel(
-//        DateTime.Now,
-//        system,
-//        $"{system}-{_random.Next(100000, 999999)}",
-//        product,
-//        ccyPair.Item1,
-//        ccyPair.Item2,
-//        side,
-//        _random.Next(1000000, 50000000),
-//        100m + (decimal)(_random.NextDouble() * 100),
-//        "New",        // <-- Status = "New" för nya trades
-//        isNew: true); // Behåll för badge-visning
-
-//    // Lägg till först i listan
-//    Trades.Insert(0, newTrade);
-
-//    // Ändra status från "New" till "Pending" efter 20 sekunder
-//    System.Threading.Tasks.Task.Delay(20000).ContinueWith(_ =>
-//    {
-//        System.Windows.Application.Current?.Dispatcher.Invoke(() =>
-//        {
-//            newTrade.IsNew = false;  // Dölj badge
-//                                     // Om du vill ändra status också:
-//                                     // Men TradeRowViewModel är immutable, så du kan inte ändra Status direkt
-//        });
-//    });
-//}

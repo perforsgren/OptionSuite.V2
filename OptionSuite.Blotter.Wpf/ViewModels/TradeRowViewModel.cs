@@ -1,45 +1,104 @@
 ﻿using System;
 using System.ComponentModel;
+using System.Runtime.CompilerServices;
 
 namespace OptionSuite.Blotter.Wpf.ViewModels
 {
     public sealed class TradeRowViewModel : INotifyPropertyChanged
     {
+        private bool _isNew;
+
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public DateTime Time { get; }
-        public string System { get; }
-        public string ExternalTradeId { get; }
-        public string Product { get; }
-        public string Ccy1 { get; }
-        public string Ccy2 { get; }
-        public string Side { get; }
+        // Options-specifika kolumner (i ordning)
+        public string TradeId { get; }
+        public string Counterparty { get; }
+        public string CcyPair { get; }
+        public string BuySell { get; }
+        public string CallPut { get; }
+        public decimal? Strike { get; }
+        public DateTime? ExpiryDate { get; }
         public decimal Notional { get; }
-        public decimal Price { get; }
+        public string NotionalCcy { get; }
+        public decimal? Premium { get; }
+        public string PremiumCcy { get; }
+        public string PortfolioMx3 { get; }
+        public string Trader { get; }
         public string Status { get; }
 
+        // Gemensamma fält (för båda grid-typer)
+        public DateTime Time { get; }
+        public string System { get; }
+        public string Product { get; }
+
+        // Linear-specifika (kommer användas senare)
+        public decimal? SpotRate { get; }
+        public decimal? SwapPoints { get; }
+        public DateTime? SettlementDate { get; }
+
+        public bool IsNew
+        {
+            get => _isNew;
+            set
+            {
+                if (_isNew != value)
+                {
+                    _isNew = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
         public TradeRowViewModel(
+            string tradeId,
+            string counterparty,
+            string ccyPair,
+            string buySell,
+            string callPut,
+            decimal? strike,
+            DateTime? expiryDate,
+            decimal notional,
+            string notionalCcy,
+            decimal? premium,
+            string premiumCcy,
+            string portfolioMx3,
+            string trader,
+            string status,
             DateTime time,
             string system,
-            string externalTradeId,
             string product,
-            string ccy1,
-            string ccy2,
-            string side,
-            decimal notional,
-            decimal price,
-            string status)
+            decimal? spotRate = null,
+            decimal? swapPoints = null,
+            DateTime? settlementDate = null,
+            bool isNew = false)
         {
+            TradeId = tradeId ?? string.Empty;
+            Counterparty = counterparty ?? string.Empty;
+            CcyPair = ccyPair ?? string.Empty;
+            BuySell = buySell ?? string.Empty;
+            CallPut = callPut ?? string.Empty;
+            Strike = strike;
+            ExpiryDate = expiryDate;
+            Notional = notional;
+            NotionalCcy = notionalCcy ?? string.Empty;
+            Premium = premium;
+            PremiumCcy = premiumCcy ?? string.Empty;
+            PortfolioMx3 = portfolioMx3 ?? string.Empty;
+            Trader = trader ?? string.Empty;
+            Status = status ?? string.Empty;
             Time = time;
             System = system ?? string.Empty;
-            ExternalTradeId = externalTradeId ?? string.Empty;
             Product = product ?? string.Empty;
-            Ccy1 = ccy1 ?? string.Empty;
-            Ccy2 = ccy2 ?? string.Empty;
-            Side = side ?? string.Empty;
-            Notional = notional;
-            Price = price;
-            Status = status ?? string.Empty;
+            SpotRate = spotRate;
+            SwapPoints = swapPoints;
+            SettlementDate = settlementDate;
+            _isNew = isNew;
+        }
+
+        private void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }
+ 
