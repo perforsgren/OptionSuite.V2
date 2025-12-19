@@ -124,6 +124,8 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                     hedgeRate: r.HedgeRate,
                     hedgeType: r.HedgeType,
                     calypsoPortfolio: r.CalypsoPortfolio,
+                    mx3Status: r.Mx3Status ?? "New",           // NY!
+                    calypsoStatus: r.CalypsoStatus ?? "New",   // NY!
                     isNew: false
                 );
 
@@ -179,6 +181,8 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                 hedgeRate: !isOption ? 100m + (decimal)(_random.NextDouble() * 5) : null,
                 hedgeType: !isOption ? "SPOT" : null,
                 calypsoPortfolio: "CAL_BOOK_1",
+                mx3Status: !isOption ? "Booked" : null,       // NY! Linear börjar som Pending
+                calypsoStatus: !isOption ? "Pending" : null,   // NY! Linear börjar som Pending
                 isNew: true
             );
 

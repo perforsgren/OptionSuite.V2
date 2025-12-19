@@ -25,6 +25,8 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
         public string PortfolioMx3 { get; }
         public string Trader { get; }
         public string Status { get; }
+        public string Mx3Status { get; }
+        public string CalypsoStatus { get; }
 
         // Gemensamma fält
         public DateTime Time { get; }
@@ -76,6 +78,8 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             decimal? hedgeRate = null,
             string hedgeType = null,
             string calypsoPortfolio = null,
+            string mx3Status = null,           // NY!
+            string calypsoStatus = null,       // NY!
             bool isNew = false)
         {
             TradeId = tradeId ?? string.Empty;
@@ -91,7 +95,12 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             PremiumCcy = premiumCcy ?? string.Empty;
             PortfolioMx3 = portfolioMx3 ?? string.Empty;
             Trader = trader ?? string.Empty;
-            Status = status ?? string.Empty;
+
+            // Beräkna aggregerad status från system-status
+            Mx3Status = mx3Status ?? "New";
+            CalypsoStatus = calypsoStatus ?? "New";
+            Status = CalculateAggregatedStatus(Mx3Status, CalypsoStatus, status);
+
             Time = time;
             System = system ?? string.Empty;
             Product = product ?? string.Empty;
@@ -102,6 +111,37 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             HedgeType = hedgeType ?? string.Empty;
             CalypsoPortfolio = calypsoPortfolio ?? string.Empty;
             _isNew = isNew;
+        }
+
+        private string CalculateAggregatedStatus(string mx3Status, string calypsoStatus, string fallbackStatus)
+        {
+            // För Options: använd fallback (ingen dual-system booking)
+            if (string.IsNullOrEmpty(CallPut) == false)
+                return fallbackStatus ?? "New";
+
+            // För Linear: beräkna från båda system
+            var mx3 = mx3Status ?? "New";
+            var caly = calypsoStatus ?? "New";
+
+            // Båda bokade
+            if (mx3 == "Booked" && caly == "Booked")
+                return "Booked";
+
+            // Någon failed
+            if (mx3 == "Failed" || caly == "Failed")
+                return "Failed";
+
+            // En bokad, en pending/new
+            if ((mx3 == "Booked" && caly != "Booked") ||
+                (caly == "Booked" && mx3 != "Booked"))
+                return "Partial";
+
+            // Båda pending
+            if (mx3 == "Pending" || caly == "Pending")
+                return "Pending";
+
+            // Default: New
+            return "New";
         }
 
         private void OnPropertyChanged([CallerMemberName] string propertyName = null)

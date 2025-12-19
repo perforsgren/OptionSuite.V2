@@ -108,6 +108,9 @@
                                         <DataTrigger Binding="{Binding Status}" Value="Rejected">
                                             <Setter Property="Fill" Value="#FB7185"/>
                                         </DataTrigger>
+                                        <DataTrigger Binding="{Binding Status}" Value="Partial">
+                                            <Setter Property="Fill" Value="#FB923C"/>
+                                        </DataTrigger>
                                     </Style.Triggers>
                                 </Style>
                             </Ellipse.Style>
