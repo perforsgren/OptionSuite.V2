@@ -1241,6 +1241,13 @@
         <Setter Property="Margin" Value="10,6"/>
     </Style>
 
+    <!-- =========================================================
+     NUMERIC COLUMN STYLING
+     ========================================================= -->
+    <Style x:Key="Style.BlotterNumericCell" TargetType="TextBlock">
+        <Setter Property="HorizontalAlignment" Value="Right"/>
+        <Setter Property="Margin" Value="0,0,8,0"/>
+    </Style>
 
 
 </ResourceDictionary>
