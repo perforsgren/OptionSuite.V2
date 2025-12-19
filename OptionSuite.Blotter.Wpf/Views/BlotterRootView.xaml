@@ -437,7 +437,6 @@
                                           ColumnHeaderStyle="{StaticResource Style.BlotterDataGridHeader}"
                                           CellStyle="{StaticResource Style.BlotterDataGridCell}"
                                           RowStyle="{StaticResource Style.BlotterDataGridRow.Options}"
-                                          PreviewMouseDown="OptionsGrid_SelectionChanged"
                                           AutoGenerateColumns="False">
                                     <!-- LÄGG TILL DENNA RAD -->
 
@@ -467,8 +466,6 @@
           ColumnHeaderStyle="{StaticResource Style.BlotterDataGridHeader}"
           CellStyle="{StaticResource Style.BlotterDataGridCell}"
           RowStyle="{StaticResource Style.BlotterDataGridRow.Linear}"
-                                     
-          PreviewMouseDown="LinearGrid_SelectionChanged"
           AutoGenerateColumns="False">
                                     <!-- LÄGG TILL DENNA RAD -->
 

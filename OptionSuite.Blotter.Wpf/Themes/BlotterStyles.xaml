@@ -1071,6 +1071,7 @@
                             <Setter TargetName="LeftAccent" Property="Background" Value="#2DD4BF"/>
                         </Trigger>
 
+                        <!-- Selected trigger (redan finns) -->
                         <Trigger Property="IsSelected" Value="True">
                             <Setter TargetName="RowFill" Property="Background" Value="{StaticResource Blotter.Brush.RowSelectedGlass}"/>
                             <Setter TargetName="TopLine" Property="Opacity" Value="1"/>
@@ -1078,6 +1079,7 @@
                             <Setter TargetName="TopLine" Property="Background" Value="{StaticResource Blotter.Brush.RowLineStrong}"/>
                             <Setter TargetName="BottomLine" Property="Background" Value="{StaticResource Blotter.Brush.RowLineStrong}"/>
                             <Setter TargetName="LeftAccent" Property="Background" Value="#2DD4BF"/>
+                            <!-- eller #A78BFA för Linear -->
                             <Setter Property="Foreground" Value="{StaticResource Brush.Text}"/>
                         </Trigger>
 
@@ -1138,13 +1140,15 @@
                             <Setter TargetName="LeftAccent" Property="Background" Value="#A78BFA"/>
                         </Trigger>
 
+                        <!-- Selected trigger (redan finns) -->
                         <Trigger Property="IsSelected" Value="True">
                             <Setter TargetName="RowFill" Property="Background" Value="{StaticResource Blotter.Brush.RowSelectedGlass}"/>
                             <Setter TargetName="TopLine" Property="Opacity" Value="1"/>
                             <Setter TargetName="BottomLine" Property="Opacity" Value="1"/>
                             <Setter TargetName="TopLine" Property="Background" Value="{StaticResource Blotter.Brush.RowLineStrong}"/>
                             <Setter TargetName="BottomLine" Property="Background" Value="{StaticResource Blotter.Brush.RowLineStrong}"/>
-                            <Setter TargetName="LeftAccent" Property="Background" Value="#A78BFA"/>
+                            <Setter TargetName="LeftAccent" Property="Background" Value="#2DD4BF"/>
+                            <!-- eller #A78BFA för Linear -->
                             <Setter Property="Foreground" Value="{StaticResource Brush.Text}"/>
                         </Trigger>
 
