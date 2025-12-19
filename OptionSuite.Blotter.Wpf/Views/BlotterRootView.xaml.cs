@@ -4,37 +4,45 @@ using System.Windows.Controls;
 
 namespace OptionSuite.Blotter.Wpf.Views
 {
-    /// <summary>
-    /// Root-view för Blotter-modulen.
-    /// I Fas 2 hålls denna extremt tunn – all logik ligger i ViewModel.
-    /// </summary>
     public partial class BlotterRootView : UserControl
     {
-        /// <summary>
-        /// Skapar root-viewn och initierar XAML.
-        /// </summary>
         public BlotterRootView()
         {
             InitializeComponent();
         }
 
-        private void OptionsGrid_GotFocus(object sender, RoutedEventArgs e)
+        private void OptionsGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (DataContext is BlotterRootViewModel vm)
+            if (DataContext is not BlotterRootViewModel vm) return;
+
+            // När en option trade selectas, cleara om det var en linear trade
+            if (e.AddedItems.Count > 0 && e.AddedItems[0] is TradeRowViewModel selectedTrade)
             {
-                vm.OnOptionGridGotFocus();
+                // Sätt den nya selectionen direkt
+                vm.SelectedTrade = selectedTrade;
+            }
+            else if (e.RemovedItems.Count > 0 && e.AddedItems.Count == 0)
+            {
+                // Användaren deselekterade manuellt
+                vm.SelectedTrade = null;
             }
         }
 
-        private void LinearGrid_GotFocus(object sender, RoutedEventArgs e)
+        private void LinearGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (DataContext is BlotterRootViewModel vm)
+            if (DataContext is not BlotterRootViewModel vm) return;
+
+            // När en linear trade selectas, cleara om det var en option trade
+            if (e.AddedItems.Count > 0 && e.AddedItems[0] is TradeRowViewModel selectedTrade)
             {
-                vm.OnLinearGridGotFocus();
+                // Sätt den nya selectionen direkt
+                vm.SelectedTrade = selectedTrade;
+            }
+            else if (e.RemovedItems.Count > 0 && e.AddedItems.Count == 0)
+            {
+                // Användaren deselekterade manuellt
+                vm.SelectedTrade = null;
             }
         }
-
     }
-
-
 }

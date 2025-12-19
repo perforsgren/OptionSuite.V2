@@ -437,7 +437,7 @@
                                           ColumnHeaderStyle="{StaticResource Style.BlotterDataGridHeader}"
                                           CellStyle="{StaticResource Style.BlotterDataGridCell}"
                                           RowStyle="{StaticResource Style.BlotterDataGridRow.Options}"
-                                          GotFocus="OptionsGrid_GotFocus"
+                                          PreviewMouseDown="OptionsGrid_SelectionChanged"
                                           AutoGenerateColumns="False">
                                     <!-- LÄGG TILL DENNA RAD -->
 
@@ -467,7 +467,8 @@
           ColumnHeaderStyle="{StaticResource Style.BlotterDataGridHeader}"
           CellStyle="{StaticResource Style.BlotterDataGridCell}"
           RowStyle="{StaticResource Style.BlotterDataGridRow.Linear}"
-                                          GotFocus="LinearGrid_GotFocus"
+                                     
+          PreviewMouseDown="LinearGrid_SelectionChanged"
           AutoGenerateColumns="False">
                                     <!-- LÄGG TILL DENNA RAD -->
 

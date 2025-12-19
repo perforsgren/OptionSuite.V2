@@ -42,26 +42,6 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             }
         }
 
-        // Lägg till dessa methods i BlotterRootViewModel
-        public void OnOptionGridGotFocus()
-        {
-            // Om en linear trade är selected, cleara den
-            if (SelectedTrade != null && LinearTrades.Contains(SelectedTrade))
-            {
-                SelectedTrade = null;
-            }
-        }
-
-        public void OnLinearGridGotFocus()
-        {
-            // Om en option trade är selected, cleara den
-            if (SelectedTrade != null && OptionTrades.Contains(SelectedTrade))
-            {
-                SelectedTrade = null;
-            }
-        }
-
-
         public ICommand RefreshCommand { get; }
 
         public BlotterRootViewModel(IBlotterReadServiceAsync readService)
@@ -129,7 +109,6 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             }
         }
 
-
         private void ExecuteRefresh()
         {
             var systems = new[] { "VOLBROKER", "RTNS", "ICAP", "BLOOMBERG", "REFINITIV" };
@@ -156,9 +135,9 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                 strike: isOption ? 100m + (decimal)(_random.NextDouble() * 50) : null,
                 expiryDate: isOption ? DateTime.Now.AddMonths(3) : null,
                 notional: _random.Next(1000000, 50000000),
-                notionalCcy: ccyPair.Substring(0, 3), // First 3 chars
+                notionalCcy: ccyPair.Substring(0, 3),
                 premium: isOption ? _random.Next(10000, 500000) : null,
-                premiumCcy: isOption ? ccyPair.Substring(3, 3) : string.Empty, // Last 3 chars
+                premiumCcy: isOption ? ccyPair.Substring(3, 3) : string.Empty,
                 portfolioMx3: portfolios[_random.Next(portfolios.Length)],
                 trader: traders[_random.Next(traders.Length)],
                 status: "New",
@@ -171,7 +150,6 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                 isNew: true
             );
 
-            // Lägg till i rätt collection
             if (IsOptionProduct(product))
             {
                 OptionTrades.Insert(0, newTrade);
@@ -181,7 +159,6 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                 LinearTrades.Insert(0, newTrade);
             }
 
-            // Dölj badge efter 20 sekunder
             Task.Delay(20000).ContinueWith(_ =>
             {
                 System.Windows.Application.Current?.Dispatcher.Invoke(() =>
@@ -191,7 +168,6 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             });
         }
 
-
         private static bool IsOptionProduct(string productType)
         {
             if (string.IsNullOrWhiteSpace(productType))
@@ -199,23 +175,6 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
 
             var upper = productType.ToUpperInvariant();
             return upper.Contains("OPTION") || upper.Contains("NDO");
-        }
-
-        private static (string Ccy1, string Ccy2) SplitCcyPair(string ccyPair)
-        {
-            if (string.IsNullOrWhiteSpace(ccyPair))
-                return (string.Empty, string.Empty);
-
-            if (ccyPair.Length == 6 && ccyPair.IndexOfAny(new[] { '/', '-', ' ' }) < 0)
-                return (ccyPair.Substring(0, 3), ccyPair.Substring(3, 3));
-
-            var cleaned = ccyPair.Replace("-", "/").Replace(" ", "/");
-            var parts = cleaned.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
-
-            if (parts.Length >= 2)
-                return (parts[0], parts[1]);
-
-            return (ccyPair, string.Empty);
         }
 
         private void OnPropertyChanged(string propertyName)
