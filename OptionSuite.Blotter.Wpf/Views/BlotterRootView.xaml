@@ -457,21 +457,7 @@
                                     </DataGrid.Columns>
                                 </DataGrid>
 
-                                <!-- LINEAR GRID - bind till SelectedLinearTrade -->
-                                <DataGrid Grid.Row="4"
-          Style="{StaticResource Style.BlotterDataGrid}"
-          ItemsSource="{Binding LinearTrades}"
-          SelectedItem="{Binding SelectedLinearTrade, Mode=TwoWay}"
-          ColumnHeaderStyle="{StaticResource Style.BlotterDataGridHeader}"
-          CellStyle="{StaticResource Style.BlotterDataGridCell}"
-          RowStyle="{StaticResource Style.BlotterDataGridRow.Linear}"
-          AutoGenerateColumns="False">
-
-                                    <DataGrid.Columns>
-                                        <!-- Dina linear-kolumner här (specificera senare) -->
-                                    </DataGrid.Columns>
-                                </DataGrid>
-
+ 
 
 
                                 <!-- ==================== LINEAR SECTION ==================== -->
