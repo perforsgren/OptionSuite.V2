@@ -16,6 +16,8 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
         private TradeRowViewModel _selectedOptionTrade;
         private TradeRowViewModel _selectedLinearTrade;
 
+        //test
+
         public event PropertyChangedEventHandler PropertyChanged;
 
         public string Title { get; set; } = "Trade Blotter";
