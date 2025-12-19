@@ -442,6 +442,35 @@
           RowStyle="{StaticResource Style.BlotterDataGridRow.Options}"
           AutoGenerateColumns="False">
 
+                                    <DataGrid.ContextMenu>
+                                        <ContextMenu Style="{StaticResource Style.BlotterContextMenu}">
+                                            <MenuItem Header="Book Trade" 
+                  Command="{Binding BookTradeCommand}"
+                  Style="{StaticResource Style.BlotterMenuItem}"/>
+                                            <MenuItem Header="Duplicate Trade" 
+                  Command="{Binding DuplicateTradeCommand}"
+                  Style="{StaticResource Style.BlotterMenuItem}"/>
+                                            <MenuItem Header="Copy To Manual Input" 
+                  Command="{Binding CopyToManualInputCommand}"
+                  Style="{StaticResource Style.BlotterMenuItem}"/>
+                                            <MenuItem Header="Book As Live Trade" 
+                  Command="{Binding BookAsLiveTradeCommand}"
+                  Style="{StaticResource Style.BlotterMenuItem}"/>
+                                            <Separator Style="{StaticResource Style.BlotterMenuSeparator}"/>
+                                            <MenuItem Header="Delete Row" 
+                  Command="{Binding DeleteRowCommand}"
+                  Style="{StaticResource Style.BlotterMenuItem}"/>
+                                            <Separator Style="{StaticResource Style.BlotterMenuSeparator}"/>
+                                            <MenuItem Header="Check If Trade Is Booked" 
+                  Command="{Binding CheckIfBookedCommand}"
+                  Style="{StaticResource Style.BlotterMenuItem}"/>
+                                            <MenuItem Header="Open Error Log" 
+                  Command="{Binding OpenErrorLogCommand}"
+                  Style="{StaticResource Style.BlotterMenuItem}"/>
+                                        </ContextMenu>
+                                    </DataGrid.ContextMenu>
+
+
                                     <DataGrid.Columns>
                                         <DataGridTextColumn Header="TradeID" Binding="{Binding TradeId}" Width="120"/>
                                         <DataGridTextColumn Header="Counterpart" Binding="{Binding Counterparty}" Width="100"/>
@@ -478,6 +507,38 @@
               CellStyle="{StaticResource Style.BlotterDataGridCell}"
               RowStyle="{StaticResource Style.BlotterDataGridRow.Linear}"
 AutoGenerateColumns="False">
+
+                                    <DataGrid.ContextMenu>
+                                        <ContextMenu Style="{StaticResource Style.BlotterContextMenu}">
+                                            <MenuItem Header="Book Trade" 
+                  Command="{Binding BookTradeCommand}"
+                  Style="{StaticResource Style.BlotterMenuItem}"/>
+                                            <MenuItem Header="Duplicate Trade" 
+                  Command="{Binding DuplicateTradeCommand}"
+                  Style="{StaticResource Style.BlotterMenuItem}"/>
+                                            <MenuItem Header="Copy To Manual Input" 
+                  Command="{Binding CopyToManualInputCommand}"
+                  Style="{StaticResource Style.BlotterMenuItem}"/>
+                                            <MenuItem Header="Book As Live Trade" 
+                  Command="{Binding BookAsLiveTradeCommand}"
+                  Style="{StaticResource Style.BlotterMenuItem}"/>
+                                            <Separator Style="{StaticResource Style.BlotterMenuSeparator}"/>
+                                            <MenuItem Header="Cancel Calypso Trade" 
+                  Command="{Binding CancelCalypsoTradeCommand}"
+                  Style="{StaticResource Style.BlotterMenuItem}"/>
+                                            <MenuItem Header="Delete Row" 
+                  Command="{Binding DeleteRowCommand}"
+                  Style="{StaticResource Style.BlotterMenuItem}"/>
+                                            <Separator Style="{StaticResource Style.BlotterMenuSeparator}"/>
+                                            <MenuItem Header="Check If Trade Is Booked" 
+                  Command="{Binding CheckIfBookedCommand}"
+                  Style="{StaticResource Style.BlotterMenuItem}"/>
+                                            <MenuItem Header="Open Error Log" 
+                  Command="{Binding OpenErrorLogCommand}"
+                  Style="{StaticResource Style.BlotterMenuItem}"/>
+                                        </ContextMenu>
+                                    </DataGrid.ContextMenu>
+
 
 
                                     <DataGrid.Columns>

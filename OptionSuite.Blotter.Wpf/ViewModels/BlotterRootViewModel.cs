@@ -29,6 +29,20 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
         public ObservableCollection<TradeRowViewModel> LinearTrades { get; } =
             new ObservableCollection<TradeRowViewModel>();
 
+        public ICommand RefreshCommand { get; }
+
+        // Context Menu Commands  
+        public ICommand BookTradeCommand { get; }
+        public ICommand DuplicateTradeCommand { get; }
+        public ICommand CopyToManualInputCommand { get; }
+        public ICommand BookAsLiveTradeCommand { get; }
+        public ICommand CancelCalypsoTradeCommand { get; }
+        public ICommand DeleteRowCommand { get; }
+        public ICommand CheckIfBookedCommand { get; }
+        public ICommand OpenErrorLogCommand { get; }
+
+
+
         // Separata selections - koordineras automatiskt
         public TradeRowViewModel SelectedOptionTrade
         {
@@ -68,12 +82,21 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             }
         }
 
-        public ICommand RefreshCommand { get; }
 
         public BlotterRootViewModel(IBlotterReadServiceAsync readService)
         {
             _readService = readService ?? throw new ArgumentNullException(nameof(readService));
             RefreshCommand = new RelayCommand(ExecuteRefresh);
+
+            // Context Menu Commands - lägg märke till lambdas!
+            BookTradeCommand = new RelayCommand(() => ExecuteBookTrade(), () => CanExecuteBookTrade());
+            DuplicateTradeCommand = new RelayCommand(() => ExecuteDuplicateTrade(), () => CanExecuteDuplicateTrade());
+            CopyToManualInputCommand = new RelayCommand(() => ExecuteCopyToManualInput(), () => CanExecuteCopyToManualInput());
+            BookAsLiveTradeCommand = new RelayCommand(() => ExecuteBookAsLiveTrade(), () => CanExecuteBookAsLiveTrade());
+            CancelCalypsoTradeCommand = new RelayCommand(() => ExecuteCancelCalypsoTrade(), () => CanExecuteCancelCalypsoTrade());
+            DeleteRowCommand = new RelayCommand(() => ExecuteDeleteRow(), () => CanExecuteDeleteRow());
+            CheckIfBookedCommand = new RelayCommand(() => ExecuteCheckIfBooked(), () => CanExecuteCheckIfBooked());
+            OpenErrorLogCommand = new RelayCommand(() => ExecuteOpenErrorLog(), () => CanExecuteOpenErrorLog());
         }
 
         public async Task InitialLoadAsync()
@@ -217,5 +240,140 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
+
+        // === CONTEXT MENU COMMAND HANDLERS ===
+
+        private bool CanExecuteBookTrade()
+        {
+            var trade = GetSelectedTrade();
+            return trade != null && trade.Status == "New";
+        }
+
+        private void ExecuteBookTrade()
+        {
+            var trade = GetSelectedTrade();
+            if (trade == null) return;
+
+            // TODO: Implementera book-logik
+            System.Diagnostics.Debug.WriteLine($"Booking trade: {trade.TradeId}");
+        }
+
+        private bool CanExecuteBookAsLiveTrade()
+        {
+            var trade = GetSelectedTrade();
+            return trade != null && trade.Status == "New";
+        }
+
+        private void ExecuteBookAsLiveTrade()
+        {
+            var trade = GetSelectedTrade();
+            if (trade == null) return;
+
+            // TODO: Implementera book as live
+            System.Diagnostics.Debug.WriteLine($"Booking as live: {trade.TradeId}");
+        }
+
+        private bool CanExecuteDuplicateTrade()
+        {
+            return GetSelectedTrade() != null;
+        }
+
+        private void ExecuteDuplicateTrade()
+        {
+            var trade = GetSelectedTrade();
+            if (trade == null) return;
+
+            // TODO: Implementera duplicate
+            System.Diagnostics.Debug.WriteLine($"Duplicating trade: {trade.TradeId}");
+        }
+
+        private bool CanExecuteCopyToManualInput()
+        {
+            return GetSelectedTrade() != null;
+        }
+
+        private void ExecuteCopyToManualInput()
+        {
+            var trade = GetSelectedTrade();
+            if (trade == null) return;
+
+            // TODO: Implementera copy to manual input
+            System.Diagnostics.Debug.WriteLine($"Copy to manual input: {trade.TradeId}");
+        }
+
+        private bool CanExecuteCancelCalypsoTrade()
+        {
+            var trade = GetSelectedTrade();
+            // Bara för Linear trades (ingen CallPut) och bara om Calypso = Pending
+            return trade != null &&
+                   string.IsNullOrEmpty(trade.CallPut) &&
+                   trade.CalypsoStatus == "Pending";
+        }
+
+        private void ExecuteCancelCalypsoTrade()
+        {
+            var trade = GetSelectedTrade();
+            if (trade == null) return;
+
+            // TODO: Implementera cancel Calypso trade
+            System.Diagnostics.Debug.WriteLine($"Cancelling Calypso trade: {trade.TradeId}");
+        }
+
+        private bool CanExecuteDeleteRow()
+        {
+            return GetSelectedTrade() != null;
+        }
+
+        private void ExecuteDeleteRow()
+        {
+            var trade = GetSelectedTrade();
+            if (trade == null) return;
+
+            // Ta bort från rätt collection
+            if (OptionTrades.Contains(trade))
+            {
+                OptionTrades.Remove(trade);
+            }
+            else if (LinearTrades.Contains(trade))
+            {
+                LinearTrades.Remove(trade);
+            }
+        }
+
+        private bool CanExecuteCheckIfBooked()
+        {
+            return GetSelectedTrade() != null;
+        }
+
+        private void ExecuteCheckIfBooked()
+        {
+            var trade = GetSelectedTrade();
+            if (trade == null) return;
+
+            // TODO: Implementera check if booked
+            System.Diagnostics.Debug.WriteLine($"Checking if booked: {trade.TradeId}");
+        }
+
+        private bool CanExecuteOpenErrorLog()
+        {
+            var trade = GetSelectedTrade();
+            return trade != null && trade.Status == "Rejected";
+        }
+
+        private void ExecuteOpenErrorLog()
+        {
+            var trade = GetSelectedTrade();
+            if (trade == null) return;
+
+            // TODO: Öppna error log
+            System.Diagnostics.Debug.WriteLine($"Opening error log for: {trade.TradeId}");
+        }
+
+        private TradeRowViewModel GetSelectedTrade()
+        {
+            return SelectedOptionTrade ?? SelectedLinearTrade;
+        }
+
+
     }
 }
