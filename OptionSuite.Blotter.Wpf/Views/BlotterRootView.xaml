@@ -429,16 +429,15 @@
                    Style="{StaticResource Style.BlotterSectionHeaderText}"/>
                                 </Border>
 
-                                <!-- OPTIONS GRID -->
+                                <!-- OPTIONS GRID - bind till SelectedOptionTrade -->
                                 <DataGrid Grid.Row="1"
-                                          Style="{StaticResource Style.BlotterDataGrid}"
-                                          ItemsSource="{Binding OptionTrades}"
-                                          SelectedItem="{Binding SelectedTrade, Mode=TwoWay}"
-                                          ColumnHeaderStyle="{StaticResource Style.BlotterDataGridHeader}"
-                                          CellStyle="{StaticResource Style.BlotterDataGridCell}"
-                                          RowStyle="{StaticResource Style.BlotterDataGridRow.Options}"
-                                          AutoGenerateColumns="False">
-                                    <!-- LÄGG TILL DENNA RAD -->
+          Style="{StaticResource Style.BlotterDataGrid}"
+          ItemsSource="{Binding OptionTrades}"
+          SelectedItem="{Binding SelectedOptionTrade, Mode=TwoWay}"
+          ColumnHeaderStyle="{StaticResource Style.BlotterDataGridHeader}"
+          CellStyle="{StaticResource Style.BlotterDataGridCell}"
+          RowStyle="{StaticResource Style.BlotterDataGridRow.Options}"
+          AutoGenerateColumns="False">
 
                                     <DataGrid.Columns>
                                         <DataGridTextColumn Header="TradeID" Binding="{Binding TradeId}" Width="120"/>
@@ -458,16 +457,15 @@
                                     </DataGrid.Columns>
                                 </DataGrid>
 
-                                <!-- LINEAR GRID -->
+                                <!-- LINEAR GRID - bind till SelectedLinearTrade -->
                                 <DataGrid Grid.Row="4"
           Style="{StaticResource Style.BlotterDataGrid}"
           ItemsSource="{Binding LinearTrades}"
-          SelectedItem="{Binding SelectedTrade, Mode=TwoWay}"
+          SelectedItem="{Binding SelectedLinearTrade, Mode=TwoWay}"
           ColumnHeaderStyle="{StaticResource Style.BlotterDataGridHeader}"
           CellStyle="{StaticResource Style.BlotterDataGridCell}"
           RowStyle="{StaticResource Style.BlotterDataGridRow.Linear}"
           AutoGenerateColumns="False">
-                                    <!-- LÄGG TILL DENNA RAD -->
 
                                     <DataGrid.Columns>
                                         <!-- Dina linear-kolumner här (specificera senare) -->

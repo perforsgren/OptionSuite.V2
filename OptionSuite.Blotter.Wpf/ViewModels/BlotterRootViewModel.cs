@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using FxTradeHub.Contracts.Dtos;
@@ -14,30 +13,55 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
     {
         private readonly IBlotterReadServiceAsync _readService;
         private readonly Random _random = new Random();
-        private TradeRowViewModel _selectedTrade;
+        private TradeRowViewModel _selectedOptionTrade;
+        private TradeRowViewModel _selectedLinearTrade;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
         public string Title { get; set; } = "Trade Blotter";
         public string Subtitle { get; set; } = "v2";
 
-        // Två separata collections
         public ObservableCollection<TradeRowViewModel> OptionTrades { get; } =
             new ObservableCollection<TradeRowViewModel>();
 
         public ObservableCollection<TradeRowViewModel> LinearTrades { get; } =
             new ObservableCollection<TradeRowViewModel>();
 
-        // Gemensam selection (båda grids binder till denna)
-        public TradeRowViewModel SelectedTrade
+        // Separata selections - koordineras automatiskt
+        public TradeRowViewModel SelectedOptionTrade
         {
-            get => _selectedTrade;
+            get => _selectedOptionTrade;
             set
             {
-                if (_selectedTrade != value)
+                if (_selectedOptionTrade != value)
                 {
-                    _selectedTrade = value;
-                    OnPropertyChanged(nameof(SelectedTrade));
+                    _selectedOptionTrade = value;
+                    OnPropertyChanged(nameof(SelectedOptionTrade));
+
+                    // När options-trade selectas, cleara linear
+                    if (value != null && _selectedLinearTrade != null)
+                    {
+                        SelectedLinearTrade = null;
+                    }
+                }
+            }
+        }
+
+        public TradeRowViewModel SelectedLinearTrade
+        {
+            get => _selectedLinearTrade;
+            set
+            {
+                if (_selectedLinearTrade != value)
+                {
+                    _selectedLinearTrade = value;
+                    OnPropertyChanged(nameof(SelectedLinearTrade));
+
+                    // När linear-trade selectas, cleara options
+                    if (value != null && _selectedOptionTrade != null)
+                    {
+                        SelectedOptionTrade = null;
+                    }
                 }
             }
         }
