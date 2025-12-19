@@ -377,6 +377,7 @@
         <Setter Property="BorderThickness" Value="0,0,0,1"/>
         <Setter Property="BorderBrush" Value="{StaticResource Brush.BorderSoft}"/>
         <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Foreground" Value="{StaticResource Brush.Text}"/>
         <Setter Property="HorizontalContentAlignment" Value="Left"/>
         <Setter Property="VerticalContentAlignment" Value="Center"/>
         <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
@@ -1147,7 +1148,7 @@
                             <Setter TargetName="BottomLine" Property="Opacity" Value="1"/>
                             <Setter TargetName="TopLine" Property="Background" Value="{StaticResource Blotter.Brush.RowLineStrong}"/>
                             <Setter TargetName="BottomLine" Property="Background" Value="{StaticResource Blotter.Brush.RowLineStrong}"/>
-                            <Setter TargetName="LeftAccent" Property="Background" Value="#2DD4BF"/>
+                            <Setter TargetName="LeftAccent" Property="Background" Value="#A78BFA"/>
                             <!-- eller #A78BFA för Linear -->
                             <Setter Property="Foreground" Value="{StaticResource Brush.Text}"/>
                         </Trigger>

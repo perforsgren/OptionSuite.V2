@@ -119,6 +119,9 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                     spotRate: r.SpotRate,
                     swapPoints: r.SwapPoints,
                     settlementDate: r.SettlementDate,
+                    hedgeRate: r.HedgeRate,
+                    hedgeType: r.HedgeType,
+                    calypsoPortfolio: r.CalypsoPortfolio,
                     isNew: false
                 );
 
@@ -171,6 +174,9 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                 spotRate: !isOption ? 100m + (decimal)(_random.NextDouble() * 10) : null,
                 swapPoints: !isOption && product == "FORWARD" ? (decimal)(_random.NextDouble() * 0.5) : null,
                 settlementDate: !isOption ? DateTime.Now.AddDays(2) : null,
+                hedgeRate: !isOption ? 100m + (decimal)(_random.NextDouble() * 5) : null,
+                hedgeType: !isOption ? "SPOT" : null,
+                calypsoPortfolio: "CAL_BOOK_1",
                 isNew: true
             );
 

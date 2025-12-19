@@ -10,7 +10,7 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        // Options-specifika kolumner (i ordning)
+        // Options-specifika kolumner
         public string TradeId { get; }
         public string Counterparty { get; }
         public string CcyPair { get; }
@@ -26,15 +26,18 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
         public string Trader { get; }
         public string Status { get; }
 
-        // Gemensamma fält (för båda grid-typer)
+        // Gemensamma fält
         public DateTime Time { get; }
         public string System { get; }
         public string Product { get; }
 
-        // Linear-specifika (kommer användas senare)
+        // Linear-specifika
         public decimal? SpotRate { get; }
         public decimal? SwapPoints { get; }
         public DateTime? SettlementDate { get; }
+        public decimal? HedgeRate { get; }           // NY!
+        public string HedgeType { get; }              // NY!
+        public string CalypsoPortfolio { get; }       // NY!
 
         public bool IsNew
         {
@@ -70,6 +73,9 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             decimal? spotRate = null,
             decimal? swapPoints = null,
             DateTime? settlementDate = null,
+            decimal? hedgeRate = null,
+            string hedgeType = null,
+            string calypsoPortfolio = null,
             bool isNew = false)
         {
             TradeId = tradeId ?? string.Empty;
@@ -92,6 +98,9 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             SpotRate = spotRate;
             SwapPoints = swapPoints;
             SettlementDate = settlementDate;
+            HedgeRate = hedgeRate;
+            HedgeType = hedgeType ?? string.Empty;
+            CalypsoPortfolio = calypsoPortfolio ?? string.Empty;
             _isNew = isNew;
         }
 
@@ -101,4 +110,3 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
         }
     }
 }
- 
