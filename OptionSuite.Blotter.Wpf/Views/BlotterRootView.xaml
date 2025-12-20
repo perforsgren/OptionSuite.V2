@@ -494,7 +494,7 @@
                                         <DataGridTextColumn Header="Call/Put" Binding="{Binding CallPut}" Width="70"/>
                                         <DataGridTextColumn Header="Strike" 
                         Binding="{Binding Strike, StringFormat=F4}" 
-                        Width="90"
+                        Width="90" CellStyle="{StaticResource Style.BlotterNumericCell}"
                         ElementStyle="{StaticResource Style.BlotterNumericCell}"/>
                                         <DataGridTextColumn Header="Expiry Date" Binding="{Binding ExpiryDate, StringFormat=yyyy-MM-dd}" Width="100"/>
                                         <DataGridTextColumn Header="Notional" 
