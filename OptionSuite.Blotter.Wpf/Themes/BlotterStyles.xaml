@@ -1058,7 +1058,7 @@
                                     <Storyboard>
                                         <DoubleAnimation Storyboard.TargetName="FlashOverlay" 
                                                      Storyboard.TargetProperty="Opacity" 
-                                                     From="1.0" To="0.0" Duration="0:0:2.0"
+                                                     From="1.0" To="0.0" Duration="0:0:3.0"
                                                      EasingFunction="{StaticResource EaseOutQuad}"/>
                                     </Storyboard>
                                 </BeginStoryboard>
@@ -1095,6 +1095,8 @@
                             <Setter TargetName="TopLine" Property="Opacity" Value="0.6"/>
                             <Setter TargetName="BottomLine" Property="Opacity" Value="0.6"/>
                         </MultiTrigger>
+                        
+                        
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
