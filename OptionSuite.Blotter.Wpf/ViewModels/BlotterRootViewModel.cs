@@ -166,6 +166,8 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                 // 2D: bygg nästa “snapshot” av signatures
                 var nextSignatures = new Dictionary<string, string>(StringComparer.Ordinal);
 
+                var isColdStart = _seenTradeIds.Count == 0;
+
                 foreach (var r in rows)
                 {
                     var tradeId = r.TradeId ?? string.Empty;
@@ -184,7 +186,7 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                     var signature = BuildSignature(r, time, system, fallbackStatus);
                     nextSignatures[tradeId] = signature;
 
-                    var isNew = !_seenTradeIds.Contains(tradeId);
+                    var isNew = !isColdStart && !_seenTradeIds.Contains(tradeId);
 
                     var isUpdated =
                         !isNew &&

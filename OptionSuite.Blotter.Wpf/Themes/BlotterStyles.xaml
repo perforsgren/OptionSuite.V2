@@ -55,6 +55,12 @@
         <GradientStop Color="#2A000000" Offset="1.00"/>
     </LinearGradientBrush>
 
+    <!-- Updated flash overlay (token-only) -->
+    <LinearGradientBrush x:Key="Blotter.Brush.RowUpdatedFlash" StartPoint="0,0" EndPoint="0,1">
+        <!-- Subtil highlight, ska bara "kännas" -->
+        <GradientStop Color="#18FFFFFF" Offset="0.0"/>
+        <GradientStop Color="#00FFFFFF" Offset="1.0"/>
+    </LinearGradientBrush>
 
 
 
@@ -437,66 +443,42 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type DataGridRow}">
-                    <Grid SnapsToDevicePixels="True">
+                    <Grid>
+                        <!-- Base fill -->
+                        <Border x:Name="RowFill" Background="Transparent"/>
 
-                        <!-- Fill (under allt) -->
-                        <Border x:Name="RowFill"
-                            Background="Transparent"
-                            Panel.ZIndex="0"/>
-
-                        <!-- Flash overlay (för nya trades) -->
+                        <!-- NEW flash overlay (finns redan i din baseline) -->
                         <Border x:Name="FlashOverlay"
-                            Background="#592DD4BF"
-                            BorderBrush="#402DD4BF"
-                            BorderThickness="1"
-                            Opacity="0"
-                            Panel.ZIndex="1"/>
+                            Background="{StaticResource Brush.Good}"
+                            Opacity="0"/>
 
-                        <!-- Celler (i mitten) -->
-                        <DataGridCellsPresenter Panel.ZIndex="2"/>
+                        <!-- UPDATED flash overlay (NY) -->
+                        <Border x:Name="UpdatedOverlay"
+                            Background="{StaticResource Brush.AccentSoft}"
+                            Opacity="0"/>
 
-                        <!-- Left accent (över celler så den alltid syns) -->
-                        <Border x:Name="LeftAccent"
-                            Width="3"
-                            HorizontalAlignment="Left"
-                            Background="Transparent"
-                            Panel.ZIndex="3"/>
-
-                        <!-- Top/bottom hairlines (över celler) -->
+                        <!-- Top/bottom hairlines (off by default) -->
                         <Border x:Name="TopLine"
                             Height="1"
                             VerticalAlignment="Top"
                             Background="{StaticResource Blotter.Brush.RowLine}"
-                            Opacity="0"
-                            Panel.ZIndex="4"/>
-
+                            Opacity="0"/>
                         <Border x:Name="BottomLine"
                             Height="1"
                             VerticalAlignment="Bottom"
                             Background="{StaticResource Blotter.Brush.RowLine}"
-                            Opacity="0"
-                            Panel.ZIndex="4"/>
+                            Opacity="0"/>
 
+                        <!-- Left accent -->
+                        <Border x:Name="LeftAccent"
+                            Width="3"
+                            HorizontalAlignment="Left"
+                            Background="Transparent"/>
+
+                        <DataGridCellsPresenter/>
                     </Grid>
 
                     <ControlTemplate.Triggers>
-
-                        <!-- Flash animation för nya trades -->
-                        <DataTrigger Binding="{Binding IsNew}" Value="True">
-                            <DataTrigger.EnterActions>
-                                <BeginStoryboard>
-                                    <Storyboard>
-                                        <!-- Fade in snabbt, fade out långsamt -->
-                                        <DoubleAnimation Storyboard.TargetName="FlashOverlay"
-                                                     Storyboard.TargetProperty="Opacity"
-                                                     From="1.0"
-                                                     To="0.0"
-                                                     Duration="0:0:2.0"
-                                                     EasingFunction="{StaticResource EaseOutQuad}"/>
-                                    </Storyboard>
-                                </BeginStoryboard>
-                            </DataTrigger.EnterActions>
-                        </DataTrigger>
 
                         <!-- Hover -->
                         <Trigger Property="IsMouseOver" Value="True">
@@ -506,7 +488,21 @@
                             <Setter TargetName="LeftAccent" Property="Background" Value="{StaticResource Brush.AccentSoft}"/>
                         </Trigger>
 
-                        <!-- Selected -->
+                        <!-- UPDATED (NY) -->
+                        <DataTrigger Binding="{Binding IsUpdated}" Value="True">
+                            <Setter TargetName="UpdatedOverlay" Property="Opacity" Value="0.22"/>
+                            <Setter TargetName="TopLine" Property="Opacity" Value="1"/>
+                            <Setter TargetName="BottomLine" Property="Opacity" Value="1"/>
+                            <Setter TargetName="TopLine" Property="Background" Value="{StaticResource Brush.AccentSoft}"/>
+                            <Setter TargetName="BottomLine" Property="Background" Value="{StaticResource Brush.AccentSoft}"/>
+                        </DataTrigger>
+
+                        <!-- NEW (har du redan, men lämnar kvar) -->
+                        <DataTrigger Binding="{Binding IsNew}" Value="True">
+                            <Setter TargetName="FlashOverlay" Property="Opacity" Value="0.18"/>
+                        </DataTrigger>
+
+                        <!-- Selected (ska vinna över flash/updated) -->
                         <Trigger Property="IsSelected" Value="True">
                             <Setter TargetName="RowFill" Property="Background" Value="{StaticResource Blotter.Brush.RowSelectedGlass}"/>
                             <Setter TargetName="TopLine" Property="Opacity" Value="1"/>
@@ -514,27 +510,18 @@
                             <Setter TargetName="TopLine" Property="Background" Value="{StaticResource Blotter.Brush.RowLineStrong}"/>
                             <Setter TargetName="BottomLine" Property="Background" Value="{StaticResource Blotter.Brush.RowLineStrong}"/>
                             <Setter TargetName="LeftAccent" Property="Background" Value="{StaticResource Brush.Accent}"/>
+                            <Setter TargetName="FlashOverlay" Property="Opacity" Value="0"/>
+                            <Setter TargetName="UpdatedOverlay" Property="Opacity" Value="0"/>
                             <Setter Property="Foreground" Value="{StaticResource Brush.Text}"/>
                         </Trigger>
-
-                        <!-- Selected men grid är inaktiv -->
-                        <MultiTrigger>
-                            <MultiTrigger.Conditions>
-                                <Condition Property="IsSelected" Value="True"/>
-                                <Condition Property="Selector.IsSelectionActive" Value="False"/>
-                            </MultiTrigger.Conditions>
-                            <Setter Property="Foreground" Value="{StaticResource Brush.Text}"/>
-                            <Setter TargetName="RowFill" Property="Background" Value="{StaticResource Blotter.Brush.RowSelectedGlass}"/>
-                            <Setter TargetName="LeftAccent" Property="Background" Value="{StaticResource Brush.Accent}"/>
-                            <Setter TargetName="TopLine" Property="Opacity" Value="1"/>
-                            <Setter TargetName="BottomLine" Property="Opacity" Value="1"/>
-                        </MultiTrigger>
 
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
     </Style>
+
+
 
 
     <!-- Add these updated styles to your BlotterStyles.xaml file -->
