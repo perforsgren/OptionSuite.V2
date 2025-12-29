@@ -7,6 +7,7 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
     public sealed class TradeRowViewModel : INotifyPropertyChanged
     {
         private bool _isNew;
+        private bool _isUpdated;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -37,14 +38,15 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
         public decimal? SpotRate { get; }
         public decimal? SwapPoints { get; }
         public DateTime? SettlementDate { get; }
-        public decimal? HedgeRate { get; }         
-        public string HedgeType { get; }           
-        public string CalypsoPortfolio { get; }      
+        public decimal? HedgeRate { get; }
+        public string HedgeType { get; }
+        public string CalypsoPortfolio { get; }
 
-        public string Mic { get; }                    // Market Identifier Code
-        public string Tvtic { get; }                  // Trading Venue Transaction ID
-        public string Isin { get; }                   // International Securities ID
-        public string InvDecisionId { get; }          // Investment Decision ID
+        // Regulatory fields
+        public string Mic { get; }
+        public string Tvtic { get; }
+        public string Isin { get; }
+        public string InvDecisionId { get; }
 
         public bool IsNew
         {
@@ -54,6 +56,19 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                 if (_isNew != value)
                 {
                     _isNew = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        public bool IsUpdated
+        {
+            get => _isUpdated;
+            set
+            {
+                if (_isUpdated != value)
+                {
+                    _isUpdated = value;
                     OnPropertyChanged();
                 }
             }
@@ -83,13 +98,14 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             decimal? hedgeRate = null,
             string hedgeType = null,
             string calypsoPortfolio = null,
-            string mx3Status = null,     
-            string calypsoStatus = null,      
+            string mx3Status = null,
+            string calypsoStatus = null,
             string mic = null,
             string tvtic = null,
             string isin = null,
             string invDecisionId = null,
-            bool isNew = false)
+            bool isNew = false,
+            bool isUpdated = false)
         {
             TradeId = tradeId ?? string.Empty;
             Counterparty = counterparty ?? string.Empty;
@@ -120,13 +136,13 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             HedgeType = hedgeType ?? string.Empty;
             CalypsoPortfolio = calypsoPortfolio ?? string.Empty;
 
-            // Regulatory fields
             Mic = mic ?? string.Empty;
             Tvtic = tvtic ?? string.Empty;
             Isin = isin ?? string.Empty;
             InvDecisionId = invDecisionId ?? string.Empty;
 
             _isNew = isNew;
+            _isUpdated = isUpdated;
         }
 
         private string CalculateAggregatedStatus(string mx3Status, string calypsoStatus, string fallbackStatus)
@@ -139,24 +155,19 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             var mx3 = mx3Status ?? "New";
             var caly = calypsoStatus ?? "New";
 
-            // Båda bokade
             if (mx3 == "Booked" && caly == "Booked")
                 return "Booked";
 
-            // Någon failed
             if (mx3 == "Failed" || caly == "Failed")
                 return "Failed";
 
-            // En bokad, en pending/new
             if ((mx3 == "Booked" && caly != "Booked") ||
                 (caly == "Booked" && mx3 != "Booked"))
                 return "Partial";
 
-            // Båda pending
             if (mx3 == "Pending" || caly == "Pending")
                 return "Pending";
 
-            // Default: New
             return "New";
         }
 

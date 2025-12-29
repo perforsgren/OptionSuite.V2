@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using FxTradeHub.Contracts.Dtos;
@@ -12,11 +14,16 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
     public sealed class BlotterRootViewModel : INotifyPropertyChanged
     {
         private readonly IBlotterReadServiceAsync _readService;
-        private readonly Random _random = new Random();
+
         private TradeRowViewModel _selectedOptionTrade;
         private TradeRowViewModel _selectedLinearTrade;
 
-        //test
+        private bool _isBusy;
+        private string _lastError;
+
+        // 2D: state för diff
+        private readonly HashSet<string> _seenTradeIds = new HashSet<string>(StringComparer.Ordinal);
+        private readonly Dictionary<string, string> _lastSignatureByTradeId = new Dictionary<string, string>(StringComparer.Ordinal);
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -29,9 +36,35 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
         public ObservableCollection<TradeRowViewModel> LinearTrades { get; } =
             new ObservableCollection<TradeRowViewModel>();
 
+        public bool IsBusy
+        {
+            get => _isBusy;
+            private set
+            {
+                if (_isBusy != value)
+                {
+                    _isBusy = value;
+                    OnPropertyChanged(nameof(IsBusy));
+                }
+            }
+        }
+
+        public string LastError
+        {
+            get => _lastError;
+            private set
+            {
+                if (!string.Equals(_lastError, value, StringComparison.Ordinal))
+                {
+                    _lastError = value;
+                    OnPropertyChanged(nameof(LastError));
+                }
+            }
+        }
+
         public ICommand RefreshCommand { get; }
 
-        // Context Menu Commands  
+        // Context Menu Commands
         public ICommand BookTradeCommand { get; }
         public ICommand DuplicateTradeCommand { get; }
         public ICommand CopyToManualInputCommand { get; }
@@ -41,9 +74,6 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
         public ICommand CheckIfBookedCommand { get; }
         public ICommand OpenErrorLogCommand { get; }
 
-
-
-        // Separata selections - koordineras automatiskt
         public TradeRowViewModel SelectedOptionTrade
         {
             get => _selectedOptionTrade;
@@ -55,7 +85,6 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                     OnPropertyChanged(nameof(SelectedOptionTrade));
                     OnPropertyChanged(nameof(SelectedTrade));
 
-                    // När options-trade selectas, cleara linear
                     if (value != null && _selectedLinearTrade != null)
                     {
                         SelectedLinearTrade = null;
@@ -75,7 +104,6 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                     OnPropertyChanged(nameof(SelectedLinearTrade));
                     OnPropertyChanged(nameof(SelectedTrade));
 
-                    // När linear-trade selectas, cleara options
                     if (value != null && _selectedOptionTrade != null)
                     {
                         SelectedOptionTrade = null;
@@ -84,18 +112,14 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             }
         }
 
-        // Helper property för att få den trade som är selected (antingen Option eller Linear)
-        public TradeRowViewModel SelectedTrade
-        {
-            get => _selectedOptionTrade ?? _selectedLinearTrade;
-        }
+        public TradeRowViewModel SelectedTrade => _selectedOptionTrade ?? _selectedLinearTrade;
 
         public BlotterRootViewModel(IBlotterReadServiceAsync readService)
         {
             _readService = readService ?? throw new ArgumentNullException(nameof(readService));
-            RefreshCommand = new RelayCommand(ExecuteRefresh);
 
-            // Context Menu Commands - lägg märke till lambdas!
+            RefreshCommand = new RelayCommand(async () => await RefreshAsync().ConfigureAwait(true));
+
             BookTradeCommand = new RelayCommand(() => ExecuteBookTrade(), () => CanExecuteBookTrade());
             DuplicateTradeCommand = new RelayCommand(() => ExecuteDuplicateTrade(), () => CanExecuteDuplicateTrade());
             CopyToManualInputCommand = new RelayCommand(() => ExecuteCopyToManualInput(), () => CanExecuteCopyToManualInput());
@@ -106,140 +130,215 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             OpenErrorLogCommand = new RelayCommand(() => ExecuteOpenErrorLog(), () => CanExecuteOpenErrorLog());
         }
 
-        public async Task InitialLoadAsync()
+        public Task InitialLoadAsync()
         {
-            var filter = new BlotterFilter
+            return RefreshAsync();
+        }
+
+        private async Task RefreshAsync()
+        {
+            if (IsBusy)
             {
-                FromTradeDate = DateTime.UtcNow.Date.AddDays(-30),
-                ToTradeDate = DateTime.UtcNow.Date.AddDays(1),
-                MaxRows = 500
-            };
+                return;
+            }
 
-            var rows = await _readService.GetBlotterTradesAsync(filter).ConfigureAwait(true);
+            // 2D: kom ihåg selection (id + vilken grid)
+            var selectedOptionId = SelectedOptionTrade?.TradeId;
+            var selectedLinearId = SelectedLinearTrade?.TradeId;
 
-            OptionTrades.Clear();
-            LinearTrades.Clear();
-
-            foreach (var r in rows)
+            try
             {
-                var time = (r.ExecutionTimeUtc ?? r.TradeDate ?? DateTime.UtcNow);
-                var system = !string.IsNullOrWhiteSpace(r.SourceVenueCode)
-                    ? r.SourceVenueCode
-                    : r.SourceType;
-                var status = !string.IsNullOrWhiteSpace(r.Mx3Status)
-                    ? r.Mx3Status
-                    : r.SystemStatus;
+                IsBusy = true;
+                LastError = null;
 
-                var trade = new TradeRowViewModel(
-                    tradeId: r.TradeId,
-                    counterparty: r.CounterpartyCode,
-                    ccyPair: r.CcyPair,
-                    buySell: r.BuySell,
-                    callPut: r.CallPut,
-                    strike: r.Strike,
-                    expiryDate: r.ExpiryDate,
-                    notional: r.Notional,
-                    notionalCcy: r.NotionalCcy,
-                    premium: r.Premium,
-                    premiumCcy: r.PremiumCcy,
-                    portfolioMx3: r.PortfolioMx3,
-                    trader: r.TraderId,
-                    status: status,
-                    time: time,
-                    system: system,
-                    product: r.ProductType,
-                    spotRate: r.SpotRate,
-                    swapPoints: r.SwapPoints,
-                    settlementDate: r.SettlementDate,
-                    hedgeRate: r.HedgeRate,
-                    hedgeType: r.HedgeType,
-                    calypsoPortfolio: r.CalypsoPortfolio,
-                    mx3Status: r.Mx3Status ?? "New",
-                    calypsoStatus: r.CalypsoStatus ?? "New",
-                    mic: r.Mic,
-                    tvtic: r.Tvtic,
-                    isin: r.Isin,
-                    invDecisionId: r.InvId,          
-                    isNew: false
-                ); 
-
-                if (IsOptionProduct(r.ProductType))
+                var filter = new BlotterFilter
                 {
-                    OptionTrades.Add(trade);
+                    FromTradeDate = DateTime.UtcNow.Date.AddDays(-30),
+                    ToTradeDate = DateTime.UtcNow.Date.AddDays(1),
+                    MaxRows = 500
+                };
+
+                var rows = await _readService.GetBlotterTradesAsync(filter).ConfigureAwait(true);
+
+                OptionTrades.Clear();
+                LinearTrades.Clear();
+
+                // 2D: bygg nästa “snapshot” av signatures
+                var nextSignatures = new Dictionary<string, string>(StringComparer.Ordinal);
+
+                foreach (var r in rows)
+                {
+                    var tradeId = r.TradeId ?? string.Empty;
+
+                    var time = (r.ExecutionTimeUtc ?? r.TradeDate ?? DateTime.UtcNow);
+
+                    var system = !string.IsNullOrWhiteSpace(r.SourceVenueCode)
+                        ? r.SourceVenueCode
+                        : r.SourceType;
+
+                    var fallbackStatus = !string.IsNullOrWhiteSpace(r.Mx3Status)
+                        ? r.Mx3Status
+                        : r.SystemStatus;
+
+                    // 2D: signature = “vad vi tycker betyder en ändring i raden”
+                    var signature = BuildSignature(r, time, system, fallbackStatus);
+                    nextSignatures[tradeId] = signature;
+
+                    var isNew = !_seenTradeIds.Contains(tradeId);
+
+                    var isUpdated =
+                        !isNew &&
+                        _lastSignatureByTradeId.TryGetValue(tradeId, out var prevSig) &&
+                        !string.Equals(prevSig, signature, StringComparison.Ordinal);
+
+                    var trade = new TradeRowViewModel(
+                        tradeId: tradeId,
+                        counterparty: r.CounterpartyCode,
+                        ccyPair: r.CcyPair,
+                        buySell: r.BuySell,
+                        callPut: r.CallPut,
+                        strike: r.Strike,
+                        expiryDate: r.ExpiryDate,
+                        notional: r.Notional,
+                        notionalCcy: r.NotionalCcy,
+                        premium: r.Premium,
+                        premiumCcy: r.PremiumCcy,
+                        portfolioMx3: r.PortfolioMx3,
+                        trader: r.TraderId,
+                        status: fallbackStatus,
+                        time: time,
+                        system: system,
+                        product: r.ProductType,
+                        spotRate: r.SpotRate,
+                        swapPoints: r.SwapPoints,
+                        settlementDate: r.SettlementDate,
+                        hedgeRate: r.HedgeRate,
+                        hedgeType: r.HedgeType,
+                        calypsoPortfolio: r.CalypsoPortfolio,
+                        mx3Status: r.Mx3Status ?? "New",
+                        calypsoStatus: r.CalypsoStatus ?? "New",
+                        mic: r.Mic,
+                        tvtic: r.Tvtic,
+                        isin: r.Isin,
+                        invDecisionId: r.InvId,
+                        isNew: isNew,
+                        isUpdated: isUpdated
+                    );
+
+                    if (IsOptionProduct(r.ProductType))
+                    {
+                        OptionTrades.Add(trade);
+                    }
+                    else
+                    {
+                        LinearTrades.Add(trade);
+                    }
+
+                    // 2D: “släck” highlight efter en stund
+                    if (trade.IsNew)
+                    {
+                        _ = ClearFlagLaterAsync(trade, clearNew: true, delayMs: 20000);
+                    }
+
+                    if (trade.IsUpdated)
+                    {
+                        _ = ClearFlagLaterAsync(trade, clearNew: false, delayMs: 2000);
+                    }
                 }
-                else
+
+                // 2D: commit “snapshot”
+                _seenTradeIds.Clear();
+                foreach (var id in nextSignatures.Keys)
                 {
-                    LinearTrades.Add(trade);
+                    _seenTradeIds.Add(id);
+                }
+
+                _lastSignatureByTradeId.Clear();
+                foreach (var kvp in nextSignatures)
+                {
+                    _lastSignatureByTradeId[kvp.Key] = kvp.Value;
+                }
+
+                // 2D: återställ selection (utan att “cleara” den i onödan)
+                RestoreSelection(selectedOptionId, selectedLinearId);
+            }
+            catch (Exception ex)
+            {
+                LastError = ex.Message;
+                System.Diagnostics.Debug.WriteLine(ex);
+            }
+            finally
+            {
+                IsBusy = false;
+            }
+        }
+
+        private void RestoreSelection(string selectedOptionId, string selectedLinearId)
+        {
+            // Om du hade en option selected: försök återselecta den först
+            if (!string.IsNullOrWhiteSpace(selectedOptionId))
+            {
+                var vm = OptionTrades.FirstOrDefault(x => string.Equals(x.TradeId, selectedOptionId, StringComparison.Ordinal));
+                if (vm != null)
+                {
+                    SelectedOptionTrade = vm;
+                    return;
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(selectedLinearId))
+            {
+                var vm = LinearTrades.FirstOrDefault(x => string.Equals(x.TradeId, selectedLinearId, StringComparison.Ordinal));
+                if (vm != null)
+                {
+                    SelectedLinearTrade = vm;
                 }
             }
         }
 
-        private void ExecuteRefresh()
+        private static async Task ClearFlagLaterAsync(TradeRowViewModel trade, bool clearNew, int delayMs)
         {
-            var systems = new[] { "VOLBROKER", "RTNS", "ICAP", "BLOOMBERG", "REFINITIV" };
-            var products = new[] { "OPTION", "SPOT", "NDF", "FORWARD" };
-            var ccyPairs = new[] { "EURUSD", "USDJPY", "GBPUSD", "USDSEK", "EURSEK" };
-            var sides = new[] { "Buy", "Sell" };
-            var callPuts = new[] { "Call", "Put" };
-            var counterparties = new[] { "CPTY_A", "CPTY_B", "CPTY_C" };
-            var portfolios = new[] { "FX_OPT_1", "FX_OPT_2", "FX_LIN_1" };
-            var traders = new[] { "JDoe", "ASmith", "MJones" };
-
-            var system = systems[_random.Next(systems.Length)];
-            var product = products[_random.Next(products.Length)];
-            var ccyPair = ccyPairs[_random.Next(ccyPairs.Length)];
-            var side = sides[_random.Next(sides.Length)];
-            var isOption = product == "OPTION";
-
-            var newTrade = new TradeRowViewModel(
-                tradeId: $"{system}-{_random.Next(100000, 999999)}",
-                counterparty: counterparties[_random.Next(counterparties.Length)],
-                ccyPair: ccyPair,
-                buySell: side,
-                callPut: isOption ? callPuts[_random.Next(callPuts.Length)] : string.Empty,
-                strike: isOption ? 100m + (decimal)(_random.NextDouble() * 50) : null,
-                expiryDate: isOption ? DateTime.Now.AddMonths(3) : null,
-                notional: _random.Next(1000000, 50000000),
-                notionalCcy: ccyPair.Substring(0, 3),
-                premium: isOption ? _random.Next(10000, 500000) : null,
-                premiumCcy: isOption ? ccyPair.Substring(3, 3) : string.Empty,
-                portfolioMx3: portfolios[_random.Next(portfolios.Length)],
-                trader: traders[_random.Next(traders.Length)],
-                status: "New",
-                time: DateTime.Now,
-                system: system,
-                product: product,
-                spotRate: !isOption ? 100m + (decimal)(_random.NextDouble() * 10) : null,
-                swapPoints: !isOption && product == "FORWARD" ? (decimal)(_random.NextDouble() * 0.5) : null,
-                settlementDate: !isOption ? DateTime.Now.AddDays(2) : null,
-                hedgeRate: !isOption ? 100m + (decimal)(_random.NextDouble() * 5) : null,
-                hedgeType: !isOption ? "SPOT" : null,
-                calypsoPortfolio: "CAL_BOOK_1",
-                mx3Status: !isOption ? "Booked" : null,      
-                calypsoStatus: !isOption ? "Pending" : null,
-                mic: "XNGS",                                          // NY! Mock: Nasdaq Stockholm
-                tvtic: $"XNGS{_random.Next(100000, 999999)}",        // NY! Mock TVTIC
-                isin: isOption ? $"SE{_random.Next(1000000000, 1999999999)}" : null,  // NY! Mock ISIN
-                invDecisionId: traders[_random.Next(traders.Length)],  // NY! Mock Investment Decisio
-                isNew: true
-            );
-
-            if (IsOptionProduct(product))
+            try
             {
-                OptionTrades.Insert(0, newTrade);
-            }
-            else
-            {
-                LinearTrades.Insert(0, newTrade);
-            }
-
-            Task.Delay(20000).ContinueWith(_ =>
-            {
-                System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+                await Task.Delay(delayMs).ConfigureAwait(true);
+                if (clearNew)
                 {
-                    newTrade.IsNew = false;
-                });
-            });
+                    trade.IsNew = false;
+                }
+                else
+                {
+                    trade.IsUpdated = false;
+                }
+            }
+            catch
+            {
+                // no-op
+            }
+        }
+
+        private static string BuildSignature(dynamic r, DateTime time, string system, string fallbackStatus)
+        {
+            // Håll detta “billigt”: string med ett urval fält som betyder något visuellt i grid/routing/status.
+            // Justera när du kopplar på fler kolumner.
+            return string.Join("|",
+                (string)(r.TradeId ?? ""),
+                (string)(r.ProductType ?? ""),
+                (string)(r.CcyPair ?? ""),
+                (string)(r.BuySell ?? ""),
+                (string)(r.CallPut ?? ""),
+                (r.Strike?.ToString() ?? ""),
+                (r.ExpiryDate?.ToString("yyyy-MM-dd") ?? ""),
+                r.Notional.ToString(),
+                (string)(r.NotionalCcy ?? ""),
+                (r.Premium?.ToString() ?? ""),
+                (string)(r.PremiumCcy ?? ""),
+                (string)(r.Mx3Status ?? ""),
+                (string)(r.CalypsoStatus ?? ""),
+                (string)(r.SystemStatus ?? ""),
+                fallbackStatus ?? "",
+                time.ToString("o"),
+                system ?? ""
+            );
         }
 
         private static bool IsOptionProduct(string productType)
@@ -269,7 +368,6 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             var trade = GetSelectedTrade();
             if (trade == null) return;
 
-            // TODO: Implementera book-logik
             System.Diagnostics.Debug.WriteLine($"Booking trade: {trade.TradeId}");
         }
 
@@ -284,7 +382,6 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             var trade = GetSelectedTrade();
             if (trade == null) return;
 
-            // TODO: Implementera book as live
             System.Diagnostics.Debug.WriteLine($"Booking as live: {trade.TradeId}");
         }
 
@@ -298,7 +395,6 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             var trade = GetSelectedTrade();
             if (trade == null) return;
 
-            // TODO: Implementera duplicate
             System.Diagnostics.Debug.WriteLine($"Duplicating trade: {trade.TradeId}");
         }
 
@@ -312,14 +408,12 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             var trade = GetSelectedTrade();
             if (trade == null) return;
 
-            // TODO: Implementera copy to manual input
             System.Diagnostics.Debug.WriteLine($"Copy to manual input: {trade.TradeId}");
         }
 
         private bool CanExecuteCancelCalypsoTrade()
         {
             var trade = GetSelectedTrade();
-            // Bara för Linear trades (ingen CallPut) och bara om Calypso = Pending
             return trade != null &&
                    string.IsNullOrEmpty(trade.CallPut) &&
                    trade.CalypsoStatus == "Pending";
@@ -330,7 +424,6 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             var trade = GetSelectedTrade();
             if (trade == null) return;
 
-            // TODO: Implementera cancel Calypso trade
             System.Diagnostics.Debug.WriteLine($"Cancelling Calypso trade: {trade.TradeId}");
         }
 
@@ -344,7 +437,6 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             var trade = GetSelectedTrade();
             if (trade == null) return;
 
-            // Ta bort från rätt collection
             if (OptionTrades.Contains(trade))
             {
                 OptionTrades.Remove(trade);
@@ -365,7 +457,6 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             var trade = GetSelectedTrade();
             if (trade == null) return;
 
-            // TODO: Implementera check if booked
             System.Diagnostics.Debug.WriteLine($"Checking if booked: {trade.TradeId}");
         }
 
@@ -380,7 +471,6 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             var trade = GetSelectedTrade();
             if (trade == null) return;
 
-            // TODO: Öppna error log
             System.Diagnostics.Debug.WriteLine($"Opening error log for: {trade.TradeId}");
         }
 
@@ -388,7 +478,5 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
         {
             return SelectedOptionTrade ?? SelectedLinearTrade;
         }
-
-
     }
 }
