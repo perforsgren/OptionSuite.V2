@@ -17,4 +17,10 @@
     <ProjectReference Include="..\OptionSuite.Shell.Wpf\OptionSuite.Shell.Wpf.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Reference Include="FxSharedConfig">
+      <HintPath>..\..\FxSharedConfig\bin\Debug\FxSharedConfig.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
 </Project>

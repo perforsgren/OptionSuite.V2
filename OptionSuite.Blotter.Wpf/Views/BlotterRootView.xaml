@@ -1080,26 +1080,25 @@
                                                             <TextBlock Grid.Row="2" Grid.Column="0" Text="Execution Time" Style="{StaticResource Style.BlotterRightKey}"/>
                                                             <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding SelectedTrade.Time, StringFormat='yyyy-MM-dd HH:mm:ss', TargetNullValue=—}" Style="{StaticResource Style.BlotterRightValue}"/>
 
-                                                            <!-- MIC - finns inte (N/A) -->
+                                                            <!-- MIC - finns nu! -->
                                                             <TextBlock Grid.Row="3" Grid.Column="0" Text="MIC" Style="{StaticResource Style.BlotterRightKey}"/>
-                                                            <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding SelectedTrade.Mic, TargetNullValue=—}" Style="{StaticResource Style.BlotterRightValue}"/>
+                                                            <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding SelectedTrade.Mic, TargetNullValue=—}" Style="{StaticResource Style.BlotterRightValue}"/>
 
-                                                            <!-- TVTIC - finns inte (N/A) -->
+                                                            <!-- TVTIC - finns nu! -->
                                                             <TextBlock Grid.Row="4" Grid.Column="0" Text="TVTIC" Style="{StaticResource Style.BlotterRightKey}"/>
-                                                            <TextBlock Grid.Row="4" Grid.Column="1" Text="N/A" Style="{StaticResource Style.BlotterRightValue}"/>
+                                                            <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding SelectedTrade.Tvtic, TargetNullValue=—}" Style="{StaticResource Style.BlotterRightValue}"/>
 
-                                                            <!-- ISIN - finns inte (N/A) -->
+                                                            <!-- ISIN - finns nu! -->
                                                             <TextBlock Grid.Row="5" Grid.Column="0" Text="ISIN" Style="{StaticResource Style.BlotterRightKey}"/>
-                                                            <TextBlock Grid.Row="5" Grid.Column="1" Text="N/A" Style="{StaticResource Style.BlotterRightValue}"/>
+                                                            <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding SelectedTrade.Isin, TargetNullValue=—}" Style="{StaticResource Style.BlotterRightValue}"/>
 
-                                                            <!-- Inv. Decision ID - finns inte (N/A) -->
+                                                            <!-- Inv. Decision ID - finns nu! -->
                                                             <TextBlock Grid.Row="6" Grid.Column="0" Text="Inv. Decision ID" Style="{StaticResource Style.BlotterRightKey}"/>
-                                                            <TextBlock Grid.Row="6" Grid.Column="1" Text="N/A" Style="{StaticResource Style.BlotterRightValue}"/>
+                                                            <TextBlock Grid.Row="6" Grid.Column="1" Text="{Binding SelectedTrade.InvDecisionId, TargetNullValue=—}" Style="{StaticResource Style.BlotterRightValue}"/>
 
                                                             <!-- Inv. Decision Name - från lookup (N/A) -->
                                                             <TextBlock Grid.Row="7" Grid.Column="0" Text="Inv. Decision Name" Style="{StaticResource Style.BlotterRightKey}"/>
                                                             <TextBlock Grid.Row="7" Grid.Column="1" Text="N/A" Style="{StaticResource Style.BlotterRightValue}"/>
-
 
 
                                                         </Grid>
