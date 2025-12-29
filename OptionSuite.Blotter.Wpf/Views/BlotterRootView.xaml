@@ -734,11 +734,6 @@
                                                                 <TextBlock Text="Audit: 4 events" Style="{StaticResource Style.BlotterChipText}"/>
                                                             </Border>
                                                         </WrapPanel>
-
-
-                                                        <TextBlock Margin="0,6,0,0"
-                               Foreground="{StaticResource Brush.TextMuted}"
-                               Text="TODO: I v2 kan vi lägga busy state/spinner på Refresh/Book."/>
                                                     </StackPanel>
                                                 </Border>
 

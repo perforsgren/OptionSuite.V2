@@ -574,7 +574,7 @@
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="6"/>
+                            <RowDefinition Height="1"/>
                         </Grid.RowDefinitions>
 
                         <Border x:Name="Bd"
@@ -665,11 +665,10 @@
 
     <!-- Section title (e.g. ECONOMICS / ROUTING / LINKS) -->
     <Style x:Key="Style.BlotterRightSectionTitle" TargetType="{x:Type TextBlock}">
-        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="FontSize" Value="13"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
         <Setter Property="Foreground" Value="{StaticResource Brush.Text}"/>
-        <Setter Property="Margin" Value="0,0,0,12"/>
-        <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
+        <Setter Property="Margin" Value="0,4,0,4"/>
     </Style>
 
 
@@ -691,7 +690,7 @@
     <Style x:Key="Style.BlotterSectionHeaderBorder" TargetType="{x:Type Border}">
         <Setter Property="BorderBrush" Value="#2DD4BF"/>
         <Setter Property="BorderThickness" Value="3,0,0,0"/>
-        <Setter Property="Padding" Value="8,0,0,0"/>
+        <Setter Property="Padding" Value="8,2,0,2"/>
         <Setter Property="Margin" Value="0,0,0,12"/>
     </Style>
 
