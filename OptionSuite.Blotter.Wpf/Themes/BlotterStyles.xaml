@@ -1249,7 +1249,12 @@
         <Setter Property="Margin" Value="0,0,12,0"/>
         <Setter Property="VerticalAlignment" Value="Center"/>
     </Style>
- 
+
+    <!-- Numeric cell style - overrider HorizontalContentAlignment -->
+    <Style x:Key="Style.BlotterDataGridCell.Numeric" TargetType="{x:Type DataGridCell}" BasedOn="{StaticResource Style.BlotterDataGridCell}">
+        <Setter Property="HorizontalContentAlignment" Value="Right"/>
+    </Style>
+
 
 
 </ResourceDictionary>
