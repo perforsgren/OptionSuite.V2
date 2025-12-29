@@ -1094,8 +1094,7 @@
             BorderThickness="1" Opacity="0" Panel.ZIndex="1"/>
 
                         <!-- UPDATED flash (NY!) -->
-                        <Border x:Name="UpdatedOverlay" Background="{StaticResource Brush.AccentSoft}" 
-            Opacity="0" Panel.ZIndex="1"/>
+                        <Border x:Name="UpdatedOverlay" Background="#332DD4BF" Opacity="0" Panel.ZIndex="1"/>
 
                         <DataGridCellsPresenter Panel.ZIndex="2"/>
                         <Border x:Name="LeftAccent" Width="3" HorizontalAlignment="Left" 
@@ -1114,7 +1113,8 @@
 
                         <!-- UPDATED trigger (NY! lägg till efter IsNew) -->
                         <DataTrigger Binding="{Binding IsUpdated}" Value="True">
-                            <Setter TargetName="UpdatedOverlay" Property="Opacity" Value="0.3"/>
+                            <Setter TargetName="UpdatedOverlay" Property="Opacity" Value="1"/>
+                            <!-- Från 0.3 → 1 -->
                             <Setter TargetName="TopLine" Property="Opacity" Value="1"/>
                             <Setter TargetName="BottomLine" Property="Opacity" Value="1"/>
                             <Setter TargetName="TopLine" Property="Background" Value="#2DD4BF"/>
@@ -1158,8 +1158,7 @@
             BorderThickness="1" Opacity="0" Panel.ZIndex="1"/>
 
                         <!-- UPDATED flash (NY!) -->
-                        <Border x:Name="UpdatedOverlay" Background="{StaticResource Brush.AccentSoft}" 
-            Opacity="0" Panel.ZIndex="1"/>
+                        <Border x:Name="UpdatedOverlay" Background="#33A78BFA" Opacity="0" Panel.ZIndex="1"/>
 
                         <DataGridCellsPresenter Panel.ZIndex="2"/>
                         <Border x:Name="LeftAccent" Width="3" HorizontalAlignment="Left" 

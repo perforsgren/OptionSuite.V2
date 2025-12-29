@@ -1,9 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Linq;
-using System.Threading.Tasks;
+using System.Windows.Threading;
 using System.Windows.Input;
 using FxTradeHub.Contracts.Dtos;
 using FxTradeHub.Services;
@@ -35,6 +33,8 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
 
         public ObservableCollection<TradeRowViewModel> LinearTrades { get; } =
             new ObservableCollection<TradeRowViewModel>();
+
+        private readonly DispatcherTimer _pollTimer;
 
         public bool IsBusy
         {
@@ -128,12 +128,38 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             DeleteRowCommand = new RelayCommand(() => ExecuteDeleteRow(), () => CanExecuteDeleteRow());
             CheckIfBookedCommand = new RelayCommand(() => ExecuteCheckIfBooked(), () => CanExecuteCheckIfBooked());
             OpenErrorLogCommand = new RelayCommand(() => ExecuteOpenErrorLog(), () => CanExecuteOpenErrorLog());
+
+            _pollTimer = new DispatcherTimer(DispatcherPriority.Background);
+            _pollTimer.Interval = TimeSpan.FromSeconds(2); // default, kan ändras via StartPolling
+            _pollTimer.Tick += async (s, e) =>
+            {
+                // Ingen ny logik: tick = samma refresh som knappen.
+                await RefreshAsync().ConfigureAwait(true);
+            };
         }
 
         public Task InitialLoadAsync()
         {
             return RefreshAsync();
         }
+
+        public void StartPolling(TimeSpan interval)
+        {
+            if (interval <= TimeSpan.Zero)
+                throw new ArgumentOutOfRangeException(nameof(interval));
+
+            _pollTimer.Interval = interval;
+
+            if (!_pollTimer.IsEnabled)
+                _pollTimer.Start();
+        }
+
+        public void StopPolling()
+        {
+            if (_pollTimer.IsEnabled)
+                _pollTimer.Stop();
+        }
+
 
         private async Task RefreshAsync()
         {
