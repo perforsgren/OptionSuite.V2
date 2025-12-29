@@ -37,9 +37,14 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
         public decimal? SpotRate { get; }
         public decimal? SwapPoints { get; }
         public DateTime? SettlementDate { get; }
-        public decimal? HedgeRate { get; }           // NY!
-        public string HedgeType { get; }              // NY!
-        public string CalypsoPortfolio { get; }       // NY!
+        public decimal? HedgeRate { get; }         
+        public string HedgeType { get; }           
+        public string CalypsoPortfolio { get; }      
+
+        public string Mic { get; }                    // Market Identifier Code
+        public string Tvtic { get; }                  // Trading Venue Transaction ID
+        public string Isin { get; }                   // International Securities ID
+        public string InvDecisionId { get; }          // Investment Decision ID
 
         public bool IsNew
         {
@@ -78,8 +83,12 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             decimal? hedgeRate = null,
             string hedgeType = null,
             string calypsoPortfolio = null,
-            string mx3Status = null,           // NY!
-            string calypsoStatus = null,       // NY!
+            string mx3Status = null,     
+            string calypsoStatus = null,      
+            string mic = null,
+            string tvtic = null,
+            string isin = null,
+            string invDecisionId = null,
             bool isNew = false)
         {
             TradeId = tradeId ?? string.Empty;
@@ -110,6 +119,13 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             HedgeRate = hedgeRate;
             HedgeType = hedgeType ?? string.Empty;
             CalypsoPortfolio = calypsoPortfolio ?? string.Empty;
+
+            // Regulatory fields
+            Mic = mic ?? string.Empty;
+            Tvtic = tvtic ?? string.Empty;
+            Isin = isin ?? string.Empty;
+            InvDecisionId = invDecisionId ?? string.Empty;
+
             _isNew = isNew;
         }
 

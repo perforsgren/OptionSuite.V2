@@ -1082,7 +1082,7 @@
 
                                                             <!-- MIC - finns inte (N/A) -->
                                                             <TextBlock Grid.Row="3" Grid.Column="0" Text="MIC" Style="{StaticResource Style.BlotterRightKey}"/>
-                                                            <TextBlock Grid.Row="3" Grid.Column="1" Text="N/A" Style="{StaticResource Style.BlotterRightValue}"/>
+                                                            <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding SelectedTrade.Mic, TargetNullValue=—}" Style="{StaticResource Style.BlotterRightValue}"/>
 
                                                             <!-- TVTIC - finns inte (N/A) -->
                                                             <TextBlock Grid.Row="4" Grid.Column="0" Text="TVTIC" Style="{StaticResource Style.BlotterRightKey}"/>

@@ -154,10 +154,14 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                     hedgeRate: r.HedgeRate,
                     hedgeType: r.HedgeType,
                     calypsoPortfolio: r.CalypsoPortfolio,
-                    mx3Status: r.Mx3Status ?? "New",           // NY!
-                    calypsoStatus: r.CalypsoStatus ?? "New",   // NY!
+                    mx3Status: r.Mx3Status ?? "New",
+                    calypsoStatus: r.CalypsoStatus ?? "New",
+                    mic: r.Mic,
+                    tvtic: r.Tvtic,
+                    isin: r.Isin,
+                    invDecisionId: r.InvId,          
                     isNew: false
-                );
+                ); 
 
                 if (IsOptionProduct(r.ProductType))
                 {
@@ -211,8 +215,12 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                 hedgeRate: !isOption ? 100m + (decimal)(_random.NextDouble() * 5) : null,
                 hedgeType: !isOption ? "SPOT" : null,
                 calypsoPortfolio: "CAL_BOOK_1",
-                mx3Status: !isOption ? "Booked" : null,       // NY! Linear börjar som Pending
-                calypsoStatus: !isOption ? "Pending" : null,   // NY! Linear börjar som Pending
+                mx3Status: !isOption ? "Booked" : null,      
+                calypsoStatus: !isOption ? "Pending" : null,
+                mic: "XNGS",                                          // NY! Mock: Nasdaq Stockholm
+                tvtic: $"XNGS{_random.Next(100000, 999999)}",        // NY! Mock TVTIC
+                isin: isOption ? $"SE{_random.Next(1000000000, 1999999999)}" : null,  // NY! Mock ISIN
+                invDecisionId: traders[_random.Next(traders.Length)],  // NY! Mock Investment Decisio
                 isNew: true
             );
 
