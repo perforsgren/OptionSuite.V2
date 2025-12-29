@@ -662,7 +662,7 @@
                                                 <!-- TRADE SUMMARY card -->
                                                 <Border Style="{StaticResource Style.BlotterRightCard}">
                                                     <StackPanel>
-                                                        <Border BorderBrush="#2DD4BF" BorderThickness="3,0,0,0" Padding="8,0,0,0" Margin="0,0,0,12">
+                                                        <Border Style="{StaticResource Style.BlotterSectionHeaderBorder}">
                                                             <TextBlock Text="TRADE SUMMARY" Style="{StaticResource Style.BlotterRightSectionTitle}"/>
                                                         </Border>
 
@@ -716,7 +716,7 @@
                                                 <!-- WORKFLOW card -->
                                                 <Border Style="{StaticResource Style.BlotterRightCard}">
                                                     <StackPanel>
-                                                        <Border BorderBrush="#A78BFA" BorderThickness="3,0,0,0" Padding="8,0,0,0" Margin="0,0,0,12">
+                                                        <Border Style="{StaticResource Style.BlotterSectionHeaderBorder}">
                                                             <TextBlock Text="WORKFLOW" Style="{StaticResource Style.BlotterRightSectionTitle}"/>
                                                         </Border>
 
@@ -761,7 +761,9 @@
                                             <StackPanel>
                                                 <Border Style="{StaticResource Style.BlotterRightCard}">
                                                     <StackPanel>
-                                                        <TextBlock Text="ECONOMICS" Style="{StaticResource Style.BlotterRightSectionTitle}"/>
+                                                        <Border Style="{StaticResource Style.BlotterSectionHeaderBorder}">
+                                                            <TextBlock Text="ECONOMICS" Style="{StaticResource Style.BlotterRightSectionTitle}"/>
+                                                        </Border>
 
                                                         <Grid>
                                                             <Grid.ColumnDefinitions>
@@ -817,7 +819,9 @@
 
                                                 <Border Style="{StaticResource Style.BlotterRightCard}">
                                                     <StackPanel>
-                                                        <TextBlock Text="ROUTING / LINKS" Style="{StaticResource Style.BlotterRightSectionTitle}"/>
+                                                        <Border Style="{StaticResource Style.BlotterSectionHeaderBorder}">
+                                                            <TextBlock Text="ROUTING / LINKS" Style="{StaticResource Style.BlotterRightSectionTitle}"/>
+                                                        </Border>
 
                                                         <!-- MX3 System -->
                                                         <Border Style="{StaticResource Style.BlotterSystemCard}">
@@ -948,7 +952,9 @@
                                                         <!-- LATEST WORKFLOW EVENTS card -->
                                                         <Border Style="{StaticResource Style.BlotterRightCard}">
                                                             <StackPanel>
-                                                                <TextBlock Text="LATEST WORKFLOW EVENTS" Style="{StaticResource Style.BlotterRightSectionTitle}"/>
+                                                                <Border Style="{StaticResource Style.BlotterSectionHeaderBorder}">
+                                                                    <TextBlock Text="LATEST WORKFLOW EVENTS" Style="{StaticResource Style.BlotterRightSectionTitle}"/>
+                                                                </Border>
 
                                                                 <!-- Event 1 -->
                                                                 <Border Style="{StaticResource Style.BlotterEventRow}">
@@ -1045,7 +1051,9 @@
 
                                                 <Border Style="{StaticResource Style.BlotterRightCard}">
                                                     <StackPanel>
-                                                        <TextBlock Text="DIAGNOSTICS" Style="{StaticResource Style.BlotterRightSectionTitle}"/>
+                                                        <Border Style="{StaticResource Style.BlotterSectionHeaderBorder}">
+                                                            <TextBlock Text="DIAGNOSTICS" Style="{StaticResource Style.BlotterRightSectionTitle}"/>
+                                                        </Border>
                                                         <TextBlock Foreground="{StaticResource Brush.TextMuted}"
                                Text="Diagnostics fields här (RawHash, SeqNum, SessionKey...)."/>
                                                     </StackPanel>
@@ -1053,7 +1061,9 @@
 
                                                 <Border Style="{StaticResource Style.BlotterRightCard}">
                                                     <StackPanel>
-                                                        <TextBlock Text="RAW" Style="{StaticResource Style.BlotterRightSectionTitle}"/>
+                                                        <Border Style="{StaticResource Style.BlotterSectionHeaderBorder}">
+                                                            <TextBlock Text="RAW" Style="{StaticResource Style.BlotterRightSectionTitle}"/>
+                                                        </Border>
                                                         <TextBlock Foreground="{StaticResource Brush.TextMuted}"
                                Text="Raw payload box + Copy raw/Copy JSON/Re-parse knappar här."/>
                                                     </StackPanel>
