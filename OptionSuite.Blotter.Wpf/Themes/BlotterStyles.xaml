@@ -1066,7 +1066,11 @@
                         </DataTrigger>
 
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="RowFill" Property="Background" Value="{StaticResource Blotter.Brush.RowHoverGlass}"/>
+                            <Setter TargetName="RowFill" Property="Background">
+                                <Setter.Value>
+                                    <SolidColorBrush Color="#1A2DD4BF"/>
+                                </Setter.Value>
+                            </Setter>
                             <Setter TargetName="TopLine" Property="Opacity" Value="1"/>
                             <Setter TargetName="BottomLine" Property="Opacity" Value="1"/>
                             <Setter TargetName="LeftAccent" Property="Background" Value="#2DD4BF"/>
@@ -1095,8 +1099,18 @@
                             <Setter TargetName="TopLine" Property="Opacity" Value="0.6"/>
                             <Setter TargetName="BottomLine" Property="Opacity" Value="0.6"/>
                         </MultiTrigger>
-                        
-                        
+
+                        <!-- Zebra striping för bättre läsbarhet -->
+                        <Trigger Property="AlternationIndex" Value="1">
+                            <Setter TargetName="RowFill" Property="Background">
+                                <Setter.Value>
+                                    <SolidColorBrush Color="#0AFFFFFF" Opacity="0.05"/>
+                                </Setter.Value>
+                            </Setter>
+                        </Trigger>
+
+
+
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
@@ -1137,11 +1151,16 @@
                         </DataTrigger>
 
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="RowFill" Property="Background" Value="{StaticResource Blotter.Brush.RowHoverGlass}"/>
+                            <Setter TargetName="RowFill" Property="Background">
+                                <Setter.Value>
+                                    <SolidColorBrush Color="#1AA78BFA"/>
+                                </Setter.Value>
+                            </Setter>
                             <Setter TargetName="TopLine" Property="Opacity" Value="1"/>
                             <Setter TargetName="BottomLine" Property="Opacity" Value="1"/>
                             <Setter TargetName="LeftAccent" Property="Background" Value="#A78BFA"/>
                         </Trigger>
+
 
                         <!-- Selected trigger (redan finns) -->
                         <Trigger Property="IsSelected" Value="True">
@@ -1166,6 +1185,16 @@
                             <Setter TargetName="TopLine" Property="Opacity" Value="0.6"/>
                             <Setter TargetName="BottomLine" Property="Opacity" Value="0.6"/>
                         </MultiTrigger>
+
+                        <!-- Zebra striping för bättre läsbarhet -->
+                        <Trigger Property="AlternationIndex" Value="1">
+                            <Setter TargetName="RowFill" Property="Background">
+                                <Setter.Value>
+                                    <SolidColorBrush Color="#0AFFFFFF" Opacity="0.05"/>
+                                </Setter.Value>
+                            </Setter>
+                        </Trigger>
+
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>

@@ -449,13 +449,13 @@
 
                                 <!-- OPTIONS GRID - bind till SelectedOptionTrade -->
                                 <DataGrid Grid.Row="1"
-          Style="{StaticResource Style.BlotterDataGrid}"
-          ItemsSource="{Binding OptionTrades}"
-          SelectedItem="{Binding SelectedOptionTrade, Mode=TwoWay}"
-          ColumnHeaderStyle="{StaticResource Style.BlotterDataGridHeader}"
-          CellStyle="{StaticResource Style.BlotterDataGridCell}"
-          RowStyle="{StaticResource Style.BlotterDataGridRow.Options}"
-          AutoGenerateColumns="False">
+                                          Style="{StaticResource Style.BlotterDataGrid}"
+                                          ItemsSource="{Binding OptionTrades}"
+                                          SelectedItem="{Binding SelectedOptionTrade, Mode=TwoWay}"
+                                          ColumnHeaderStyle="{StaticResource Style.BlotterDataGridHeader}"
+                                          CellStyle="{StaticResource Style.BlotterDataGridCell}"
+                                          RowStyle="{StaticResource Style.BlotterDataGridRow.Options}"
+                                          AutoGenerateColumns="False">
 
                                     <DataGrid.ContextMenu>
                                         <ContextMenu Style="{StaticResource Style.BlotterContextMenu}">
@@ -520,14 +520,13 @@
                                 </Border>
 
                                 <DataGrid Grid.Row="4"
-              Style="{StaticResource Style.BlotterDataGrid}"
-              ItemsSource="{Binding LinearTrades}"
-              SelectedItem="{Binding SelectedLinearTrade, Mode=TwoWay}"
-
-              ColumnHeaderStyle="{StaticResource Style.BlotterDataGridHeader}"
-              CellStyle="{StaticResource Style.BlotterDataGridCell}"
-              RowStyle="{StaticResource Style.BlotterDataGridRow.Linear}"
-AutoGenerateColumns="False">
+                                          Style="{StaticResource Style.BlotterDataGrid}"
+                                          ItemsSource="{Binding LinearTrades}"
+                                          SelectedItem="{Binding SelectedLinearTrade, Mode=TwoWay}"
+                                          ColumnHeaderStyle="{StaticResource Style.BlotterDataGridHeader}"
+                                          CellStyle="{StaticResource Style.BlotterDataGridCell}"
+                                          RowStyle="{StaticResource Style.BlotterDataGridRow.Linear}"
+                                          AutoGenerateColumns="False">
 
                                     <DataGrid.ContextMenu>
                                         <ContextMenu Style="{StaticResource Style.BlotterContextMenu}">
