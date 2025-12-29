@@ -264,14 +264,14 @@
         <Setter Property="EnableColumnVirtualization" Value="True"/>
         <Setter Property="ScrollViewer.CanContentScroll" Value="True"/>
         <Setter Property="RowHeight" Value="34"/>
-        <Setter Property="ColumnHeaderHeight" Value="38"/>
+        <Setter Property="ColumnHeaderHeight" Value="32"/>
     </Style>
 
     <!-- UPPDATERAD: Starkare column header -->
     <Style x:Key="Style.BlotterDataGridHeader" TargetType="{x:Type DataGridColumnHeader}">
         <Setter Property="Foreground" Value="{StaticResource Brush.TextMuted2}"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
-        <Setter Property="Padding" Value="10,9"/>
+        <Setter Property="Padding" Value="10,6"/>
         <Setter Property="SnapsToDevicePixels" Value="True"/>
 
         <Setter Property="Background">
@@ -313,7 +313,7 @@
         <Setter Property="Background" Value="{StaticResource Blotter.Brush.ContentChrome}"/>
         <Setter Property="BorderBrush" Value="{StaticResource Brush.AccentSoft}"/>
         <Setter Property="BorderThickness" Value="3,0,0,1"/>
-        <Setter Property="Padding" Value="14,6"/>
+        <Setter Property="Padding" Value="14,10"/>
     </Style>
 
     <!-- Options section header - CYAN accent -->
@@ -343,10 +343,10 @@
     </Style>
 
     <Style x:Key="Style.BlotterSectionHeaderText" TargetType="{x:Type TextBlock}">
-        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="FontSize" Value="12"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
-        <Setter Property="Foreground" Value="{StaticResource Brush.TextMuted}"/>
-        <Setter Property="Opacity" Value="0.8"/>
+        <Setter Property="Foreground" Value="{StaticResource Brush.Text}"/>
+        <Setter Property="Opacity" Value="0.9"/>
     </Style>
 
     <!-- Status pill template -->
