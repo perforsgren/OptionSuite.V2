@@ -565,7 +565,7 @@
         <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
         <Setter Property="SnapsToDevicePixels" Value="True"/>
         <Setter Property="Cursor" Value="Hand"/>
-        <Setter Property="Padding" Value="14,8"/>
+        <Setter Property="Padding" Value="9,8"/>
         <Setter Property="Margin" Value="0,0,6,0"/>
 
         <Setter Property="Template">
@@ -578,18 +578,17 @@
                         </Grid.RowDefinitions>
 
                         <Border x:Name="Bd"
-                    Grid.Row="0"
-                    Background="Transparent"
-                    BorderBrush="Transparent"
-                    BorderThickness="1"
-                    CornerRadius="{StaticResource Radius.Button}"
-                    SnapsToDevicePixels="True">
+                            Background="Transparent"
+                            BorderBrush="Transparent"
+                            BorderThickness="1"
+                            CornerRadius="{StaticResource Radius.Button}"
+                            SnapsToDevicePixels="True">
                             <TextBlock x:Name="ContentText"
-                           Text="{TemplateBinding Content}"
-                           Margin="{TemplateBinding Padding}"
-                           VerticalAlignment="Center"
-                           HorizontalAlignment="Center"
-                           Foreground="{StaticResource Brush.TextMuted2}"/>
+                                Text="{TemplateBinding Content}"
+                                Margin="{TemplateBinding Padding}"
+                                VerticalAlignment="Center"
+                                HorizontalAlignment="Center"
+                                Foreground="{StaticResource Brush.TextMuted2}"/>
                         </Border>
                     </Grid>
 

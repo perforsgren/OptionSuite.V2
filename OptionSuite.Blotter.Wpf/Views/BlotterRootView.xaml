@@ -633,10 +633,10 @@
                              Style="{StaticResource DetailTabRadioStyle}"
                              Content="Routing"/>
 
-                                            <RadioButton x:Name="TabRaw"
+                                            <RadioButton x:Name="TabRegulatory"
                              GroupName="DetailTabs"
                              Style="{StaticResource DetailTabRadioStyle}"
-                             Content="Raw"/>
+                             Content="Regulatory"/>
                                             
                                         </StackPanel>
                                     </Border>
@@ -683,32 +683,33 @@
                                                                 <RowDefinition Height="Auto"/>
                                                             </Grid.RowDefinitions>
 
-                                                            <TextBlock Grid.Row="0" Grid.Column="0" Text="TradeId" Style="{StaticResource Style.BlotterRightKey}"/>
-                                                            <TextBlock Grid.Row="0" Grid.Column="1" Text="TRD-000128" Style="{StaticResource Style.BlotterRightValue}"/>
+                                                            <TextBlock Grid.Row="0" Grid.Column="0" Text="TradeID" Style="{StaticResource Style.BlotterRightKey}"/>
+                                                            <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding SelectedTrade.TradeId}" Style="{StaticResource Style.BlotterRightValue}"/>
 
                                                             <TextBlock Grid.Row="1" Grid.Column="0" Text="Source" Style="{StaticResource Style.BlotterRightKey}"/>
-                                                            <TextBlock Grid.Row="1" Grid.Column="1" Text="VOLBROKER / AE" Style="{StaticResource Style.BlotterRightValue}"/>
+                                                            <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding SelectedTrade.Counterparty}" Style="{StaticResource Style.BlotterRightValue}"/>
 
                                                             <TextBlock Grid.Row="2" Grid.Column="0" Text="MessageKey" Style="{StaticResource Style.BlotterRightKey}"/>
-                                                            <TextBlock Grid.Row="2" Grid.Column="1" Text="571=704955891.0.05" Style="{StaticResource Style.BlotterRightValue}"/>
+                                                            <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding SelectedTrade.TradeId}" Style="{StaticResource Style.BlotterRightValue}"/>
 
                                                             <TextBlock Grid.Row="3" Grid.Column="0" Text="Instrument" Style="{StaticResource Style.BlotterRightKey}"/>
-                                                            <TextBlock Grid.Row="3" Grid.Column="1" Text="USDJPY" Style="{StaticResource Style.BlotterRightValue}"/>
+                                                            <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding SelectedTrade.CcyPair}" Style="{StaticResource Style.BlotterRightValue}"/>
 
                                                             <TextBlock Grid.Row="4" Grid.Column="0" Text="Product" Style="{StaticResource Style.BlotterRightKey}"/>
-                                                            <TextBlock Grid.Row="4" Grid.Column="1" Text="OPTION_VANILLA" Style="{StaticResource Style.BlotterRightValue}"/>
+                                                            <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding SelectedTrade.Product}" Style="{StaticResource Style.BlotterRightValue}"/>
 
                                                             <TextBlock Grid.Row="5" Grid.Column="0" Text="Side" Style="{StaticResource Style.BlotterRightKey}"/>
-                                                            <TextBlock Grid.Row="5" Grid.Column="1" Text="Buy" Style="{StaticResource Style.BlotterRightValue}"/>
+                                                            <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding SelectedTrade.BuySell}" Style="{StaticResource Style.BlotterRightValue}"/>
 
                                                             <TextBlock Grid.Row="6" Grid.Column="0" Text="Notional" Style="{StaticResource Style.BlotterRightKey}"/>
-                                                            <TextBlock Grid.Row="6" Grid.Column="1" Text="25,000,000" Style="{StaticResource Style.BlotterRightValue}"/>
+                                                            <TextBlock Grid.Row="6" Grid.Column="1" Text="{Binding SelectedTrade.Notional, StringFormat=N0}" Style="{StaticResource Style.BlotterRightValue}"/>
 
                                                             <TextBlock Grid.Row="7" Grid.Column="0" Text="Price" Style="{StaticResource Style.BlotterRightKey}"/>
-                                                            <TextBlock Grid.Row="7" Grid.Column="1" Text="155.2300" Style="{StaticResource Style.BlotterRightValue}"/>
+                                                            <TextBlock Grid.Row="7" Grid.Column="1" Text="{Binding SelectedTrade.Premium, StringFormat=N2}" Style="{StaticResource Style.BlotterRightValue}"/>
 
                                                             <TextBlock Grid.Row="8" Grid.Column="0" Text="TradeTime" Style="{StaticResource Style.BlotterRightKey}"/>
-                                                            <TextBlock Grid.Row="8" Grid.Column="1" Text="2025-12-12 14:31:09" Style="{StaticResource Style.BlotterRightValue}"/>
+                                                            <TextBlock Grid.Row="8" Grid.Column="1" Text="{Binding SelectedTrade.Time, StringFormat='yyyy-MM-dd HH:mm:ss'}" Style="{StaticResource Style.BlotterRightValue}"/>
+
                                                         </Grid>
                                                     </StackPanel>
                                                 </Border>
@@ -774,19 +775,20 @@
                                                             </Grid.RowDefinitions>
 
                                                             <TextBlock Grid.Row="0" Grid.Column="0" Text="CcyPair" Style="{StaticResource Style.BlotterRightKey}"/>
-                                                            <TextBlock Grid.Row="0" Grid.Column="1" Text="USDJPY" Style="{StaticResource Style.BlotterRightValue}"/>
+                                                            <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding SelectedTrade.CcyPair}" Style="{StaticResource Style.BlotterRightValue}"/>
 
                                                             <TextBlock Grid.Row="1" Grid.Column="0" Text="SettleCcy" Style="{StaticResource Style.BlotterRightKey}"/>
-                                                            <TextBlock Grid.Row="1" Grid.Column="1" Text="JPY" Style="{StaticResource Style.BlotterRightValue}"/>
+                                                            <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding SelectedTrade.NotionalCcy}" Style="{StaticResource Style.BlotterRightValue}"/>
 
                                                             <TextBlock Grid.Row="2" Grid.Column="0" Text="ValueDate" Style="{StaticResource Style.BlotterRightKey}"/>
-                                                            <TextBlock Grid.Row="2" Grid.Column="1" Text="2025-12-16" Style="{StaticResource Style.BlotterRightValue}"/>
+                                                            <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding SelectedTrade.SettlementDate, StringFormat=yyyy-MM-dd, TargetNullValue=—}" Style="{StaticResource Style.BlotterRightValue}"/>
 
                                                             <TextBlock Grid.Row="3" Grid.Column="0" Text="Strike" Style="{StaticResource Style.BlotterRightKey}"/>
-                                                            <TextBlock Grid.Row="3" Grid.Column="1" Text="—" Style="{StaticResource Style.BlotterRightValue}"/>
+                                                            <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding SelectedTrade.Strike, StringFormat=F4, TargetNullValue=—}" Style="{StaticResource Style.BlotterRightValue}"/>
 
                                                             <TextBlock Grid.Row="4" Grid.Column="0" Text="Expiry" Style="{StaticResource Style.BlotterRightKey}"/>
-                                                            <TextBlock Grid.Row="4" Grid.Column="1" Text="—" Style="{StaticResource Style.BlotterRightValue}"/>
+                                                            <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding SelectedTrade.ExpiryDate, StringFormat=yyyy-MM-dd, TargetNullValue=—}" Style="{StaticResource Style.BlotterRightValue}"/>
+
                                                         </Grid>
 
                                                         <TextBlock Margin="0,10,0,0"
@@ -1029,13 +1031,13 @@
                                             </StackPanel>
                                         </ScrollViewer>
 
-                                        <!-- RAW PAGE -->
+                                        <!-- REGULATORY PAGE -->
                                         <ScrollViewer VerticalScrollBarVisibility="Auto">
                                             <ScrollViewer.Style>
                                                 <Style TargetType="{x:Type ScrollViewer}">
                                                     <Setter Property="Visibility" Value="Collapsed"/>
                                                     <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding IsChecked, ElementName=TabRaw}" Value="True">
+                                                        <DataTrigger Binding="{Binding IsChecked, ElementName=TabRegulatory}" Value="True">
                                                             <Setter Property="Visibility" Value="Visible"/>
                                                         </DataTrigger>
                                                     </Style.Triggers>
@@ -1047,22 +1049,55 @@
                                                 <Border Style="{StaticResource Style.BlotterRightCard}">
                                                     <StackPanel>
                                                         <Border Style="{StaticResource Style.BlotterSectionHeaderBorder}">
-                                                            <TextBlock Text="DIAGNOSTICS" Style="{StaticResource Style.BlotterRightSectionTitle}"/>
+                                                            <TextBlock Text="REGULATORY FIELDS" Style="{StaticResource Style.BlotterRightSectionTitle}"/>
                                                         </Border>
-                                                        <TextBlock Foreground="{StaticResource Brush.TextMuted}"
-                               Text="Diagnostics fields här (RawHash, SeqNum, SessionKey...)."/>
+                                                        <Grid>
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="120"/>
+                                                                <ColumnDefinition Width="*"/>
+                                                            </Grid.ColumnDefinitions>
+                                                            <Grid.RowDefinitions>
+                                                                <RowDefinition Height="Auto"/>
+                                                                <RowDefinition Height="Auto"/>
+                                                                <RowDefinition Height="Auto"/>
+                                                                <RowDefinition Height="Auto"/>
+                                                                <RowDefinition Height="Auto"/>
+                                                                <RowDefinition Height="Auto"/>
+                                                                <RowDefinition Height="Auto"/>
+                                                                <RowDefinition Height="Auto"/>
+
+                                                            </Grid.RowDefinitions>
+
+                                                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Trader ID" Style="{StaticResource Style.BlotterRightKey}"/>
+                                                            <TextBlock Grid.Row="0" Grid.Column="1" Text="" Style="{StaticResource Style.BlotterRightValue}"/>
+
+                                                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Trader Name" Style="{StaticResource Style.BlotterRightKey}"/>
+                                                            <TextBlock Grid.Row="1" Grid.Column="1" Text="" Style="{StaticResource Style.BlotterRightValue}"/>
+
+                                                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Execution Time" Style="{StaticResource Style.BlotterRightKey}"/>
+                                                            <TextBlock Grid.Row="2" Grid.Column="1" Text="" Style="{StaticResource Style.BlotterRightValue}"/>
+
+                                                            <TextBlock Grid.Row="3" Grid.Column="0" Text="MIC" Style="{StaticResource Style.BlotterRightKey}"/>
+                                                            <TextBlock Grid.Row="3" Grid.Column="1" Text="" Style="{StaticResource Style.BlotterRightValue}"/>
+
+                                                            <TextBlock Grid.Row="4" Grid.Column="0" Text="TVTIC" Style="{StaticResource Style.BlotterRightKey}"/>
+                                                            <TextBlock Grid.Row="4" Grid.Column="1" Text="" Style="{StaticResource Style.BlotterRightValue}"/>
+
+                                                            <TextBlock Grid.Row="5" Grid.Column="0" Text="ISIN" Style="{StaticResource Style.BlotterRightKey}"/>
+                                                            <TextBlock Grid.Row="5" Grid.Column="1" Text="" Style="{StaticResource Style.BlotterRightValue}"/>
+
+                                                            <TextBlock Grid.Row="6" Grid.Column="0" Text="Inv. Decision ID" Style="{StaticResource Style.BlotterRightKey}"/>
+                                                            <TextBlock Grid.Row="6" Grid.Column="1" Text="" Style="{StaticResource Style.BlotterRightValue}"/>
+
+                                                            <TextBlock Grid.Row="7" Grid.Column="0" Text="Inv. Decision Name" Style="{StaticResource Style.BlotterRightKey}"/>
+                                                            <TextBlock Grid.Row="7" Grid.Column="1" Text="" Style="{StaticResource Style.BlotterRightValue}"/>
+
+
+                                                        </Grid>
                                                     </StackPanel>
                                                 </Border>
 
-                                                <Border Style="{StaticResource Style.BlotterRightCard}">
-                                                    <StackPanel>
-                                                        <Border Style="{StaticResource Style.BlotterSectionHeaderBorder}">
-                                                            <TextBlock Text="RAW" Style="{StaticResource Style.BlotterRightSectionTitle}"/>
-                                                        </Border>
-                                                        <TextBlock Foreground="{StaticResource Brush.TextMuted}"
-                               Text="Raw payload box + Copy raw/Copy JSON/Re-parse knappar här."/>
-                                                    </StackPanel>
-                                                </Border>
+
 
                                             </StackPanel>
                                         </ScrollViewer>

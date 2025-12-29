@@ -53,6 +53,7 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                 {
                     _selectedOptionTrade = value;
                     OnPropertyChanged(nameof(SelectedOptionTrade));
+                    OnPropertyChanged(nameof(SelectedTrade));
 
                     // När options-trade selectas, cleara linear
                     if (value != null && _selectedLinearTrade != null)
@@ -72,6 +73,7 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                 {
                     _selectedLinearTrade = value;
                     OnPropertyChanged(nameof(SelectedLinearTrade));
+                    OnPropertyChanged(nameof(SelectedTrade));
 
                     // När linear-trade selectas, cleara options
                     if (value != null && _selectedOptionTrade != null)
@@ -82,6 +84,11 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             }
         }
 
+        // Helper property för att få den trade som är selected (antingen Option eller Linear)
+        public TradeRowViewModel SelectedTrade
+        {
+            get => _selectedOptionTrade ?? _selectedLinearTrade;
+        }
 
         public BlotterRootViewModel(IBlotterReadServiceAsync readService)
         {
