@@ -35,6 +35,7 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             new ObservableCollection<TradeRowViewModel>();
 
         private readonly DispatcherTimer _pollTimer;
+        private bool _isRefreshing;         // reentrancy-skydd så polling inte kan stapla refresh-calls
 
         public bool IsBusy
         {
@@ -133,9 +134,9 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             _pollTimer.Interval = TimeSpan.FromSeconds(2); // default, kan ändras via StartPolling
             _pollTimer.Tick += async (s, e) =>
             {
-                // Ingen ny logik: tick = samma refresh som knappen.
-                await RefreshAsync().ConfigureAwait(true);
+                await TryRefreshFromTimerAsync().ConfigureAwait(true);
             };
+
         }
 
         public Task InitialLoadAsync()
@@ -160,15 +161,29 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                 _pollTimer.Stop();
         }
 
-
-        private async Task RefreshAsync()
+        private async Task TryRefreshFromTimerAsync()
         {
-            if (IsBusy)
+            // polling ska inte kunna köra refresh om en refresh redan pågår
+            if (IsBusy || _isRefreshing)
             {
                 return;
             }
 
-            // 2D: kom ihåg selection (id + vilken grid)
+            await RefreshAsync().ConfigureAwait(true);
+        }
+
+
+
+        private async Task RefreshAsync()
+        {
+            if (IsBusy || _isRefreshing)
+            {
+                return;
+            }
+
+            _isRefreshing = true;
+
+            // kom ihåg selection (id + vilken grid)
             var selectedOptionId = SelectedOptionTrade?.TradeId;
             var selectedLinearId = SelectedLinearTrade?.TradeId;
 
@@ -298,6 +313,7 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             finally
             {
                 IsBusy = false;
+                _isRefreshing = false;
             }
         }
 
