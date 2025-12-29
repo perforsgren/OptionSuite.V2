@@ -442,9 +442,9 @@
                                 </Grid.RowDefinitions>
 
                                 <!-- ==================== OPTIONS SECTION ==================== -->
-                                <Border Grid.Row="0" Style="{StaticResource Style.BlotterSectionHeader}">
+                                <Border Grid.Row="0" Style="{StaticResource Style.BlotterSectionHeader.Options}">
                                     <TextBlock Text="OPTIONS (VANILLA • NDO)" 
-                   Style="{StaticResource Style.BlotterSectionHeaderText}"/>
+                                               Style="{StaticResource Style.BlotterSectionHeaderText}"/>
                                 </Border>
 
                                 <!-- OPTIONS GRID - bind till SelectedOptionTrade -->
@@ -514,7 +514,7 @@
                                 </DataGrid>
 
                                 <!-- ==================== LINEAR SECTION ==================== -->
-                                <Border Grid.Row="3" Style="{StaticResource Style.BlotterSectionHeader}">
+                                <Border Grid.Row="3" Style="{StaticResource Style.BlotterSectionHeader.Linear}">
                                     <TextBlock Text="LINEAR (SPOT • FWD • SWAP • NDF)" 
                                                Style="{StaticResource Style.BlotterSectionHeaderText}"/>
                                 </Border>

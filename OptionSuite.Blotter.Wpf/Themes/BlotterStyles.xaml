@@ -307,12 +307,39 @@
         </Setter>
     </Style>
 
-    <!-- NYA: Section header style -->
+
+    <!-- NYA: Section header style - BASE -->
     <Style x:Key="Style.BlotterSectionHeader" TargetType="{x:Type Border}">
         <Setter Property="Background" Value="{StaticResource Blotter.Brush.ContentChrome}"/>
         <Setter Property="BorderBrush" Value="{StaticResource Brush.AccentSoft}"/>
-        <Setter Property="BorderThickness" Value="0,0,0,1"/>
-        <Setter Property="Padding" Value="12,6"/>
+        <Setter Property="BorderThickness" Value="3,0,0,1"/>
+        <Setter Property="Padding" Value="14,6"/>
+    </Style>
+
+    <!-- Options section header - CYAN accent -->
+    <Style x:Key="Style.BlotterSectionHeader.Options" TargetType="{x:Type Border}" BasedOn="{StaticResource Style.BlotterSectionHeader}">
+        <Setter Property="BorderBrush">
+            <Setter.Value>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                    <GradientStop Color="#2DD4BF" Offset="0.0"/>
+                    <GradientStop Color="{StaticResource Color.AccentSoft}" Offset="0.01"/>
+                    <GradientStop Color="{StaticResource Color.AccentSoft}" Offset="1.0"/>
+                </LinearGradientBrush>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Linear section header - PURPLE accent -->
+    <Style x:Key="Style.BlotterSectionHeader.Linear" TargetType="{x:Type Border}" BasedOn="{StaticResource Style.BlotterSectionHeader}">
+        <Setter Property="BorderBrush">
+            <Setter.Value>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                    <GradientStop Color="#A78BFA" Offset="0.0"/>
+                    <GradientStop Color="{StaticResource Color.AccentSoft}" Offset="0.01"/>
+                    <GradientStop Color="{StaticResource Color.AccentSoft}" Offset="1.0"/>
+                </LinearGradientBrush>
+            </Setter.Value>
+        </Setter>
     </Style>
 
     <Style x:Key="Style.BlotterSectionHeaderText" TargetType="{x:Type TextBlock}">
@@ -321,7 +348,6 @@
         <Setter Property="Foreground" Value="{StaticResource Brush.TextMuted}"/>
         <Setter Property="Opacity" Value="0.8"/>
     </Style>
-
 
     <!-- Status pill template -->
     <DataTemplate x:Key="Template.StatusPill">
@@ -1100,17 +1126,6 @@
                             <Setter TargetName="BottomLine" Property="Opacity" Value="0.6"/>
                         </MultiTrigger>
 
-                        <!-- Zebra striping för bättre läsbarhet -->
-                        <Trigger Property="AlternationIndex" Value="1">
-                            <Setter TargetName="RowFill" Property="Background">
-                                <Setter.Value>
-                                    <SolidColorBrush Color="#0AFFFFFF" Opacity="0.05"/>
-                                </Setter.Value>
-                            </Setter>
-                        </Trigger>
-
-
-
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
@@ -1185,15 +1200,6 @@
                             <Setter TargetName="TopLine" Property="Opacity" Value="0.6"/>
                             <Setter TargetName="BottomLine" Property="Opacity" Value="0.6"/>
                         </MultiTrigger>
-
-                        <!-- Zebra striping för bättre läsbarhet -->
-                        <Trigger Property="AlternationIndex" Value="1">
-                            <Setter TargetName="RowFill" Property="Background">
-                                <Setter.Value>
-                                    <SolidColorBrush Color="#0AFFFFFF" Opacity="0.05"/>
-                                </Setter.Value>
-                            </Setter>
-                        </Trigger>
 
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
