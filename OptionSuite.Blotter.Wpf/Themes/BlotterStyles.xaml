@@ -571,19 +571,37 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type RadioButton}">
-                    <Border x:Name="Bd"
-                        Background="Transparent"
-                        BorderBrush="Transparent"
-                        BorderThickness="1"
-                        CornerRadius="{StaticResource Radius.Button}"
-                        SnapsToDevicePixels="True">
-                        <TextBlock x:Name="ContentText"
-                               Text="{TemplateBinding Content}"
-                               Margin="{TemplateBinding Padding}"
-                               VerticalAlignment="Center"
-                               HorizontalAlignment="Center"
-                               Foreground="{StaticResource Brush.TextMuted2}"/>
-                    </Border>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="6"/>
+                        </Grid.RowDefinitions>
+
+                        <Border x:Name="Bd"
+                    Grid.Row="0"
+                    Background="Transparent"
+                    BorderBrush="Transparent"
+                    BorderThickness="1"
+                    CornerRadius="{StaticResource Radius.Button}"
+                    SnapsToDevicePixels="True">
+                            <TextBlock x:Name="ContentText"
+                           Text="{TemplateBinding Content}"
+                           Margin="{TemplateBinding Padding}"
+                           VerticalAlignment="Center"
+                           HorizontalAlignment="Center"
+                           Foreground="{StaticResource Brush.TextMuted2}"/>
+                        </Border>
+
+                        <!-- Underline for active tab -->
+                        <Border x:Name="Underline"
+                        Grid.Row="1"
+                        Height="2"
+                        Margin="10,0,10,0"
+                        VerticalAlignment="Bottom"
+                        Background="#2DD4BF"
+                        Opacity="0"
+                        CornerRadius="2"/>
+                    </Grid>
 
                     <ControlTemplate.Triggers>
 
@@ -604,22 +622,12 @@
                             </Setter>
                         </Trigger>
 
-                        <!-- Selected: soft glass fill with visible border -->
+                        <!-- Selected: cyan tint + underline -->
                         <Trigger Property="IsChecked" Value="True">
-                            <Setter TargetName="Bd" Property="Background">
-                                <Setter.Value>
-                                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                                        <GradientStop Color="#18FFFFFF" Offset="0.0"/>
-                                        <GradientStop Color="#0CFFFFFF" Offset="1.0"/>
-                                    </LinearGradientBrush>
-                                </Setter.Value>
-                            </Setter>
-                            <Setter TargetName="Bd" Property="BorderBrush">
-                                <Setter.Value>
-                                    <SolidColorBrush Color="#35FFFFFF"/>
-                                </Setter.Value>
-                            </Setter>
-                            <Setter TargetName="ContentText" Property="Foreground" Value="{StaticResource Brush.Text}"/>
+                            <Setter TargetName="Bd" Property="Background" Value="#1A2DD4BF"/>
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="#2DD4BF"/>
+                            <Setter TargetName="ContentText" Property="Foreground" Value="#2DD4BF"/>
+                            <Setter TargetName="Underline" Property="Opacity" Value="1"/>
                         </Trigger>
 
                         <!-- Selected + hover: slightly stronger -->
@@ -628,19 +636,8 @@
                                 <Condition Property="IsChecked" Value="True"/>
                                 <Condition Property="IsMouseOver" Value="True"/>
                             </MultiTrigger.Conditions>
-                            <Setter TargetName="Bd" Property="Background">
-                                <Setter.Value>
-                                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                                        <GradientStop Color="#20FFFFFF" Offset="0.0"/>
-                                        <GradientStop Color="#10FFFFFF" Offset="1.0"/>
-                                    </LinearGradientBrush>
-                                </Setter.Value>
-                            </Setter>
-                            <Setter TargetName="Bd" Property="BorderBrush">
-                                <Setter.Value>
-                                    <SolidColorBrush Color="#45FFFFFF"/>
-                                </Setter.Value>
-                            </Setter>
+                            <Setter TargetName="Bd" Property="Background" Value="#262DD4BF"/>
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="#2DD4BF"/>
                         </MultiTrigger>
 
                         <!-- Disabled -->
@@ -652,6 +649,7 @@
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
+
     </Style>
 
 
@@ -680,7 +678,7 @@
     <Style x:Key="Style.BlotterRightSectionTitle" TargetType="{x:Type TextBlock}">
         <Setter Property="FontSize" Value="11"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
-        <Setter Property="Foreground" Value="{StaticResource Brush.TextMuted2}"/>
+        <Setter Property="Foreground" Value="{StaticResource Brush.Text}"/>
         <Setter Property="Margin" Value="0,0,0,12"/>
         <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
     </Style>
@@ -715,6 +713,46 @@
         <Setter Property="Padding" Value="12,6"/>
         <Setter Property="Margin" Value="0,0,8,8"/>
     </Style>
+
+    <!-- Success chip (Ingested, Normalized) -->
+    <Style x:Key="Style.BlotterChip.Success" TargetType="{x:Type Border}" BasedOn="{StaticResource Style.BlotterChip}">
+        <Setter Property="BorderBrush" Value="#10B981"/>
+        <Setter Property="Background">
+            <Setter.Value>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                    <GradientStop Color="#1A10B981" Offset="0.0"/>
+                    <GradientStop Color="#0D10B981" Offset="1.0"/>
+                </LinearGradientBrush>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Warning/Pending chip (MX3 link: pending) -->
+    <Style x:Key="Style.BlotterChip.Warning" TargetType="{x:Type Border}" BasedOn="{StaticResource Style.BlotterChip}">
+        <Setter Property="BorderBrush" Value="#F59E0B"/>
+        <Setter Property="Background">
+            <Setter.Value>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                    <GradientStop Color="#1AF59E0B" Offset="0.0"/>
+                    <GradientStop Color="#0DF59E0B" Offset="1.0"/>
+                </LinearGradientBrush>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Info chip (Audit: 4 events) -->
+    <Style x:Key="Style.BlotterChip.Info" TargetType="{x:Type Border}" BasedOn="{StaticResource Style.BlotterChip}">
+        <Setter Property="BorderBrush" Value="#2DD4BF"/>
+        <Setter Property="Background">
+            <Setter.Value>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                    <GradientStop Color="#1A2DD4BF" Offset="0.0"/>
+                    <GradientStop Color="#0D2DD4BF" Offset="1.0"/>
+                </LinearGradientBrush>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
 
     <Style x:Key="Style.BlotterChipText" TargetType="{x:Type TextBlock}">
         <Setter Property="FontSize" Value="11"/>
@@ -1290,6 +1328,12 @@
     <!-- Numeric cell style - overrider HorizontalContentAlignment -->
     <Style x:Key="Style.BlotterDataGridCell.Numeric" TargetType="{x:Type DataGridCell}" BasedOn="{StaticResource Style.BlotterDataGridCell}">
         <Setter Property="HorizontalContentAlignment" Value="Right"/>
+    </Style>
+
+    <!-- Numeric header style - höger-alignerad text -->
+    <Style x:Key="Style.BlotterDataGridHeader.Numeric" TargetType="{x:Type DataGridColumnHeader}" BasedOn="{StaticResource Style.BlotterDataGridHeader}">
+        <Setter Property="HorizontalContentAlignment" Value="Right"/>
+        <Setter Property="Padding" Value="10,6,12,6"/>
     </Style>
 
 
