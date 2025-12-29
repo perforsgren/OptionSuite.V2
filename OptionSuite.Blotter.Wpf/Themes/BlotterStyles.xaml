@@ -1088,43 +1088,45 @@
                 <ControlTemplate TargetType="{x:Type DataGridRow}">
                     <Grid SnapsToDevicePixels="True">
                         <Border x:Name="RowFill" Background="Transparent" Panel.ZIndex="0"/>
+
+                        <!-- NEW flash -->
                         <Border x:Name="FlashOverlay" Background="#592DD4BF" BorderBrush="#402DD4BF" 
-                            BorderThickness="1" Opacity="0" Panel.ZIndex="1"/>
+            BorderThickness="1" Opacity="0" Panel.ZIndex="1"/>
+
+                        <!-- UPDATED flash (NY!) -->
+                        <Border x:Name="UpdatedOverlay" Background="{StaticResource Brush.AccentSoft}" 
+            Opacity="0" Panel.ZIndex="1"/>
+
                         <DataGridCellsPresenter Panel.ZIndex="2"/>
                         <Border x:Name="LeftAccent" Width="3" HorizontalAlignment="Left" 
-                            Background="Transparent" Panel.ZIndex="3"/>
+            Background="Transparent" Panel.ZIndex="3"/>
                         <Border x:Name="TopLine" Height="1" VerticalAlignment="Top" 
-                            Background="{StaticResource Blotter.Brush.RowLine}" Opacity="0" Panel.ZIndex="4"/>
+            Background="{StaticResource Blotter.Brush.RowLine}" Opacity="0" Panel.ZIndex="4"/>
                         <Border x:Name="BottomLine" Height="1" VerticalAlignment="Bottom" 
-                            Background="{StaticResource Blotter.Brush.RowLine}" Opacity="0" Panel.ZIndex="4"/>
+            Background="{StaticResource Blotter.Brush.RowLine}" Opacity="0" Panel.ZIndex="4"/>
                     </Grid>
 
                     <ControlTemplate.Triggers>
+                        <!-- IsNew trigger (redan finns) -->
                         <DataTrigger Binding="{Binding IsNew}" Value="True">
-                            <DataTrigger.EnterActions>
-                                <BeginStoryboard>
-                                    <Storyboard>
-                                        <DoubleAnimation Storyboard.TargetName="FlashOverlay" 
-                                                     Storyboard.TargetProperty="Opacity" 
-                                                     From="1.0" To="0.0" Duration="0:0:3.0"
-                                                     EasingFunction="{StaticResource EaseOutQuad}"/>
-                                    </Storyboard>
-                                </BeginStoryboard>
-                            </DataTrigger.EnterActions>
+                            <!-- ... -->
                         </DataTrigger>
 
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="RowFill" Property="Background">
-                                <Setter.Value>
-                                    <SolidColorBrush Color="#1A2DD4BF"/>
-                                </Setter.Value>
-                            </Setter>
+                        <!-- UPDATED trigger (NY! lägg till efter IsNew) -->
+                        <DataTrigger Binding="{Binding IsUpdated}" Value="True">
+                            <Setter TargetName="UpdatedOverlay" Property="Opacity" Value="0.3"/>
                             <Setter TargetName="TopLine" Property="Opacity" Value="1"/>
                             <Setter TargetName="BottomLine" Property="Opacity" Value="1"/>
-                            <Setter TargetName="LeftAccent" Property="Background" Value="#2DD4BF"/>
+                            <Setter TargetName="TopLine" Property="Background" Value="#2DD4BF"/>
+                            <Setter TargetName="BottomLine" Property="Background" Value="#2DD4BF"/>
+                        </DataTrigger>
+
+                        <!-- IsMouseOver trigger -->
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <!-- ... -->
                         </Trigger>
 
-                        <!-- Selected trigger (redan finns) -->
+                        <!-- IsSelected - stäng av UpdatedOverlay -->
                         <Trigger Property="IsSelected" Value="True">
                             <Setter TargetName="RowFill" Property="Background" Value="{StaticResource Blotter.Brush.RowSelectedGlass}"/>
                             <Setter TargetName="TopLine" Property="Opacity" Value="1"/>
@@ -1132,24 +1134,14 @@
                             <Setter TargetName="TopLine" Property="Background" Value="{StaticResource Blotter.Brush.RowLineStrong}"/>
                             <Setter TargetName="BottomLine" Property="Background" Value="{StaticResource Blotter.Brush.RowLineStrong}"/>
                             <Setter TargetName="LeftAccent" Property="Background" Value="#2DD4BF"/>
-                            <!-- eller #A78BFA för Linear -->
+                            <Setter TargetName="FlashOverlay" Property="Opacity" Value="0"/>
+                            <Setter TargetName="UpdatedOverlay" Property="Opacity" Value="0"/>
+                            <!-- NY! -->
                             <Setter Property="Foreground" Value="{StaticResource Brush.Text}"/>
                         </Trigger>
-
-                        <MultiTrigger>
-                            <MultiTrigger.Conditions>
-                                <Condition Property="IsSelected" Value="True"/>
-                                <Condition Property="Selector.IsSelectionActive" Value="False"/>
-                            </MultiTrigger.Conditions>
-                            <Setter Property="Foreground" Value="{StaticResource Brush.Text}"/>
-                            <Setter TargetName="RowFill" Property="Background" Value="{StaticResource Blotter.Brush.RowSelectedGlass}"/>
-                            <Setter TargetName="LeftAccent" Property="Background" Value="#2DD4BF"/>
-                            <Setter TargetName="TopLine" Property="Opacity" Value="0.6"/>
-                            <Setter TargetName="BottomLine" Property="Opacity" Value="0.6"/>
-                        </MultiTrigger>
-
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
+
             </Setter.Value>
         </Setter>
     </Style>
@@ -1163,68 +1155,46 @@
                     <Grid SnapsToDevicePixels="True">
                         <Border x:Name="RowFill" Background="Transparent" Panel.ZIndex="0"/>
                         <Border x:Name="FlashOverlay" Background="#592DD4BF" BorderBrush="#402DD4BF" 
-                            BorderThickness="1" Opacity="0" Panel.ZIndex="1"/>
+            BorderThickness="1" Opacity="0" Panel.ZIndex="1"/>
+
+                        <!-- UPDATED flash (NY!) -->
+                        <Border x:Name="UpdatedOverlay" Background="{StaticResource Brush.AccentSoft}" 
+            Opacity="0" Panel.ZIndex="1"/>
+
                         <DataGridCellsPresenter Panel.ZIndex="2"/>
                         <Border x:Name="LeftAccent" Width="3" HorizontalAlignment="Left" 
-                            Background="Transparent" Panel.ZIndex="3"/>
+            Background="Transparent" Panel.ZIndex="3"/>
                         <Border x:Name="TopLine" Height="1" VerticalAlignment="Top" 
-                            Background="{StaticResource Blotter.Brush.RowLine}" Opacity="0" Panel.ZIndex="4"/>
+            Background="{StaticResource Blotter.Brush.RowLine}" Opacity="0" Panel.ZIndex="4"/>
                         <Border x:Name="BottomLine" Height="1" VerticalAlignment="Bottom" 
-                            Background="{StaticResource Blotter.Brush.RowLine}" Opacity="0" Panel.ZIndex="4"/>
+            Background="{StaticResource Blotter.Brush.RowLine}" Opacity="0" Panel.ZIndex="4"/>
                     </Grid>
 
                     <ControlTemplate.Triggers>
                         <DataTrigger Binding="{Binding IsNew}" Value="True">
-                            <DataTrigger.EnterActions>
-                                <BeginStoryboard>
-                                    <Storyboard>
-                                        <DoubleAnimation Storyboard.TargetName="FlashOverlay" 
-                                                     Storyboard.TargetProperty="Opacity" 
-                                                     From="1.0" To="0.0" Duration="0:0:2.0"
-                                                     EasingFunction="{StaticResource EaseOutQuad}"/>
-                                    </Storyboard>
-                                </BeginStoryboard>
-                            </DataTrigger.EnterActions>
+                            <!-- ... redan finns ... -->
                         </DataTrigger>
 
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="RowFill" Property="Background">
-                                <Setter.Value>
-                                    <SolidColorBrush Color="#1AA78BFA"/>
-                                </Setter.Value>
-                            </Setter>
+                        <!-- UPDATED trigger (NY! för Linear med purple accent) -->
+                        <DataTrigger Binding="{Binding IsUpdated}" Value="True">
+                            <Setter TargetName="UpdatedOverlay" Property="Opacity" Value="0.3"/>
                             <Setter TargetName="TopLine" Property="Opacity" Value="1"/>
                             <Setter TargetName="BottomLine" Property="Opacity" Value="1"/>
-                            <Setter TargetName="LeftAccent" Property="Background" Value="#A78BFA"/>
-                        </Trigger>
+                            <Setter TargetName="TopLine" Property="Background" Value="#A78BFA"/>
+                            <Setter TargetName="BottomLine" Property="Background" Value="#A78BFA"/>
+                        </DataTrigger>
 
-
-                        <!-- Selected trigger (redan finns) -->
+                        <!-- IsMouseOver, IsSelected etc. -->
                         <Trigger Property="IsSelected" Value="True">
-                            <Setter TargetName="RowFill" Property="Background" Value="{StaticResource Blotter.Brush.RowSelectedGlass}"/>
-                            <Setter TargetName="TopLine" Property="Opacity" Value="1"/>
-                            <Setter TargetName="BottomLine" Property="Opacity" Value="1"/>
-                            <Setter TargetName="TopLine" Property="Background" Value="{StaticResource Blotter.Brush.RowLineStrong}"/>
-                            <Setter TargetName="BottomLine" Property="Background" Value="{StaticResource Blotter.Brush.RowLineStrong}"/>
-                            <Setter TargetName="LeftAccent" Property="Background" Value="#A78BFA"/>
-                            <!-- eller #A78BFA för Linear -->
-                            <Setter Property="Foreground" Value="{StaticResource Brush.Text}"/>
+                            <!-- ... -->
+                            <Setter TargetName="FlashOverlay" Property="Opacity" Value="0"/>
+                            <Setter TargetName="UpdatedOverlay" Property="Opacity" Value="0"/>
+                            <!-- NY! -->
+                            <!-- ... -->
                         </Trigger>
-
-                        <MultiTrigger>
-                            <MultiTrigger.Conditions>
-                                <Condition Property="IsSelected" Value="True"/>
-                                <Condition Property="Selector.IsSelectionActive" Value="False"/>
-                            </MultiTrigger.Conditions>
-                            <Setter Property="Foreground" Value="{StaticResource Brush.Text}"/>
-                            <Setter TargetName="RowFill" Property="Background" Value="{StaticResource Blotter.Brush.RowSelectedGlass}"/>
-                            <Setter TargetName="LeftAccent" Property="Background" Value="#A78BFA"/>
-                            <Setter TargetName="TopLine" Property="Opacity" Value="0.6"/>
-                            <Setter TargetName="BottomLine" Property="Opacity" Value="0.6"/>
-                        </MultiTrigger>
-
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
+
             </Setter.Value>
         </Setter>
     </Style>
