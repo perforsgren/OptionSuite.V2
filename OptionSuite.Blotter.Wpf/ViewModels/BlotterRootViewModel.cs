@@ -25,7 +25,12 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
         private string _lastError;
         private bool _isStale;
         private DateTime? _lastRefreshUtc;     
-        private TimeSpan? _lastRefreshDuration; 
+        private TimeSpan? _lastRefreshDuration;
+
+        private int _totalTrades;
+        private int _newCount;
+        private int _bookedCount;
+        private int _errorCount;  
 
         // state för diff
         private readonly HashSet<string> _seenTradeIds = new HashSet<string>(StringComparer.Ordinal);
@@ -56,6 +61,11 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
 
         public ObservableCollection<TradeRowViewModel> LinearTrades { get; } =
             new ObservableCollection<TradeRowViewModel>();
+
+        public int TotalTrades { get; set; } // + INPC
+        public int NewCount { get; set; }    // + INPC
+        public int BookedCount { get; set; } // + INPC
+        public int ErrorCount { get; set; }  // + INPC
 
         public bool IsBusy
         {
@@ -287,6 +297,11 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                 {
                     IsBusy = true;
 
+                    // Reset counts
+                    _newCount = 0;
+                    _bookedCount = 0;
+                    _errorCount = 0;
+
                     // ═══════════════════════════════════════════════════════════
                     // MÄTNING - starta stopwatch
                     // ═══════════════════════════════════════════════════════════
@@ -385,11 +400,23 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                         if (trade.IsNew)
                         {
                             _ = ClearFlagLaterAsync(trade, clearNew: true, delayMs: 20000);
+                            _newCount++;
                         }
 
                         if (trade.IsUpdated)
                         {
                             _ = ClearFlagLaterAsync(trade, clearNew: false, delayMs: 2000);
+                        }
+
+                        // Räkna status för filter badges
+                        var status = trade.Status?.ToUpperInvariant() ?? "";
+                        if (status == "BOOKED")
+                        {
+                            _bookedCount++;
+                        }
+                        else if (status.Contains("ERROR") || status == "REJECTED" || status == "FAILED")
+                        {
+                            _errorCount++;
                         }
                     }
 
@@ -427,10 +454,15 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                     RestoreSelection(selectedOptionId, selectedLinearId);
 
                     // ═══════════════════════════════════════════════════════════
-                    // SUCCESS - commit health metrics
+                    // SUCCESS - commit health metrics + counts
                     // ═══════════════════════════════════════════════════════════
 
                     sw.Stop();
+
+                    TotalTrades = newOptionTrades.Count + newLinearTrades.Count;
+                    NewCount = _newCount;
+                    BookedCount = _bookedCount;
+                    ErrorCount = _errorCount;
 
                     LastRefreshUtc = DateTime.UtcNow;
                     LastRefreshDuration = sw.Elapsed;
@@ -473,20 +505,20 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                     // VIKTIGT: Vi clearar INTE OptionTrades/LinearTrades här!
                     // Gamla data stannar kvar tills nästa lyckade refresh.
 
-                    // Notera: LastRefreshUtc/Duration ändras INTE vid fel
+                    // Notera: LastRefreshUtc/Duration och counts ändras INTE vid fel
                     // så statusraden kan visa "last OK refresh" timestamp
                 }
                 finally
                 {
                     IsBusy = false;
                 }
-
             }
             finally
             {
                 Interlocked.Exchange(ref _refreshInFlight, 0);
             }
         }
+
 
 
         private void RestoreSelection(string selectedOptionId, string selectedLinearId)

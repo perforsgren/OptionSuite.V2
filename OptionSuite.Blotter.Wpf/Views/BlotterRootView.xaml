@@ -352,62 +352,52 @@
                                 <StackPanel Orientation="Horizontal" Margin="12,10">
 
                                     <RadioButton GroupName="BlotterStatusFilter"
-                                                 Style="{StaticResource Style.BlotterStripToggle}"
-                                                 IsChecked="True">
+                     Style="{StaticResource Style.BlotterStripToggle}"
+                     IsChecked="True">
                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                             <TextBlock Text="All" Style="{StaticResource Style.BlotterStripLabel}"/>
                                             <Border Style="{StaticResource Style.BlotterCountPill}" Margin="8,0,0,0">
-                                                <TextBlock Text="128" Style="{StaticResource Style.BlotterCountPillText}"/>
+                                                <TextBlock Text="{Binding TotalTrades}" Style="{StaticResource Style.BlotterCountPillText}"/>
                                             </Border>
                                         </StackPanel>
                                     </RadioButton>
 
                                     <RadioButton GroupName="BlotterStatusFilter"
-                                                 Style="{StaticResource Style.BlotterStripToggle}"
-                                                 Margin="6,0,0,0">
+                     Style="{StaticResource Style.BlotterStripToggle}"
+                     Margin="6,0,0,0">
                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                             <TextBlock Text="New" Style="{StaticResource Style.BlotterStripLabel}"/>
                                             <Border Style="{StaticResource Style.BlotterCountPill}" Margin="8,0,0,0">
-                                                <TextBlock Text="5" Style="{StaticResource Style.BlotterCountPillText}"/>
+                                                <TextBlock Text="{Binding NewCount}" Style="{StaticResource Style.BlotterCountPillText}"/>
                                             </Border>
                                         </StackPanel>
                                     </RadioButton>
 
                                     <RadioButton GroupName="BlotterStatusFilter"
-                                                 Style="{StaticResource Style.BlotterStripToggle}"
-                                                 Margin="6,0,0,0">
+                     Style="{StaticResource Style.BlotterStripToggle}"
+                     Margin="6,0,0,0">
                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                             <TextBlock Text="Booked" Style="{StaticResource Style.BlotterStripLabel}"/>
                                             <Border Style="{StaticResource Style.BlotterCountPill}" Margin="8,0,0,0">
-                                                <TextBlock Text="94" Style="{StaticResource Style.BlotterCountPillText}"/>
+                                                <TextBlock Text="{Binding BookedCount}" Style="{StaticResource Style.BlotterCountPillText}"/>
                                             </Border>
                                         </StackPanel>
                                     </RadioButton>
 
                                     <RadioButton GroupName="BlotterStatusFilter"
-                                                 Style="{StaticResource Style.BlotterStripToggle}"
-                                                 Margin="6,0,0,0">
-                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                            <TextBlock Text="Rejected" Style="{StaticResource Style.BlotterStripLabel}"/>
-                                            <Border Style="{StaticResource Style.BlotterCountPill}" Margin="8,0,0,0">
-                                                <TextBlock Text="3" Style="{StaticResource Style.BlotterCountPillText}"/>
-                                            </Border>
-                                        </StackPanel>
-                                    </RadioButton>
-
-                                    <RadioButton GroupName="BlotterStatusFilter"
-                                                 Style="{StaticResource Style.BlotterStripToggle}"
-                                                 Margin="6,0,0,0">
+                     Style="{StaticResource Style.BlotterStripToggle}"
+                     Margin="6,0,0,0">
                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                             <TextBlock Text="Errors" Style="{StaticResource Style.BlotterStripLabel}"/>
                                             <Border Style="{StaticResource Style.BlotterCountPill}" Margin="8,0,0,0">
-                                                <TextBlock Text="2" Style="{StaticResource Style.BlotterCountPillText}"/>
+                                                <TextBlock Text="{Binding ErrorCount}" Style="{StaticResource Style.BlotterCountPillText}"/>
                                             </Border>
                                         </StackPanel>
                                     </RadioButton>
 
                                 </StackPanel>
                             </Border>
+
 
                             <!-- Separator filter -> content -->
                             <Border Grid.Row="3" Background="{StaticResource Brush.Border}"/>
@@ -1124,6 +1114,11 @@
                 </Border>
 
             </Grid>
+            
+            
+            
+            
+            
         </Border>
 
     </Grid>
