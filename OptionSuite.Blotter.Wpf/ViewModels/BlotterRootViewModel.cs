@@ -23,19 +23,24 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
         private bool _isBusy;
         private string _lastError;
 
-        // 2D: state för diff
+        // state för diff
         private readonly HashSet<string> _seenTradeIds = new HashSet<string>(StringComparer.Ordinal);
         private readonly Dictionary<string, string> _lastSignatureByTradeId = new Dictionary<string, string>(StringComparer.Ordinal);
 
-        // 3B: reentrancy-skydd (knapp + timer delar samma spärr)
+        // reentrancy-skydd (knapp + timer delar samma spärr)
         private int _refreshInFlight; // 0/1
 
-        // 3C: user input gate (debounce)
+        // user input gate (debounce)
         private bool _isUserInteracting;
         private readonly DispatcherTimer _userInteractionDebounceTimer;
 
         // Polling
         private readonly DispatcherTimer _pollTimer;
+
+        // Exponential backoff för error retry
+        private int _consecutiveErrors = 0;
+        private readonly int[] _backoffIntervals = { 2, 4, 8, 16, 30 };  // sekunder
+        private readonly TimeSpan _normalPollInterval = TimeSpan.FromSeconds(2);
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -75,7 +80,7 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
         }
 
         /// <summary>
-        /// 3C: True när användaren scrollar/klickar/editerar. Polling skippar då refresh.
+        /// True när användaren scrollar/klickar/editerar. Polling skippar då refresh.
         /// Den här flaggan sätts via NotifyUserInteraction() (från View).
         /// </summary>
         public bool IsUserInteracting
@@ -348,13 +353,36 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                         _lastSignatureByTradeId[kvp.Key] = kvp.Value;
                     }
 
-                    // återställ selection (utan att “cleara” den i onödan)
+                    // återställ selection (utan att "cleara" den i onödan)
                     RestoreSelection(selectedOptionId, selectedLinearId);
+
+                    // Success - resetta error count och poll interval
+                    if (_consecutiveErrors > 0)
+                    {
+                        _consecutiveErrors = 0;
+                        if (_pollTimer.IsEnabled)
+                        {
+                            _pollTimer.Interval = _normalPollInterval;
+                        }
+                    }
                 }
                 catch (Exception ex)
                 {
-                    LastError = ex.Message;
-                    System.Diagnostics.Debug.WriteLine(ex);
+                    _consecutiveErrors++;
+
+                    // Exponential backoff: 2s → 4s → 8s → 16s → 30s
+                    var backoffIndex = Math.Min(_consecutiveErrors - 1, _backoffIntervals.Length - 1);
+                    var backoffSeconds = _backoffIntervals[backoffIndex];
+                    var newInterval = TimeSpan.FromSeconds(backoffSeconds);
+
+                    // Uppdatera poll interval
+                    if (_pollTimer.IsEnabled)
+                    {
+                        _pollTimer.Interval = newInterval;
+                    }
+
+                    LastError = $"Refresh failed (retry #{_consecutiveErrors} in {backoffSeconds}s): {ex.Message}";
+                    System.Diagnostics.Debug.WriteLine($"[BlotterVM] Error #{_consecutiveErrors}, backoff to {backoffSeconds}s: {ex}");
                 }
                 finally
                 {

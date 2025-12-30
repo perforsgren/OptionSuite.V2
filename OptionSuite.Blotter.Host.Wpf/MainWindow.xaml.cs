@@ -18,9 +18,22 @@ namespace OptionSuite.Blotter.Host.Wpf
             Loaded += async (s, e) =>
             {
                 await _vm.InitialLoadAsync().ConfigureAwait(true);
-
-                // Starta polling efter första loaden
                 _vm.StartPolling(TimeSpan.FromSeconds(2));
+            };
+
+            // Pause/resume när window minimeras/återställs
+            StateChanged += (s, e) =>
+            {
+                switch (WindowState)
+                {
+                    case WindowState.Minimized:
+                        _vm.StopPolling();
+                        break;
+                    case WindowState.Normal:
+                    case WindowState.Maximized:
+                        _vm.StartPolling(TimeSpan.FromSeconds(2));
+                        break;
+                }
             };
 
             Closed += (s, e) =>
@@ -28,5 +41,6 @@ namespace OptionSuite.Blotter.Host.Wpf
                 _vm.StopPolling();
             };
         }
+
     }
 }
