@@ -135,6 +135,40 @@ namespace FxTradeHub.Services
             return rows;
         }
 
+
+        /// <summary>
+        /// Hämtar systemlänkar (TradeSystemLink) för en specifik trade (via StpTradeId).
+        /// </summary>
+        public Task<IReadOnlyList<TradeSystemLinkRow>> GetTradeSystemLinksAsync(long stpTradeId)
+        {
+            if (stpTradeId <= 0)
+            {
+                return Task.FromResult<IReadOnlyList<TradeSystemLinkRow>>(
+                    Array.Empty<TradeSystemLinkRow>());
+            }
+
+            return _repository.GetTradeSystemLinksAsync(stpTradeId);
+        }
+
+        /// <summary>
+        /// Hämtar senaste workflow events (TradeWorkflowEvent) för en specifik trade (via StpTradeId).
+        /// </summary>
+        public Task<IReadOnlyList<TradeWorkflowEventRow>> GetTradeWorkflowEventsAsync(long stpTradeId, int maxRows)
+        {
+            if (stpTradeId <= 0)
+            {
+                return Task.FromResult<IReadOnlyList<TradeWorkflowEventRow>>(
+                    Array.Empty<TradeWorkflowEventRow>());
+            }
+
+            if (maxRows <= 0)
+            {
+                maxRows = 50;
+            }
+
+            return _repository.GetTradeWorkflowEventsAsync(stpTradeId, maxRows);
+        }
+
         /// <summary>
         /// Mappar en TradeSystemSummary till en blotter-rad på trade-nivå.
         /// Denna metod fyller endast trade-fält (inte systemlänk-fält),

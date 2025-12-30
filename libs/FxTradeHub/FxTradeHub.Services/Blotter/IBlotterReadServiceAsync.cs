@@ -22,5 +22,17 @@ namespace FxTradeHub.Services
         /// (en rad per trade/system-kombination v1).
         /// </returns>
         Task<List<BlotterTradeRow>> GetBlotterTradesAsync(BlotterFilter filter);
+
+        /// <summary>
+        /// Hämtar systemlänkar (TradeSystemLink) för en specifik trade.
+        /// Read-only lista – UI ska inte mutera.
+        /// </summary>
+        Task<IReadOnlyList<TradeSystemLinkRow>> GetTradeSystemLinksAsync(long stpTradeId);
+
+        /// <summary>
+        /// Hämtar senaste workflow events (TradeWorkflowEvent) för en specifik trade.
+        /// Read-only lista – UI ska inte mutera.
+        /// </summary>
+        Task<IReadOnlyList<TradeWorkflowEventRow>> GetTradeWorkflowEventsAsync(long stpTradeId, int maxRows);
     }
 }
