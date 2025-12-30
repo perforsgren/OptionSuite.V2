@@ -361,10 +361,10 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                     IsBusy = true;
 
                     // Reset counts
-                    _newCount = 0;
-                    _pendingCount = 0;
-                    _bookedCount = 0;
-                    _errorCount = 0;
+                    int newCount = 0;
+                    int pendingCount = 0;
+                    int bookedCount = 0;
+                    int errorCount = 0;
 
                     // ═══════════════════════════════════════════════════════════
                     // MÄTNING - starta stopwatch
@@ -482,19 +482,19 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
 
                         if (status == "NEW")
                         {
-                            _newCount++;
+                            newCount++;  // ← Lokal variabel!
                         }
                         else if (status == "PENDING" || status == "PARTIAL")
                         {
-                            _pendingCount++;
+                            pendingCount++;  // ← Lokal variabel!
                         }
                         else if (status == "BOOKED")
                         {
-                            _bookedCount++;
+                            bookedCount++;  // ← Lokal variabel!
                         }
                         else if (status.Contains("ERROR") || status == "REJECTED" || status == "FAILED")
                         {
-                            _errorCount++;
+                            errorCount++;  // ← Lokal variabel!
                         }
 
 
@@ -541,10 +541,11 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                     sw.Stop();
 
                     TotalTrades = newOptionTrades.Count + newLinearTrades.Count;
-                    NewCount = _newCount;
-                    PendingCount = _pendingCount;
-                    BookedCount = _bookedCount;
-                    ErrorCount = _errorCount;
+                    NewCount = newCount;        // ← Från lokal variabel!
+                    PendingCount = pendingCount;  // ← Från lokal variabel!
+                    BookedCount = bookedCount;   // ← Från lokal variabel!
+                    ErrorCount = errorCount;     // ← Från lokal variabel!
+
 
                     // DEBUG: Logga counts
                     System.Diagnostics.Debug.WriteLine($"[DEBUG] Counts - Total:{TotalTrades}, New:{NewCount}, Pending:{PendingCount}, Booked:{BookedCount}, Error:{ErrorCount}");
