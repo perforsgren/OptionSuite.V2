@@ -529,7 +529,7 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                         // DEBUG: Logga första 5 trades för att se vad status faktiskt är
                         if (newOptionTrades.Count + newLinearTrades.Count <= 5)
                         {
-                            System.Diagnostics.Debug.WriteLine($"[DEBUG] Trade {tradeId}: Status='{trade.Status}' (upper='{status}'), IsNew={trade.IsNew}");
+                            //Debug.WriteLine($"[DEBUG] Trade {tradeId}: Status='{trade.Status}' (upper='{status}'), IsNew={trade.IsNew}");
                         }
 
                         if (status == "NEW")
@@ -600,7 +600,7 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
 
 
                     // DEBUG: Logga counts
-                    System.Diagnostics.Debug.WriteLine($"[DEBUG] Counts - Total:{TotalTrades}, New:{NewCount}, Pending:{PendingCount}, Booked:{BookedCount}, Error:{ErrorCount}");
+                    //Debug.WriteLine($"[DEBUG] Counts - Total:{TotalTrades}, New:{NewCount}, Pending:{PendingCount}, Booked:{BookedCount}, Error:{ErrorCount}");
 
                     LastRefreshUtc = DateTime.UtcNow;
                     LastRefreshDuration = sw.Elapsed;
