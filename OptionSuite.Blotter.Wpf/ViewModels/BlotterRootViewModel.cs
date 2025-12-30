@@ -11,6 +11,7 @@ using System.Windows.Threading;
 using FxTradeHub.Contracts.Dtos;
 using FxTradeHub.Services;
 using OptionSuite.Blotter.Wpf.Infrastructure;
+using System.Windows.Data;
 
 namespace OptionSuite.Blotter.Wpf.ViewModels
 {
@@ -31,7 +32,13 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
         private int _newCount;
         private int _pendingCount; 
         private int _bookedCount;
-        private int _errorCount;  
+        private int _errorCount;
+
+        // grid filtering
+
+        private ICollectionView _optionTradesView;
+        private ICollectionView _linearTradesView;
+        private string _currentStatusFilter = "ALL";
 
         // state för diff
         private readonly HashSet<string> _seenTradeIds = new HashSet<string>(StringComparer.Ordinal);
@@ -211,6 +218,31 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             }
         }
 
+        public ICollectionView OptionTradesView
+        {
+            get => _optionTradesView;
+            private set
+            {
+                if (_optionTradesView != value)
+                {
+                    _optionTradesView = value;
+                    OnPropertyChanged(nameof(OptionTradesView));
+                }
+            }
+        }
+
+        public ICollectionView LinearTradesView
+        {
+            get => _linearTradesView;
+            private set
+            {
+                if (_linearTradesView != value)
+                {
+                    _linearTradesView = value;
+                    OnPropertyChanged(nameof(LinearTradesView));
+                }
+            }
+        }
 
 
         public ICommand RefreshCommand { get; }
@@ -224,6 +256,13 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
         public ICommand DeleteRowCommand { get; }
         public ICommand CheckIfBookedCommand { get; }
         public ICommand OpenErrorLogCommand { get; }
+
+        public ICommand SetFilterAllCommand { get; }
+        public ICommand SetFilterNewCommand { get; }
+        public ICommand SetFilterPendingCommand { get; }
+        public ICommand SetFilterBookedCommand { get; }
+        public ICommand SetFilterErrorsCommand { get; }
+
 
         public TradeRowViewModel SelectedOptionTrade
         {
@@ -280,6 +319,19 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             DeleteRowCommand = new RelayCommand(() => ExecuteDeleteRow(), () => CanExecuteDeleteRow());
             CheckIfBookedCommand = new RelayCommand(() => ExecuteCheckIfBooked(), () => CanExecuteCheckIfBooked());
             OpenErrorLogCommand = new RelayCommand(() => ExecuteOpenErrorLog(), () => CanExecuteOpenErrorLog());
+
+            SetFilterAllCommand = new RelayCommand(() => SetStatusFilter("ALL"));
+            SetFilterNewCommand = new RelayCommand(() => SetStatusFilter("NEW"));
+            SetFilterPendingCommand = new RelayCommand(() => SetStatusFilter("PENDING"));
+            SetFilterBookedCommand = new RelayCommand(() => SetStatusFilter("BOOKED"));
+            SetFilterErrorsCommand = new RelayCommand(() => SetStatusFilter("ERRORS"));
+
+            // Skapa collection views för filtrering
+            _optionTradesView = CollectionViewSource.GetDefaultView(OptionTrades);
+            _linearTradesView = CollectionViewSource.GetDefaultView(LinearTrades);
+            _optionTradesView.Filter = FilterTrade;
+            _linearTradesView.Filter = FilterTrade;
+
 
             // debounce-timer som släcker IsUserInteracting efter kort “idle”
             _userInteractionDebounceTimer = new DispatcherTimer(DispatcherPriority.Background);
@@ -555,6 +607,11 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                     LastError = null;
                     IsStale = false;
 
+                    // Refresh filter views
+                    _optionTradesView?.Refresh();
+                    _linearTradesView?.Refresh();
+
+
                     if (_consecutiveErrors > 0)
                     {
                         _consecutiveErrors = 0;
@@ -813,5 +870,30 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
         {
             return SelectedOptionTrade ?? SelectedLinearTrade;
         }
+
+        private bool FilterTrade(object obj)
+        {
+            if (obj is not TradeRowViewModel trade) return false;
+            if (_currentStatusFilter == "ALL") return true;
+
+            var status = trade.Status?.ToUpperInvariant() ?? "";
+
+            return _currentStatusFilter switch
+            {
+                "NEW" => status == "NEW",
+                "PENDING" => status == "PENDING" || status == "PARTIAL",
+                "BOOKED" => status == "BOOKED",
+                "ERRORS" => status.Contains("ERROR") || status == "REJECTED" || status == "FAILED",
+                _ => true
+            };
+        }
+
+        public void SetStatusFilter(string filter)
+        {
+            _currentStatusFilter = filter?.ToUpperInvariant() ?? "ALL";
+            _optionTradesView?.Refresh();
+            _linearTradesView?.Refresh();
+        }
+
     }
 }

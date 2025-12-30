@@ -352,8 +352,10 @@
                                 <StackPanel Orientation="Horizontal" Margin="12,10">
 
                                     <RadioButton GroupName="BlotterStatusFilter"
-                     Style="{StaticResource Style.BlotterStripToggle}"
-                     IsChecked="True">
+                                                 Style="{StaticResource Style.BlotterStripToggle}"
+                                                 IsChecked="True"
+                                                 Command="{Binding SetFilterAllCommand}"
+                                                 CommandParameter="ALL">
                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                             <TextBlock Text="All" Style="{StaticResource Style.BlotterStripLabel}"/>
                                             <Border Style="{StaticResource Style.BlotterCountPill}" Margin="8,0,0,0">
@@ -363,8 +365,10 @@
                                     </RadioButton>
 
                                     <RadioButton GroupName="BlotterStatusFilter"
-                     Style="{StaticResource Style.BlotterStripToggle}"
-                     Margin="6,0,0,0">
+                                                 Style="{StaticResource Style.BlotterStripToggle}"
+                                                 Margin="6,0,0,0"
+                                                 Command="{Binding SetFilterNewCommand}"
+                                                 CommandParameter="NEW">
                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                             <TextBlock Text="New" Style="{StaticResource Style.BlotterStripLabel}"/>
                                             <Border Style="{StaticResource Style.BlotterCountPill}" Margin="8,0,0,0">
@@ -374,8 +378,10 @@
                                     </RadioButton>
 
                                     <RadioButton GroupName="BlotterStatusFilter"
-             Style="{StaticResource Style.BlotterStripToggle}"
-             Margin="6,0,0,0">
+                                                 Style="{StaticResource Style.BlotterStripToggle}"
+                                                 Margin="6,0,0,0"
+                                                 Command="{Binding SetFilterPendingCommand}"
+                                                 CommandParameter="PENDING">
                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                             <TextBlock Text="Pending" Style="{StaticResource Style.BlotterStripLabel}"/>
                                             <Border Style="{StaticResource Style.BlotterCountPill}" Margin="8,0,0,0">
@@ -384,10 +390,11 @@
                                         </StackPanel>
                                     </RadioButton>
 
-
                                     <RadioButton GroupName="BlotterStatusFilter"
-                     Style="{StaticResource Style.BlotterStripToggle}"
-                     Margin="6,0,0,0">
+                                                 Style="{StaticResource Style.BlotterStripToggle}"
+                                                 Margin="6,0,0,0"
+                                                 Command="{Binding SetFilterBookedCommand}"
+                                                 CommandParameter="BOOKED">
                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                             <TextBlock Text="Booked" Style="{StaticResource Style.BlotterStripLabel}"/>
                                             <Border Style="{StaticResource Style.BlotterCountPill}" Margin="8,0,0,0">
@@ -397,8 +404,10 @@
                                     </RadioButton>
 
                                     <RadioButton GroupName="BlotterStatusFilter"
-                     Style="{StaticResource Style.BlotterStripToggle}"
-                     Margin="6,0,0,0">
+                                                 Style="{StaticResource Style.BlotterStripToggle}"
+                                                 Margin="6,0,0,0"
+                                                 Command="{Binding SetFilterErrorsCommand}"
+                                                 CommandParameter="ERRORS">
                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                             <TextBlock Text="Errors" Style="{StaticResource Style.BlotterStripLabel}"/>
                                             <Border Style="{StaticResource Style.BlotterCountPill}" Margin="8,0,0,0">
@@ -406,6 +415,7 @@
                                             </Border>
                                         </StackPanel>
                                     </RadioButton>
+
 
                                 </StackPanel>
                             </Border>
@@ -451,7 +461,7 @@
                                 <DataGrid Grid.Row="1"
                                           x:Name="OptionGrid"
                                           Style="{StaticResource Style.BlotterDataGrid}"
-                                          ItemsSource="{Binding OptionTrades}"
+                                          ItemsSource="{Binding OptionTradesView}"
                                           SelectedItem="{Binding SelectedOptionTrade, Mode=TwoWay}"
                                           ColumnHeaderStyle="{StaticResource Style.BlotterDataGridHeader}"
                                           CellStyle="{StaticResource Style.BlotterDataGridCell}"
@@ -526,7 +536,7 @@
                                 <DataGrid Grid.Row="4"
                                           x:Name="LinearGrid"
                                           Style="{StaticResource Style.BlotterDataGrid}"
-                                          ItemsSource="{Binding LinearTrades}"
+                                          ItemsSource="{Binding LinearTradesView}"
                                           SelectedItem="{Binding SelectedLinearTrade, Mode=TwoWay}"
                                           ColumnHeaderStyle="{StaticResource Style.BlotterDataGridHeader}"
                                           CellStyle="{StaticResource Style.BlotterDataGridCell}"
