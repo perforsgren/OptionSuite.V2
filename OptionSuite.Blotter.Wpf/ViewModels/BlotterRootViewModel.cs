@@ -29,6 +29,7 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
 
         private int _totalTrades;
         private int _newCount;
+        private int _pendingCount; 
         private int _bookedCount;
         private int _errorCount;  
 
@@ -61,11 +62,6 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
 
         public ObservableCollection<TradeRowViewModel> LinearTrades { get; } =
             new ObservableCollection<TradeRowViewModel>();
-
-        public int TotalTrades { get; set; } // + INPC
-        public int NewCount { get; set; }    // + INPC
-        public int BookedCount { get; set; } // + INPC
-        public int ErrorCount { get; set; }  // + INPC
 
         public bool IsBusy
         {
@@ -149,6 +145,73 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                 }
             }
         }
+
+        public int TotalTrades
+        {
+            get => _totalTrades;
+            private set
+            {
+                if (_totalTrades != value)
+                {
+                    _totalTrades = value;
+                    OnPropertyChanged(nameof(TotalTrades));
+                }
+            }
+        }
+
+        public int NewCount
+        {
+            get => _newCount;
+            private set
+            {
+                if (_newCount != value)
+                {
+                    _newCount = value;
+                    OnPropertyChanged(nameof(NewCount));
+                }
+            }
+        }
+
+        public int BookedCount
+        {
+            get => _bookedCount;
+            private set
+            {
+                if (_bookedCount != value)
+                {
+                    _bookedCount = value;
+                    OnPropertyChanged(nameof(BookedCount));
+                }
+            }
+        }
+
+        public int ErrorCount
+        {
+            get => _errorCount;
+            private set
+            {
+                if (_errorCount != value)
+                {
+                    _errorCount = value;
+                    OnPropertyChanged(nameof(ErrorCount));
+                }
+            }
+        }
+
+        public int PendingCount
+        {
+            get => _pendingCount;
+            private set
+            {
+                if (_pendingCount != value)
+                {
+                    _pendingCount = value;
+                    OnPropertyChanged(nameof(PendingCount));
+                }
+            }
+        }
+
+
 
         public ICommand RefreshCommand { get; }
 
@@ -299,6 +362,7 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
 
                     // Reset counts
                     _newCount = 0;
+                    _pendingCount = 0;
                     _bookedCount = 0;
                     _errorCount = 0;
 
@@ -414,10 +478,15 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                         {
                             _bookedCount++;
                         }
+                        else if (status == "PENDING" || status == "PARTIAL") 
+                        {
+                            _pendingCount++;
+                        }
                         else if (status.Contains("ERROR") || status == "REJECTED" || status == "FAILED")
                         {
                             _errorCount++;
                         }
+
                     }
 
                     // ═══════════════════════════════════════════════════════════
@@ -461,6 +530,7 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
 
                     TotalTrades = newOptionTrades.Count + newLinearTrades.Count;
                     NewCount = _newCount;
+                    PendingCount = _pendingCount;
                     BookedCount = _bookedCount;
                     ErrorCount = _errorCount;
 
