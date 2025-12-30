@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Threading.Tasks;
+using FxTradeHub.Contracts.Dtos;
 using FxTradeHub.Domain.Entities;
 using FxTradeHub.Domain.Enums;
 using FxTradeHub.Domain.Interfaces;
@@ -351,6 +352,123 @@ WHERE t.IsDeleted = 0
 
             return results;
         }
+
+        public async Task<IReadOnlyList<TradeSystemLinkRow>> GetTradeSystemLinksAsync(string tradeId)
+        {
+            const string sql = @"
+SELECT
+    tsl.TradeSystemLinkId,
+    tsl.TradeId,
+    tsl.SystemCode,
+    tsl.Status,
+    tsl.SystemTradeId,
+    tsl.LastStatusUtc,
+    tsl.LastError,
+    tsl.PortfolioCode,
+    tsl.BookFlag,
+    tsl.StpMode,
+    tsl.ImportedBy,
+    tsl.BookedBy,
+    tsl.FirstBookedUtc,
+    tsl.LastBookedUtc,
+    tsl.StpFlag,
+    tsl.SystemCreatedUtc,
+    tsl.IsDeleted
+FROM trade_stp.TradeSystemLink tsl
+WHERE tsl.TradeId = @tradeId
+ORDER BY tsl.SystemCode;
+";
+
+            var rows = new List<TradeSystemLinkRow>();
+
+            using (var conn = CreateConnection())
+            using (var cmd = new MySqlCommand(sql, conn))
+            {
+                cmd.Parameters.AddWithValue("@tradeId", tradeId);
+
+                await conn.OpenAsync().ConfigureAwait(false);
+
+                using (var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false))
+                {
+                    while (await reader.ReadAsync().ConfigureAwait(false))
+                    {
+                        rows.Add(new TradeSystemLinkRow
+                        {
+                            SystemLinkId = reader.GetInt64(reader.GetOrdinal("TradeSystemLinkId")),
+                            TradeId = reader.GetString(reader.GetOrdinal("TradeId")),
+                            SystemCode = reader.GetString(reader.GetOrdinal("SystemCode")),
+                            Status = reader.GetString(reader.GetOrdinal("Status")),
+                            SystemTradeId = reader["SystemTradeId"] as string,
+                            LastStatusUtc = reader["LastStatusUtc"] as DateTime?,
+                            LastError = reader["LastError"] as string,
+                            PortfolioCode = reader["PortfolioCode"] as string,
+                            BookFlag = reader["BookFlag"] as bool?,
+                            StpMode = reader["StpMode"] as string,
+                            ImportedBy = reader["ImportedBy"] as string,
+                            BookedBy = reader["BookedBy"] as string,
+                            FirstBookedUtc = reader["FirstBookedUtc"] as DateTime?,
+                            LastBookedUtc = reader["LastBookedUtc"] as DateTime?,
+                            StpFlag = reader["StpFlag"] as bool?,
+                            SystemCreatedUtc = reader["SystemCreatedUtc"] as DateTime?,
+                            IsDeleted = reader.GetBoolean(reader.GetOrdinal("IsDeleted"))
+
+                        });
+                    }
+                }
+            }
+
+            return rows;
+        }
+
+        public async Task<IReadOnlyList<TradeWorkflowEventRow>> GetTradeWorkflowEventsAsync(
+    string tradeId,
+    int maxRows)
+        {
+            const string sql = @"
+SELECT
+    twe.TradeWorkflowEventId,
+    twe.TradeId,
+    twe.EventTimeUtc,
+    twe.EventType,
+    twe.Message,
+    twe.CreatedBy
+FROM trade_stp.TradeWorkflowEvent twe
+WHERE twe.TradeId = @tradeId
+ORDER BY twe.EventTimeUtc DESC
+LIMIT @maxRows;
+";
+
+            var rows = new List<TradeWorkflowEventRow>();
+
+            using (var conn = CreateConnection())
+            using (var cmd = new MySqlCommand(sql, conn))
+            {
+                cmd.Parameters.AddWithValue("@tradeId", tradeId);
+                cmd.Parameters.AddWithValue("@maxRows", maxRows);
+
+                await conn.OpenAsync().ConfigureAwait(false);
+
+                using (var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false))
+                {
+                    while (await reader.ReadAsync().ConfigureAwait(false))
+                    {
+                        rows.Add(new TradeWorkflowEventRow
+                        {
+                            WorkflowEventId = reader.GetInt64(reader.GetOrdinal("TradeWorkflowEventId")),
+                            TradeId = reader.GetString(reader.GetOrdinal("TradeId")),
+                            EventTimeUtc = reader.GetDateTime(reader.GetOrdinal("EventTimeUtc")),
+                            EventType = reader.GetString(reader.GetOrdinal("EventType")),
+                            Message = reader["Message"] as string,
+                            CreatedBy = reader["CreatedBy"] as string
+
+                        });
+                    }
+                }
+            }
+
+            return rows;
+        }
+
 
         /// <summary>
         /// Mappar databaskod (VARCHAR) till ProductType-enum.

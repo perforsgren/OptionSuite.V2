@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using FxTradeHub.Contracts.Dtos;
 using FxTradeHub.Domain.Entities;
 
 namespace FxTradeHub.Domain.Interfaces
@@ -44,5 +45,17 @@ namespace FxTradeHub.Domain.Interfaces
             string currencyPair,
             int? maxRows,
             string currentUserId);
+
+
+        // =========================================================
+        // D1.2 – Read support för Blotter detail panels
+        // =========================================================
+
+        Task<IReadOnlyList<TradeSystemLinkRow>> GetTradeSystemLinksAsync(string tradeId);
+
+        Task<IReadOnlyList<TradeWorkflowEventRow>> GetTradeWorkflowEventsAsync(
+            string tradeId,
+            int maxRows);
+
     }
 }
