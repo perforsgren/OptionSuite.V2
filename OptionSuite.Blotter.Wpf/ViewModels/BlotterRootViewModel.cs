@@ -166,7 +166,7 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
 
             // debounce-timer som släcker IsUserInteracting efter kort “idle”
             _userInteractionDebounceTimer = new DispatcherTimer(DispatcherPriority.Background);
-            _userInteractionDebounceTimer.Interval = TimeSpan.FromMilliseconds(2000);
+            _userInteractionDebounceTimer.Interval = TimeSpan.FromMilliseconds(800);
             _userInteractionDebounceTimer.Tick += (s, e) =>
             {
                 _userInteractionDebounceTimer.Stop();
@@ -336,7 +336,7 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
 
                         if (trade.IsUpdated)
                         {
-                            _ = ClearFlagLaterAsync(trade, clearNew: false, delayMs: 2000);
+                            _ = ClearFlagLaterAsync(trade, clearNew: false, delayMs: 5000);
                         }
                     }
 

@@ -1106,15 +1106,24 @@
                     </Grid>
 
                     <ControlTemplate.Triggers>
-                        <!-- IsNew - Flash animation -->
-                        <DataTrigger Binding="{Binding IsNew}" Value="True">
+
+                        <!-- IsUpdated - Wash + hairlines -->
+                        <DataTrigger Binding="{Binding IsUpdated}" Value="True">
                             <DataTrigger.EnterActions>
                                 <BeginStoryboard>
                                     <Storyboard>
-                                        <DoubleAnimation Storyboard.TargetName="FlashOverlay" 
-                                     Storyboard.TargetProperty="Opacity" 
-                                     From="1.0" To="0.0" Duration="0:0:3.0"
-                                     EasingFunction="{StaticResource EaseOutQuad}"/>
+                                        <DoubleAnimation Storyboard.TargetName="UpdatedOverlay" 
+                                 Storyboard.TargetProperty="Opacity" 
+                                 From="0.5" To="0.0" Duration="0:0:2.0"
+                                 EasingFunction="{StaticResource EaseOutQuad}"/>
+                                        <DoubleAnimation Storyboard.TargetName="TopLine" 
+                                 Storyboard.TargetProperty="Opacity" 
+                                 From="1.0" To="0.0" Duration="0:0:2.0"
+                                 EasingFunction="{StaticResource EaseOutQuad}"/>
+                                        <DoubleAnimation Storyboard.TargetName="BottomLine" 
+                                 Storyboard.TargetProperty="Opacity" 
+                                 From="1.0" To="0.0" Duration="0:0:2.0"
+                                 EasingFunction="{StaticResource EaseOutQuad}"/>
                                     </Storyboard>
                                 </BeginStoryboard>
                             </DataTrigger.EnterActions>
@@ -1199,19 +1208,29 @@
                     </Grid>
 
                     <ControlTemplate.Triggers>
-                        <!-- IsNew - Flash animation -->
-                        <DataTrigger Binding="{Binding IsNew}" Value="True">
+
+                        <!-- IsUpdated - Wash + hairlines (purple) -->
+                        <DataTrigger Binding="{Binding IsUpdated}" Value="True">
                             <DataTrigger.EnterActions>
                                 <BeginStoryboard>
                                     <Storyboard>
-                                        <DoubleAnimation Storyboard.TargetName="FlashOverlay" 
-                                     Storyboard.TargetProperty="Opacity" 
-                                     From="1.0" To="0.0" Duration="0:0:3.0"
-                                     EasingFunction="{StaticResource EaseOutQuad}"/>
+                                        <DoubleAnimation Storyboard.TargetName="UpdatedOverlay" 
+                                 Storyboard.TargetProperty="Opacity" 
+                                 From="0.5" To="0.0" Duration="0:0:2.0"
+                                 EasingFunction="{StaticResource EaseOutQuad}"/>
+                                        <DoubleAnimation Storyboard.TargetName="TopLine" 
+                                 Storyboard.TargetProperty="Opacity" 
+                                 From="1.0" To="0.0" Duration="0:0:2.0"
+                                 EasingFunction="{StaticResource EaseOutQuad}"/>
+                                        <DoubleAnimation Storyboard.TargetName="BottomLine" 
+                                 Storyboard.TargetProperty="Opacity" 
+                                 From="1.0" To="0.0" Duration="0:0:2.0"
+                                 EasingFunction="{StaticResource EaseOutQuad}"/>
                                     </Storyboard>
                                 </BeginStoryboard>
                             </DataTrigger.EnterActions>
                         </DataTrigger>
+
 
                         <!-- IsUpdated - Wash + hairlines (purple) -->
                         <DataTrigger Binding="{Binding IsUpdated}" Value="True">
