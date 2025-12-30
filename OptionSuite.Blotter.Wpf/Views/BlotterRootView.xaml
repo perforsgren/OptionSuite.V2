@@ -424,8 +424,6 @@
                                 <ColumnDefinition Width="360"/>
                             </Grid.ColumnDefinitions>
 
-                            <!-- LEFT: DataGrid -->
-                            <!-- Ersätt din nuvarande DataGrid med detta: -->
 
                             <Grid>
                                 <Grid.RowDefinitions>
@@ -449,6 +447,7 @@
 
                                 <!-- OPTIONS GRID - bind till SelectedOptionTrade -->
                                 <DataGrid Grid.Row="1"
+                                          x:Name="OptionGrid"
                                           Style="{StaticResource Style.BlotterDataGrid}"
                                           ItemsSource="{Binding OptionTrades}"
                                           SelectedItem="{Binding SelectedOptionTrade, Mode=TwoWay}"
@@ -523,6 +522,7 @@
                                 </Border>
 
                                 <DataGrid Grid.Row="4"
+                                          x:Name="LinearGrid"
                                           Style="{StaticResource Style.BlotterDataGrid}"
                                           ItemsSource="{Binding LinearTrades}"
                                           SelectedItem="{Binding SelectedLinearTrade, Mode=TwoWay}"
