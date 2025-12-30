@@ -464,7 +464,6 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                         if (trade.IsNew)
                         {
                             _ = ClearFlagLaterAsync(trade, clearNew: true, delayMs: 20000);
-                            _newCount++;
                         }
 
                         if (trade.IsUpdated)
@@ -474,18 +473,31 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
 
                         // Räkna status för filter badges
                         var status = trade.Status?.ToUpperInvariant() ?? "";
-                        if (status == "BOOKED")
+
+                        // DEBUG: Logga första 5 trades för att se vad status faktiskt är
+                        if (newOptionTrades.Count + newLinearTrades.Count <= 5)
                         {
-                            _bookedCount++;
+                            System.Diagnostics.Debug.WriteLine($"[DEBUG] Trade {tradeId}: Status='{trade.Status}' (upper='{status}'), IsNew={trade.IsNew}");
                         }
-                        else if (status == "PENDING" || status == "PARTIAL") 
+
+                        if (status == "NEW")
+                        {
+                            _newCount++;
+                        }
+                        else if (status == "PENDING" || status == "PARTIAL")
                         {
                             _pendingCount++;
+                        }
+                        else if (status == "BOOKED")
+                        {
+                            _bookedCount++;
                         }
                         else if (status.Contains("ERROR") || status == "REJECTED" || status == "FAILED")
                         {
                             _errorCount++;
                         }
+
+
 
                     }
 
@@ -533,6 +545,9 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                     PendingCount = _pendingCount;
                     BookedCount = _bookedCount;
                     ErrorCount = _errorCount;
+
+                    // DEBUG: Logga counts
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] Counts - Total:{TotalTrades}, New:{NewCount}, Pending:{PendingCount}, Booked:{BookedCount}, Error:{ErrorCount}");
 
                     LastRefreshUtc = DateTime.UtcNow;
                     LastRefreshDuration = sw.Elapsed;
