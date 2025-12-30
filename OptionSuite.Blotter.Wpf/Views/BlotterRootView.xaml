@@ -352,62 +352,64 @@
                                 <StackPanel Orientation="Horizontal" Margin="12,10">
 
                                     <RadioButton GroupName="BlotterStatusFilter"
-                                                 Style="{StaticResource Style.BlotterStripToggle}"
-                                                 IsChecked="True">
+                     Style="{StaticResource Style.BlotterStripToggle}"
+                     IsChecked="True">
                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                             <TextBlock Text="All" Style="{StaticResource Style.BlotterStripLabel}"/>
                                             <Border Style="{StaticResource Style.BlotterCountPill}" Margin="8,0,0,0">
-                                                <TextBlock Text="128" Style="{StaticResource Style.BlotterCountPillText}"/>
+                                                <TextBlock Text="{Binding TotalTrades}" Style="{StaticResource Style.BlotterCountPillText}"/>
                                             </Border>
                                         </StackPanel>
                                     </RadioButton>
 
                                     <RadioButton GroupName="BlotterStatusFilter"
-                                                 Style="{StaticResource Style.BlotterStripToggle}"
-                                                 Margin="6,0,0,0">
+                     Style="{StaticResource Style.BlotterStripToggle}"
+                     Margin="6,0,0,0">
                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                             <TextBlock Text="New" Style="{StaticResource Style.BlotterStripLabel}"/>
                                             <Border Style="{StaticResource Style.BlotterCountPill}" Margin="8,0,0,0">
-                                                <TextBlock Text="5" Style="{StaticResource Style.BlotterCountPillText}"/>
+                                                <TextBlock Text="{Binding NewCount}" Style="{StaticResource Style.BlotterCountPillText}"/>
                                             </Border>
                                         </StackPanel>
                                     </RadioButton>
 
                                     <RadioButton GroupName="BlotterStatusFilter"
-                                                 Style="{StaticResource Style.BlotterStripToggle}"
-                                                 Margin="6,0,0,0">
+             Style="{StaticResource Style.BlotterStripToggle}"
+             Margin="6,0,0,0">
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <TextBlock Text="Pending" Style="{StaticResource Style.BlotterStripLabel}"/>
+                                            <Border Style="{StaticResource Style.BlotterCountPill}" Margin="8,0,0,0">
+                                                <TextBlock Text="{Binding PendingCount}" Style="{StaticResource Style.BlotterCountPillText}"/>
+                                            </Border>
+                                        </StackPanel>
+                                    </RadioButton>
+
+
+                                    <RadioButton GroupName="BlotterStatusFilter"
+                     Style="{StaticResource Style.BlotterStripToggle}"
+                     Margin="6,0,0,0">
                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                             <TextBlock Text="Booked" Style="{StaticResource Style.BlotterStripLabel}"/>
                                             <Border Style="{StaticResource Style.BlotterCountPill}" Margin="8,0,0,0">
-                                                <TextBlock Text="94" Style="{StaticResource Style.BlotterCountPillText}"/>
+                                                <TextBlock Text="{Binding BookedCount}" Style="{StaticResource Style.BlotterCountPillText}"/>
                                             </Border>
                                         </StackPanel>
                                     </RadioButton>
 
                                     <RadioButton GroupName="BlotterStatusFilter"
-                                                 Style="{StaticResource Style.BlotterStripToggle}"
-                                                 Margin="6,0,0,0">
-                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                            <TextBlock Text="Rejected" Style="{StaticResource Style.BlotterStripLabel}"/>
-                                            <Border Style="{StaticResource Style.BlotterCountPill}" Margin="8,0,0,0">
-                                                <TextBlock Text="3" Style="{StaticResource Style.BlotterCountPillText}"/>
-                                            </Border>
-                                        </StackPanel>
-                                    </RadioButton>
-
-                                    <RadioButton GroupName="BlotterStatusFilter"
-                                                 Style="{StaticResource Style.BlotterStripToggle}"
-                                                 Margin="6,0,0,0">
+                     Style="{StaticResource Style.BlotterStripToggle}"
+                     Margin="6,0,0,0">
                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                             <TextBlock Text="Errors" Style="{StaticResource Style.BlotterStripLabel}"/>
                                             <Border Style="{StaticResource Style.BlotterCountPill}" Margin="8,0,0,0">
-                                                <TextBlock Text="2" Style="{StaticResource Style.BlotterCountPillText}"/>
+                                                <TextBlock Text="{Binding ErrorCount}" Style="{StaticResource Style.BlotterCountPillText}"/>
                                             </Border>
                                         </StackPanel>
                                     </RadioButton>
 
                                 </StackPanel>
                             </Border>
+
 
                             <!-- Separator filter -> content -->
                             <Border Grid.Row="3" Background="{StaticResource Brush.Border}"/>
@@ -1124,6 +1126,48 @@
                 </Border>
 
             </Grid>
+
+            <!-- STATUSRAD - diskret längst ner -->
+            <Border Background="{StaticResource Brush.Panel2}"
+                    BorderBrush="{StaticResource Brush.BorderSoft}"
+                    BorderThickness="0,1,0,0"
+                    Padding="8,4">
+
+                <TextBlock FontSize="10" HorizontalAlignment="Right">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Foreground" Value="{StaticResource Brush.TextMuted2}"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsStale}" Value="True">
+                                    <Setter Property="Foreground" Value="#EF4444"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                    
+                    <Run Text="⚠ ">
+                        <Run.Style>
+                            <Style TargetType="Run">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsStale}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Run.Style>
+                    </Run>
+                    <Run Text="Last refresh: "/>
+                    <Run Text="{Binding LastRefreshUtc, StringFormat='HH:mm:ss', TargetNullValue='—'}"/>
+                    <Run Text=" ("/>
+                    <Run Text="{Binding LastRefreshDuration.TotalMilliseconds, StringFormat='F0', TargetNullValue='—'}"/>
+                    <Run Text="ms)"/>
+                </TextBlock>
+
+            </Border>
+
+
+
         </Border>
 
     </Grid>

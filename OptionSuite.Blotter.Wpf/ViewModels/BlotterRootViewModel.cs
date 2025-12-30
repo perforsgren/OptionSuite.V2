@@ -5,6 +5,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Diagnostics;
 using System.Windows.Input;
 using System.Windows.Threading;
 using FxTradeHub.Contracts.Dtos;
@@ -22,6 +23,15 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
 
         private bool _isBusy;
         private string _lastError;
+        private bool _isStale;
+        private DateTime? _lastRefreshUtc;     
+        private TimeSpan? _lastRefreshDuration;
+
+        private int _totalTrades;
+        private int _newCount;
+        private int _pendingCount; 
+        private int _bookedCount;
+        private int _errorCount;  
 
         // state för diff
         private readonly HashSet<string> _seenTradeIds = new HashSet<string>(StringComparer.Ordinal);
@@ -79,6 +89,46 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             }
         }
 
+        public bool IsStale
+        {
+            get => _isStale;
+            private set
+            {
+                if (_isStale != value)
+                {
+                    _isStale = value;
+                    OnPropertyChanged(nameof(IsStale));
+                }
+            }
+        }
+
+        public DateTime? LastRefreshUtc
+        {
+            get => _lastRefreshUtc;
+            private set
+            {
+                if (_lastRefreshUtc != value)
+                {
+                    _lastRefreshUtc = value;
+                    OnPropertyChanged(nameof(LastRefreshUtc));
+                }
+            }
+        }
+
+        public TimeSpan? LastRefreshDuration
+        {
+            get => _lastRefreshDuration;
+            private set
+            {
+                if (_lastRefreshDuration != value)
+                {
+                    _lastRefreshDuration = value;
+                    OnPropertyChanged(nameof(LastRefreshDuration));
+                }
+            }
+        }
+
+
         /// <summary>
         /// True när användaren scrollar/klickar/editerar. Polling skippar då refresh.
         /// Den här flaggan sätts via NotifyUserInteraction() (från View).
@@ -95,6 +145,73 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                 }
             }
         }
+
+        public int TotalTrades
+        {
+            get => _totalTrades;
+            private set
+            {
+                if (_totalTrades != value)
+                {
+                    _totalTrades = value;
+                    OnPropertyChanged(nameof(TotalTrades));
+                }
+            }
+        }
+
+        public int NewCount
+        {
+            get => _newCount;
+            private set
+            {
+                if (_newCount != value)
+                {
+                    _newCount = value;
+                    OnPropertyChanged(nameof(NewCount));
+                }
+            }
+        }
+
+        public int BookedCount
+        {
+            get => _bookedCount;
+            private set
+            {
+                if (_bookedCount != value)
+                {
+                    _bookedCount = value;
+                    OnPropertyChanged(nameof(BookedCount));
+                }
+            }
+        }
+
+        public int ErrorCount
+        {
+            get => _errorCount;
+            private set
+            {
+                if (_errorCount != value)
+                {
+                    _errorCount = value;
+                    OnPropertyChanged(nameof(ErrorCount));
+                }
+            }
+        }
+
+        public int PendingCount
+        {
+            get => _pendingCount;
+            private set
+            {
+                if (_pendingCount != value)
+                {
+                    _pendingCount = value;
+                    OnPropertyChanged(nameof(PendingCount));
+                }
+            }
+        }
+
+
 
         public ICommand RefreshCommand { get; }
 
@@ -166,7 +283,7 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
 
             // debounce-timer som släcker IsUserInteracting efter kort “idle”
             _userInteractionDebounceTimer = new DispatcherTimer(DispatcherPriority.Background);
-            _userInteractionDebounceTimer.Interval = TimeSpan.FromMilliseconds(2000);
+            _userInteractionDebounceTimer.Interval = TimeSpan.FromMilliseconds(800);
             _userInteractionDebounceTimer.Tick += (s, e) =>
             {
                 _userInteractionDebounceTimer.Stop();
@@ -210,7 +327,7 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
         }
 
         /// <summary>
-        /// 3C: Kallas från View vid scroll/mouse/keyboard/edit för att pausa polling kort.
+        /// Kallas från View vid scroll/mouse/keyboard/edit för att pausa polling kort.
         /// </summary>
         public void NotifyUserInteraction()
         {
@@ -242,7 +359,17 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                 try
                 {
                     IsBusy = true;
-                    LastError = null;
+
+                    // Lokala variabler för räkning (inte privata fält!)
+                    int newCount = 0;
+                    int pendingCount = 0;
+                    int bookedCount = 0;
+                    int errorCount = 0;
+
+                    // ═══════════════════════════════════════════════════════════
+                    // MÄTNING - starta stopwatch
+                    // ═══════════════════════════════════════════════════════════
+                    var sw = Stopwatch.StartNew();
 
                     var filter = new BlotterFilter
                     {
@@ -251,12 +378,17 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                         MaxRows = 500
                     };
 
+                    // FETCH (kan kasta exception)
                     var rows = await _readService.GetBlotterTradesAsync(filter).ConfigureAwait(true);
 
-                    OptionTrades.Clear();
-                    LinearTrades.Clear();
+                    // ═══════════════════════════════════════════════════════════
+                    // APPLY - Bygg nya listor LOKALT först (non-destructive!)
+                    // ═══════════════════════════════════════════════════════════
 
-                    // bygg nästa “snapshot” av signatures
+                    var newOptionTrades = new List<TradeRowViewModel>();
+                    var newLinearTrades = new List<TradeRowViewModel>();
+
+                    // bygg nästa "snapshot" av signatures
                     var nextSignatures = new Dictionary<string, string>(StringComparer.Ordinal);
 
                     var isColdStart = _seenTradeIds.Count == 0;
@@ -321,14 +453,14 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
 
                         if (IsOptionProduct(r.ProductType))
                         {
-                            OptionTrades.Add(trade);
+                            newOptionTrades.Add(trade);
                         }
                         else
                         {
-                            LinearTrades.Add(trade);
+                            newLinearTrades.Add(trade);
                         }
 
-                        // “släck” highlight efter en stund
+                        // "släck" highlight efter en stund
                         if (trade.IsNew)
                         {
                             _ = ClearFlagLaterAsync(trade, clearNew: true, delayMs: 20000);
@@ -338,9 +470,55 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                         {
                             _ = ClearFlagLaterAsync(trade, clearNew: false, delayMs: 2000);
                         }
+
+                        // Räkna status för filter badges
+                        var status = trade.Status?.ToUpperInvariant() ?? "";
+
+                        // DEBUG: Logga första 5 trades för att se vad status faktiskt är
+                        if (newOptionTrades.Count + newLinearTrades.Count <= 5)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"[DEBUG] Trade {tradeId}: Status='{trade.Status}' (upper='{status}'), IsNew={trade.IsNew}");
+                        }
+
+                        if (status == "NEW")
+                        {
+                            newCount++;
+                        }
+                        else if (status == "PENDING" || status == "PARTIAL")
+                        {
+                            pendingCount++;
+                        }
+                        else if (status == "BOOKED")
+                        {
+                            bookedCount++;
+                        }
+                        else if (status.Contains("ERROR") || status == "REJECTED" || status == "FAILED")
+                        {
+                            errorCount++;
+                        }
+
+
+
                     }
 
-                    // commit “snapshot”
+                    // ═══════════════════════════════════════════════════════════
+                    // COMMIT - Nu är allt OK, uppdatera UI collections
+                    // ═══════════════════════════════════════════════════════════
+
+                    OptionTrades.Clear();
+                    LinearTrades.Clear();
+
+                    foreach (var trade in newOptionTrades)
+                    {
+                        OptionTrades.Add(trade);
+                    }
+
+                    foreach (var trade in newLinearTrades)
+                    {
+                        LinearTrades.Add(trade);
+                    }
+
+                    // commit "snapshot"
                     _seenTradeIds.Clear();
                     foreach (var id in nextSignatures.Keys)
                     {
@@ -356,7 +534,26 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                     // återställ selection (utan att "cleara" den i onödan)
                     RestoreSelection(selectedOptionId, selectedLinearId);
 
-                    // Success - resetta error count och poll interval
+                    // ═══════════════════════════════════════════════════════════
+                    // SUCCESS - commit health metrics + counts
+                    // ═══════════════════════════════════════════════════════════
+
+                    sw.Stop();
+
+                    TotalTrades = newOptionTrades.Count + newLinearTrades.Count;
+                    NewCount = newCount;
+                    PendingCount = pendingCount;
+                    BookedCount = bookedCount;
+                    ErrorCount = errorCount;
+
+                    // DEBUG: Logga counts
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] Counts - Total:{TotalTrades}, New:{NewCount}, Pending:{PendingCount}, Booked:{BookedCount}, Error:{ErrorCount}");
+
+                    LastRefreshUtc = DateTime.UtcNow;
+                    LastRefreshDuration = sw.Elapsed;
+                    LastError = null;
+                    IsStale = false;
+
                     if (_consecutiveErrors > 0)
                     {
                         _consecutiveErrors = 0;
@@ -368,6 +565,10 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                 }
                 catch (Exception ex)
                 {
+                    // ═══════════════════════════════════════════════════════════
+                    // FAILURE - behåll gamla trades, markera som stale
+                    // ═══════════════════════════════════════════════════════════
+
                     _consecutiveErrors++;
 
                     // Exponential backoff: 2s → 4s → 8s → 16s → 30s
@@ -382,7 +583,15 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                     }
 
                     LastError = $"Refresh failed (retry #{_consecutiveErrors} in {backoffSeconds}s): {ex.Message}";
+                    IsStale = true;
+
                     System.Diagnostics.Debug.WriteLine($"[BlotterVM] Error #{_consecutiveErrors}, backoff to {backoffSeconds}s: {ex}");
+
+                    // VIKTIGT: Vi clearar INTE OptionTrades/LinearTrades här!
+                    // Gamla data stannar kvar tills nästa lyckade refresh.
+
+                    // Notera: LastRefreshUtc/Duration och counts ändras INTE vid fel
+                    // så statusraden kan visa "last OK refresh" timestamp
                 }
                 finally
                 {
@@ -394,6 +603,8 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                 Interlocked.Exchange(ref _refreshInFlight, 0);
             }
         }
+
+
 
         private void RestoreSelection(string selectedOptionId, string selectedLinearId)
         {
