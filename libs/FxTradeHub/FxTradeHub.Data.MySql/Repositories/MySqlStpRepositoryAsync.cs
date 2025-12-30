@@ -66,68 +66,68 @@ namespace FxTradeHub.Data.MySql.Repositories
 
                 var sqlBuilder = new System.Text.StringBuilder();
                 sqlBuilder.Append(@"
-SELECT
-    t.StpTradeId,
-    t.TradeId,
-    t.ProductType,
-    t.SourceType,
-    t.SourceVenueCode,
-    t.CounterpartyCode,
-    t.BrokerCode,
-    t.TraderId,
-    t.InvId,
-    t.ReportingEntityId,
-    t.CurrencyPair,
-    t.Mic,
-    t.Isin,
-    t.TradeDate,
-    t.ExecutionTimeUtc,
-    t.BuySell,
-    t.Notional,
-    t.NotionalCurrency,
-    t.SettlementDate,
-    t.NearSettlementDate,
-    t.IsNonDeliverable,
-    t.FixingDate,
-    t.SettlementCurrency,
-    t.Uti,
-    t.Tvtic,
-    t.Margin,
-    t.HedgeRate,
-    t.SpotRate,
-    t.SwapPoints,
-    t.HedgeType,
-    t.CallPut,
-    t.Strike,
-    t.ExpiryDate,
-    t.Cut,
-    t.Premium,
-    t.PremiumCurrency,
-    t.PremiumDate,
-    t.PortfolioMx3,
-    t.LastUpdatedUtc AS TradeLastUpdatedUtc,
-    t.LastUpdatedBy AS TradeLastUpdatedBy,
+                                    SELECT
+                                        t.StpTradeId,
+                                        t.TradeId,
+                                        t.ProductType,
+                                        t.SourceType,
+                                        t.SourceVenueCode,
+                                        t.CounterpartyCode,
+                                        t.BrokerCode,
+                                        t.TraderId,
+                                        t.InvId,
+                                        t.ReportingEntityId,
+                                        t.CurrencyPair,
+                                        t.Mic,
+                                        t.Isin,
+                                        t.TradeDate,
+                                        t.ExecutionTimeUtc,
+                                        t.BuySell,
+                                        t.Notional,
+                                        t.NotionalCurrency,
+                                        t.SettlementDate,
+                                        t.NearSettlementDate,
+                                        t.IsNonDeliverable,
+                                        t.FixingDate,
+                                        t.SettlementCurrency,
+                                        t.Uti,
+                                        t.Tvtic,
+                                        t.Margin,
+                                        t.HedgeRate,
+                                        t.SpotRate,
+                                        t.SwapPoints,
+                                        t.HedgeType,
+                                        t.CallPut,
+                                        t.Strike,
+                                        t.ExpiryDate,
+                                        t.Cut,
+                                        t.Premium,
+                                        t.PremiumCurrency,
+                                        t.PremiumDate,
+                                        t.PortfolioMx3,
+                                        t.LastUpdatedUtc AS TradeLastUpdatedUtc,
+                                        t.LastUpdatedBy AS TradeLastUpdatedBy,
 
-    l.SystemLinkId,
-    l.SystemCode,
-    l.SystemTradeId,
-    l.Status,
-    l.LastStatusUtc,
-    l.LastError,
-    l.PortfolioCode,
-    l.BookFlag,
-    l.StpMode,
-    l.ImportedBy,
-    l.BookedBy,
-    l.FirstBookedUtc,
-    l.LastBookedUtc,
-    l.StpFlag,
-    l.CreatedUtc AS SystemCreatedUtc,
-    l.IsDeleted AS SystemLinkIsDeleted
-FROM trade_stp.Trade t
-INNER JOIN trade_stp.TradeSystemLink l ON l.StpTradeId = t.StpTradeId
-WHERE t.IsDeleted = 0
-");
+                                        l.SystemLinkId,
+                                        l.SystemCode,
+                                        l.SystemTradeId,
+                                        l.Status,
+                                        l.LastStatusUtc,
+                                        l.LastError,
+                                        l.PortfolioCode,
+                                        l.BookFlag,
+                                        l.StpMode,
+                                        l.ImportedBy,
+                                        l.BookedBy,
+                                        l.FirstBookedUtc,
+                                        l.LastBookedUtc,
+                                        l.StpFlag,
+                                        l.CreatedUtc AS SystemCreatedUtc,
+                                        l.IsDeleted AS SystemLinkIsDeleted
+                                    FROM trade_stp.Trade t
+                                    INNER JOIN trade_stp.TradeSystemLink l ON l.StpTradeId = t.StpTradeId
+                                    WHERE t.IsDeleted = 0
+                                    ");
 
                 // Dynamiska filter – exakt samma logik som i den synkrona varianten.
                 if (fromTradeDate.HasValue)
@@ -353,65 +353,85 @@ WHERE t.IsDeleted = 0
             return results;
         }
 
-        public async Task<IReadOnlyList<TradeSystemLinkRow>> GetTradeSystemLinksAsync(string tradeId)
+
+
+        public async Task<IReadOnlyList<TradeSystemLinkRow>> GetTradeSystemLinksAsync(long stpTradeId)
         {
             const string sql = @"
-SELECT
-    tsl.TradeSystemLinkId,
-    tsl.TradeId,
-    tsl.SystemCode,
-    tsl.Status,
-    tsl.SystemTradeId,
-    tsl.LastStatusUtc,
-    tsl.LastError,
-    tsl.PortfolioCode,
-    tsl.BookFlag,
-    tsl.StpMode,
-    tsl.ImportedBy,
-    tsl.BookedBy,
-    tsl.FirstBookedUtc,
-    tsl.LastBookedUtc,
-    tsl.StpFlag,
-    tsl.SystemCreatedUtc,
-    tsl.IsDeleted
-FROM trade_stp.TradeSystemLink tsl
-WHERE tsl.TradeId = @tradeId
-ORDER BY tsl.SystemCode;
-";
+                                SELECT
+                                    tsl.SystemLinkId,
+                                    tsl.StpTradeId,
+                                    tsl.SystemCode,
+                                    tsl.SystemTradeId,
+                                    tsl.Status,
+                                    tsl.LastStatusUtc,
+                                    tsl.LastError,
+                                    tsl.CreatedUtc,
+                                    tsl.PortfolioCode,
+                                    tsl.BookFlag,
+                                    tsl.StpMode,
+                                    tsl.ImportedBy,
+                                    tsl.BookedBy,
+                                    tsl.FirstBookedUtc,
+                                    tsl.LastBookedUtc,
+                                    tsl.StpFlag,
+                                    tsl.IsDeleted
+                                FROM trade_stp.TradeSystemLink tsl
+                                WHERE tsl.StpTradeId = @stpTradeId
+                                  AND tsl.IsDeleted = 0
+                                ORDER BY tsl.SystemCode;
+                                ";
 
             var rows = new List<TradeSystemLinkRow>();
 
             using (var conn = CreateConnection())
             using (var cmd = new MySqlCommand(sql, conn))
             {
-                cmd.Parameters.AddWithValue("@tradeId", tradeId);
+                cmd.Parameters.AddWithValue("@stpTradeId", stpTradeId);
 
                 await conn.OpenAsync().ConfigureAwait(false);
 
                 using (var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false))
                 {
+                    int ordSystemLinkId = reader.GetOrdinal("SystemLinkId");
+                    int ordStpTradeId = reader.GetOrdinal("StpTradeId");
+                    int ordSystemCode = reader.GetOrdinal("SystemCode");
+                    int ordSystemTradeId = reader.GetOrdinal("SystemTradeId");
+                    int ordStatus = reader.GetOrdinal("Status");
+                    int ordLastStatusUtc = reader.GetOrdinal("LastStatusUtc");
+                    int ordLastError = reader.GetOrdinal("LastError");
+                    int ordCreatedUtc = reader.GetOrdinal("CreatedUtc");
+                    int ordPortfolioCode = reader.GetOrdinal("PortfolioCode");
+                    int ordBookFlag = reader.GetOrdinal("BookFlag");
+                    int ordStpMode = reader.GetOrdinal("StpMode");
+                    int ordImportedBy = reader.GetOrdinal("ImportedBy");
+                    int ordBookedBy = reader.GetOrdinal("BookedBy");
+                    int ordFirstBookedUtc = reader.GetOrdinal("FirstBookedUtc");
+                    int ordLastBookedUtc = reader.GetOrdinal("LastBookedUtc");
+                    int ordStpFlag = reader.GetOrdinal("StpFlag");
+                    int ordIsDeleted = reader.GetOrdinal("IsDeleted");
+
                     while (await reader.ReadAsync().ConfigureAwait(false))
                     {
                         rows.Add(new TradeSystemLinkRow
                         {
-                            SystemLinkId = reader.GetInt64(reader.GetOrdinal("TradeSystemLinkId")),
-                            TradeId = reader.GetString(reader.GetOrdinal("TradeId")),
-                            SystemCode = reader.GetString(reader.GetOrdinal("SystemCode")),
-                            Status = reader.GetString(reader.GetOrdinal("Status")),
-                            SystemTradeId = reader["SystemTradeId"] as string,
-                            LastStatusUtc = reader["LastStatusUtc"] as DateTime?,
-                            LastError = reader["LastError"] as string,
-                            PortfolioCode = reader["PortfolioCode"] as string,
-                            BookFlag = reader["BookFlag"] as bool?,
-                            StpMode = reader["StpMode"] as string,
-                            ImportedBy = reader["ImportedBy"] as string,
-                            BookedBy = reader["BookedBy"] as string,
-                            FirstBookedUtc = reader["FirstBookedUtc"] as DateTime?,
-                            LastBookedUtc = reader["LastBookedUtc"] as DateTime?,
-                            StpFlag = reader["StpFlag"] as bool?,
-                            SystemCreatedUtc = reader["SystemCreatedUtc"] as DateTime?,
-                            IsDeleted = reader.GetBoolean(reader.GetOrdinal("IsDeleted"))
-
+                            SystemLinkId = reader.GetInt64(ordSystemLinkId),
+                            StpTradeId = reader.GetInt64(ordStpTradeId),
+                            SystemCode = reader.IsDBNull(ordSystemCode) ? string.Empty : reader.GetString(ordSystemCode),
+                            SystemTradeId = reader.IsDBNull(ordSystemTradeId) ? string.Empty : reader.GetString(ordSystemTradeId),
+                            Status = reader.IsDBNull(ordStatus) ? string.Empty : reader.GetString(ordStatus),
+                            LastStatusUtc = reader.IsDBNull(ordLastStatusUtc) ? (DateTime?)null : reader.GetDateTime(ordLastStatusUtc),
+                            LastError = reader.IsDBNull(ordLastError) ? string.Empty : reader.GetString(ordLastError),
+                            CreatedUtc = reader.IsDBNull(ordCreatedUtc) ? (DateTime?)null : reader.GetDateTime(ordCreatedUtc),
+                            PortfolioCode = reader.IsDBNull(ordPortfolioCode) ? string.Empty : reader.GetString(ordPortfolioCode),
+                            BookFlag = reader.IsDBNull(ordBookFlag) ? (bool?)null : reader.GetBoolean(ordBookFlag),
+                            StpMode = reader.IsDBNull(ordStpMode) ? string.Empty : reader.GetString(ordStpMode),
+                            ImportedBy = reader.IsDBNull(ordImportedBy) ? string.Empty : reader.GetString(ordImportedBy),
+                            BookedBy = reader.IsDBNull(ordBookedBy) ? string.Empty : reader.GetString(ordBookedBy),
+                            FirstBookedUtc = reader.IsDBNull(ordFirstBookedUtc) ? (DateTime?)null : reader.GetDateTime(ordFirstBookedUtc),
+                            LastBookedUtc = reader.IsDBNull(ordLastBookedUtc) ? (DateTime?)null : reader.GetDateTime(ordLastBookedUtc),
+                            StpFlag = reader.IsDBNull(ordStpFlag) ? (bool?)null : reader.GetBoolean(ordStpFlag),
+                            IsDeleted = reader.GetBoolean(ordIsDeleted)
                         });
                     }
                 }
@@ -420,47 +440,54 @@ ORDER BY tsl.SystemCode;
             return rows;
         }
 
-        public async Task<IReadOnlyList<TradeWorkflowEventRow>> GetTradeWorkflowEventsAsync(
-    string tradeId,
-    int maxRows)
+        public async Task<IReadOnlyList<TradeWorkflowEventRow>> GetTradeWorkflowEventsAsync(long stpTradeId, int maxRows)
         {
             const string sql = @"
-SELECT
-    twe.TradeWorkflowEventId,
-    twe.TradeId,
-    twe.EventTimeUtc,
-    twe.EventType,
-    twe.Message,
-    twe.CreatedBy
-FROM trade_stp.TradeWorkflowEvent twe
-WHERE twe.TradeId = @tradeId
-ORDER BY twe.EventTimeUtc DESC
-LIMIT @maxRows;
-";
+                                SELECT
+                                    twe.WorkflowEventId,
+                                    twe.StpTradeId,
+                                    twe.TimestampUtc,
+                                    twe.EventType,
+                                    twe.SystemCode,
+                                    twe.UserId,
+                                    twe.Details
+                                FROM trade_stp.TradeWorkflowEvent twe
+                                WHERE twe.StpTradeId = @stpTradeId
+                                ORDER BY twe.TimestampUtc DESC
+                                LIMIT @maxRows;
+                                ";
 
             var rows = new List<TradeWorkflowEventRow>();
 
             using (var conn = CreateConnection())
             using (var cmd = new MySqlCommand(sql, conn))
             {
-                cmd.Parameters.AddWithValue("@tradeId", tradeId);
+                cmd.Parameters.AddWithValue("@stpTradeId", stpTradeId);
                 cmd.Parameters.AddWithValue("@maxRows", maxRows);
 
                 await conn.OpenAsync().ConfigureAwait(false);
 
                 using (var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false))
                 {
+                    int ordWorkflowEventId = reader.GetOrdinal("WorkflowEventId");
+                    int ordStpTradeId = reader.GetOrdinal("StpTradeId");
+                    int ordTimestampUtc = reader.GetOrdinal("TimestampUtc");
+                    int ordEventType = reader.GetOrdinal("EventType");
+                    int ordSystemCode = reader.GetOrdinal("SystemCode");
+                    int ordUserId = reader.GetOrdinal("UserId");
+                    int ordDetails = reader.GetOrdinal("Details");
+
                     while (await reader.ReadAsync().ConfigureAwait(false))
                     {
                         rows.Add(new TradeWorkflowEventRow
                         {
-                            WorkflowEventId = reader.GetInt64(reader.GetOrdinal("TradeWorkflowEventId")),
-                            TradeId = reader.GetString(reader.GetOrdinal("TradeId")),
-                            EventTimeUtc = reader.GetDateTime(reader.GetOrdinal("EventTimeUtc")),
-                            EventType = reader.GetString(reader.GetOrdinal("EventType")),
-                            Message = reader["Message"] as string,
-                            CreatedBy = reader["CreatedBy"] as string
-
+                            WorkflowEventId = reader.GetInt64(ordWorkflowEventId),
+                            StpTradeId = reader.GetInt64(ordStpTradeId),
+                            TimestampUtc = reader.GetDateTime(ordTimestampUtc),
+                            EventType = reader.IsDBNull(ordEventType) ? string.Empty : reader.GetString(ordEventType),
+                            SystemCode = reader.IsDBNull(ordSystemCode) ? string.Empty : reader.GetString(ordSystemCode),
+                            UserId = reader.IsDBNull(ordUserId) ? string.Empty : reader.GetString(ordUserId),
+                            Details = reader.IsDBNull(ordDetails) ? string.Empty : reader.GetString(ordDetails)
                         });
                     }
                 }

@@ -47,15 +47,25 @@ namespace FxTradeHub.Domain.Interfaces
             string currentUserId);
 
 
-        // =========================================================
-        // D1.2 – Read support för Blotter detail panels
-        // =========================================================
+        /// <summary>
+        /// Hämtar samtliga systemlänkar (TradeSystemLink) för en given STP-trade.
+        /// Läser från trade_stp.TradeSystemLink på StpTradeId och filtrerar bort IsDeleted=1.
+        /// Sorterar deterministiskt (SystemCode).
+        /// </summary>
+        /// <param name="stpTradeId">Intern STP-trade-id (Trade.StpTradeId).</param>
+        /// <returns>Lista med länkar för trade:n.</returns>
+        Task<IReadOnlyList<TradeSystemLinkRow>> GetTradeSystemLinksAsync(long stpTradeId);
 
-        Task<IReadOnlyList<TradeSystemLinkRow>> GetTradeSystemLinksAsync(string tradeId);
 
-        Task<IReadOnlyList<TradeWorkflowEventRow>> GetTradeWorkflowEventsAsync(
-            string tradeId,
-            int maxRows);
+        /// <summary>
+        /// Hämtar senaste workflow events för en given STP-trade.
+        /// Läser från trade_stp.TradeWorkflowEvent på StpTradeId och sorterar nyast först.
+        /// </summary>
+        /// <param name="stpTradeId">Intern STP-trade-id (Trade.StpTradeId).</param>
+        /// <param name="maxRows">Max antal events att returnera (typiskt 50).</param>
+        /// <returns>Lista med events i fallande tid (nyast först).</returns>
+        Task<IReadOnlyList<TradeWorkflowEventRow>> GetTradeWorkflowEventsAsync(long stpTradeId, int maxRows);
+
 
     }
 }
