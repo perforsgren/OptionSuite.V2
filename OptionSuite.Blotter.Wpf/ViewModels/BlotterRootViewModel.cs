@@ -73,7 +73,6 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             new ObservableCollection<TradeWorkflowEventRow>();
 
         private CancellationTokenSource _detailsCts;
-        private int _detailsLoadInFlight; // 0/1
 
         private int _detailsRequestVersion = 0;  // request version för concurrency
 
@@ -758,30 +757,21 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
         {
             if (selected == null) return;
 
-            // En load i taget, men tillåt ny selection att cancella den gamla
+            // Cancellera tidigare fetch
             CancelDetailsLoadInFlight();
 
             _detailsCts = new CancellationTokenSource();
             var token = _detailsCts.Token;
 
-            // Increment version BEFORE fetch för att detektera stale results
+            // Increment version BEFORE fetch - detta är vår ENDA concurrency protection (och det räcker!)
             var thisVersion = Interlocked.Increment(ref _detailsRequestVersion);
 
-            // Om en details-load redan pågår, låt ändå denna köra – men spärren hindrar parallell commit.
-            // (Vi använder Interlocked som "commit gate".)
-            if (Interlocked.CompareExchange(ref _detailsLoadInFlight, 1, 0) != 0)
-            {
-                // Det pågår redan en load; vi låter den senaste selectionen vinna via cancellation.
-                // Här returnerar vi bara.
-                return;
-            }
+            var stpTradeId = selected.StpTradeId;
 
             try
             {
                 IsDetailsBusy = true;
                 DetailsLastError = null;
-
-                var stpTradeId = selected.StpTradeId;
 
                 if (stpTradeId <= 0)
                 {
@@ -796,7 +786,10 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                 await Task.WhenAll(linksTask, eventsTask).ConfigureAwait(true);
 
                 // Check både cancellation OCH version för robust concurrency handling
-                token.ThrowIfCancellationRequested();
+                if (token.IsCancellationRequested)
+                {
+                    return; // Cancelled, ignore
+                }
                 if (Volatile.Read(ref _detailsRequestVersion) != thisVersion)
                 {
                     return; // Stale result, ignore
@@ -806,7 +799,9 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                 var links = await linksTask.ConfigureAwait(true) ?? new List<TradeSystemLinkRow>();
                 var eventsList = await eventsTask.ConfigureAwait(true) ?? new List<TradeWorkflowEventRow>();
 
-                // Commit (clear + repopulate)
+                //Debug.WriteLine($"[Details] COMMIT for StpTradeId={stpTradeId}, Version={thisVersion}, Links={links.Count}, Events={eventsList.Count}");
+
+                // Commit (clear + repopulate) - version check garanterar att endast latest results committas
                 _selectedTradeSystemLinks.Clear();
                 foreach (var l in links)
                 {
@@ -822,6 +817,7 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             catch (OperationCanceledException)
             {
                 // no-op: ny selection vann, expected behavior
+                Debug.WriteLine($"[Details] CANCELLED for Version={thisVersion}");
             }
             catch (Exception ex)
             {
@@ -831,9 +827,9 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             finally
             {
                 IsDetailsBusy = false;
-                Interlocked.Exchange(ref _detailsLoadInFlight, 0);
             }
         }
+
 
 
 

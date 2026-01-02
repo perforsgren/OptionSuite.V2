@@ -889,20 +889,20 @@
                                                                                             <Style TargetType="Ellipse">
                                                                                                 <Setter Property="Fill" Value="{StaticResource Brush.TextMuted}"/>
                                                                                                 <Style.Triggers>
-                                                                                                    <DataTrigger Binding="{Binding Status}" Value="Booked">
-                                                                                                        <Setter Property="Fill" Value="#2DD4BF"/>
-                                                                                                    </DataTrigger>
-                                                                                                    <DataTrigger Binding="{Binding Status}" Value="Pending">
-                                                                                                        <Setter Property="Fill" Value="#FBBF24"/>
-                                                                                                    </DataTrigger>
-                                                                                                    <DataTrigger Binding="{Binding Status}" Value="New">
+                                                                                                    <DataTrigger Binding="{Binding Status}" Value="NEW">
                                                                                                         <Setter Property="Fill" Value="#3B82F6"/>
                                                                                                     </DataTrigger>
-                                                                                                    <DataTrigger Binding="{Binding Status}" Value="Error">
-                                                                                                        <Setter Property="Fill" Value="#EF4444"/>
+                                                                                                    <DataTrigger Binding="{Binding Status}" Value="BOOKED">
+                                                                                                        <Setter Property="Fill" Value="#2DD4BF"/>
                                                                                                     </DataTrigger>
-                                                                                                    <DataTrigger Binding="{Binding Status}" Value="Failed">
-                                                                                                        <Setter Property="Fill" Value="#EF4444"/>
+                                                                                                    <DataTrigger Binding="{Binding Status}" Value="PENDING">
+                                                                                                        <Setter Property="Fill" Value="#FBBF24"/>
+                                                                                                    </DataTrigger>
+                                                                                                    <DataTrigger Binding="{Binding Status}" Value="REJECTED">
+                                                                                                        <Setter Property="Fill" Value="#FB7185"/>
+                                                                                                    </DataTrigger>
+                                                                                                    <DataTrigger Binding="{Binding Status}" Value="PARTIAL">
+                                                                                                        <Setter Property="Fill" Value="#FB923C"/>
                                                                                                     </DataTrigger>
                                                                                                 </Style.Triggers>
                                                                                             </Style>
