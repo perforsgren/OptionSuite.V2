@@ -11,6 +11,9 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
 
         public event PropertyChangedEventHandler PropertyChanged;
 
+        // Primärnyckel i STP (behövs för att hämta links/events per trade)
+        public long StpTradeId { get; }
+
         // Options-specifika kolumner
         public string TradeId { get; }
         public string Counterparty { get; }
@@ -75,6 +78,7 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
         }
 
         public TradeRowViewModel(
+            long stpTradeId,
             string tradeId,
             string counterparty,
             string ccyPair,
@@ -107,6 +111,8 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             bool isNew = false,
             bool isUpdated = false)
         {
+            StpTradeId = stpTradeId;
+
             TradeId = tradeId ?? string.Empty;
             Counterparty = counterparty ?? string.Empty;
             CcyPair = ccyPair ?? string.Empty;

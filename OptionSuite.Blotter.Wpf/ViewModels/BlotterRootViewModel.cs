@@ -25,17 +25,16 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
         private bool _isBusy;
         private string _lastError;
         private bool _isStale;
-        private DateTime? _lastRefreshUtc;     
+        private DateTime? _lastRefreshUtc;
         private TimeSpan? _lastRefreshDuration;
 
         private int _totalTrades;
         private int _newCount;
-        private int _pendingCount; 
+        private int _pendingCount;
         private int _bookedCount;
         private int _errorCount;
 
         // grid filtering
-
         private ICollectionView _optionTradesView;
         private ICollectionView _linearTradesView;
         private string _currentStatusFilter = "ALL";
@@ -58,6 +57,21 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
         private int _consecutiveErrors = 0;
         private readonly int[] _backoffIntervals = { 2, 4, 8, 16, 30 };  // sekunder
         private readonly TimeSpan _normalPollInterval = TimeSpan.FromSeconds(2);
+
+        // =========================
+        // D2.2C – Details (links/events)
+        // =========================
+        private bool _isDetailsBusy;
+        private string _detailsLastError;
+
+        private readonly ObservableCollection<TradeSystemLinkRow> _selectedTradeSystemLinks =
+            new ObservableCollection<TradeSystemLinkRow>();
+
+        private readonly ObservableCollection<TradeWorkflowEventRow> _selectedTradeWorkflowEvents =
+            new ObservableCollection<TradeWorkflowEventRow>();
+
+        private CancellationTokenSource _detailsCts;
+        private int _detailsLoadInFlight; // 0/1
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -134,7 +148,6 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                 }
             }
         }
-
 
         /// <summary>
         /// True när användaren scrollar/klickar/editerar. Polling skippar då refresh.
@@ -244,6 +257,45 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             }
         }
 
+        // =========================
+        // D2.2C – Details properties
+        // =========================
+
+        /// <summary>
+        /// True när högerpanelen håller på att ladda TradeSystemLink/WorkflowEvent för vald trade.
+        /// </summary>
+        public bool IsDetailsBusy
+        {
+            get => _isDetailsBusy;
+            private set
+            {
+                if (_isDetailsBusy != value)
+                {
+                    _isDetailsBusy = value;
+                    OnPropertyChanged(nameof(IsDetailsBusy));
+                }
+            }
+        }
+
+        /// <summary>
+        /// Senaste felet vid laddning av details (högerpanel). Null/empty = OK.
+        /// </summary>
+        public string DetailsLastError
+        {
+            get => _detailsLastError;
+            private set
+            {
+                if (!string.Equals(_detailsLastError, value, StringComparison.Ordinal))
+                {
+                    _detailsLastError = value;
+                    OnPropertyChanged(nameof(DetailsLastError));
+                }
+            }
+        }
+
+        public ObservableCollection<TradeSystemLinkRow> SelectedTradeSystemLinks => _selectedTradeSystemLinks;
+
+        public ObservableCollection<TradeWorkflowEventRow> SelectedTradeWorkflowEvents => _selectedTradeWorkflowEvents;
 
         public ICommand RefreshCommand { get; }
 
@@ -263,7 +315,6 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
         public ICommand SetFilterBookedCommand { get; }
         public ICommand SetFilterErrorsCommand { get; }
 
-
         public TradeRowViewModel SelectedOptionTrade
         {
             get => _selectedOptionTrade;
@@ -279,6 +330,9 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                     {
                         SelectedLinearTrade = null;
                     }
+
+                    // D2.2C: load details när selection ändras
+                    TriggerDetailsLoadForSelection();
                 }
             }
         }
@@ -298,6 +352,9 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                     {
                         SelectedOptionTrade = null;
                     }
+
+                    // D2.2C: load details när selection ändras
+                    TriggerDetailsLoadForSelection();
                 }
             }
         }
@@ -331,7 +388,6 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             _linearTradesView = CollectionViewSource.GetDefaultView(LinearTrades);
             _optionTradesView.Filter = FilterTrade;
             _linearTradesView.Filter = FilterTrade;
-
 
             // debounce-timer som släcker IsUserInteracting efter kort “idle”
             _userInteractionDebounceTimer = new DispatcherTimer(DispatcherPriority.Background);
@@ -418,9 +474,6 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                     int bookedCount = 0;
                     int errorCount = 0;
 
-                    // ═══════════════════════════════════════════════════════════
-                    // MÄTNING - starta stopwatch
-                    // ═══════════════════════════════════════════════════════════
                     var sw = Stopwatch.StartNew();
 
                     var filter = new BlotterFilter
@@ -430,17 +483,11 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                         MaxRows = 500
                     };
 
-                    // FETCH (kan kasta exception)
                     var rows = await _readService.GetBlotterTradesAsync(filter).ConfigureAwait(true);
-
-                    // ═══════════════════════════════════════════════════════════
-                    // APPLY - Bygg nya listor LOKALT först (non-destructive!)
-                    // ═══════════════════════════════════════════════════════════
 
                     var newOptionTrades = new List<TradeRowViewModel>();
                     var newLinearTrades = new List<TradeRowViewModel>();
 
-                    // bygg nästa "snapshot" av signatures
                     var nextSignatures = new Dictionary<string, string>(StringComparer.Ordinal);
 
                     var isColdStart = _seenTradeIds.Count == 0;
@@ -470,6 +517,7 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                             !string.Equals(prevSig, signature, StringComparison.Ordinal);
 
                         var trade = new TradeRowViewModel(
+                            stpTradeId: r.StpTradeId,
                             tradeId: tradeId,
                             counterparty: r.CounterpartyCode,
                             ccyPair: r.CcyPair,
@@ -512,7 +560,6 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                             newLinearTrades.Add(trade);
                         }
 
-                        // "släck" highlight efter en stund
                         if (trade.IsNew)
                         {
                             _ = ClearFlagLaterAsync(trade, clearNew: true, delayMs: 20000);
@@ -523,39 +570,25 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                             _ = ClearFlagLaterAsync(trade, clearNew: false, delayMs: 2000);
                         }
 
-                        // Räkna status för filter badges
                         var status = trade.Status?.ToUpperInvariant() ?? "";
-
-                        // DEBUG: Logga första 5 trades för att se vad status faktiskt är
-                        if (newOptionTrades.Count + newLinearTrades.Count <= 5)
-                        {
-                            //Debug.WriteLine($"[DEBUG] Trade {tradeId}: Status='{trade.Status}' (upper='{status}'), IsNew={trade.IsNew}");
-                        }
 
                         if (status == "NEW")
                         {
-                            newCount++;  // ← Lokal variabel!
+                            newCount++;
                         }
                         else if (status == "PENDING" || status == "PARTIAL")
                         {
-                            pendingCount++;  // ← Lokal variabel!
+                            pendingCount++;
                         }
                         else if (status == "BOOKED")
                         {
-                            bookedCount++;  // ← Lokal variabel!
+                            bookedCount++;
                         }
                         else if (status.Contains("ERROR") || status == "REJECTED" || status == "FAILED")
                         {
-                            errorCount++;  // ← Lokal variabel!
+                            errorCount++;
                         }
-
-
-
                     }
-
-                    // ═══════════════════════════════════════════════════════════
-                    // COMMIT - Nu är allt OK, uppdatera UI collections
-                    // ═══════════════════════════════════════════════════════════
 
                     OptionTrades.Clear();
                     LinearTrades.Clear();
@@ -570,7 +603,6 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                         LinearTrades.Add(trade);
                     }
 
-                    // commit "snapshot"
                     _seenTradeIds.Clear();
                     foreach (var id in nextSignatures.Keys)
                     {
@@ -583,34 +615,23 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                         _lastSignatureByTradeId[kvp.Key] = kvp.Value;
                     }
 
-                    // återställ selection (utan att "cleara" den i onödan)
                     RestoreSelection(selectedOptionId, selectedLinearId);
-
-                    // ═══════════════════════════════════════════════════════════
-                    // SUCCESS - commit health metrics + counts
-                    // ═══════════════════════════════════════════════════════════
 
                     sw.Stop();
 
                     TotalTrades = newOptionTrades.Count + newLinearTrades.Count;
-                    NewCount = newCount;        // ← Från lokal variabel!
-                    PendingCount = pendingCount;  // ← Från lokal variabel!
-                    BookedCount = bookedCount;   // ← Från lokal variabel!
-                    ErrorCount = errorCount;     // ← Från lokal variabel!
-
-
-                    // DEBUG: Logga counts
-                    //Debug.WriteLine($"[DEBUG] Counts - Total:{TotalTrades}, New:{NewCount}, Pending:{PendingCount}, Booked:{BookedCount}, Error:{ErrorCount}");
+                    NewCount = newCount;
+                    PendingCount = pendingCount;
+                    BookedCount = bookedCount;
+                    ErrorCount = errorCount;
 
                     LastRefreshUtc = DateTime.UtcNow;
                     LastRefreshDuration = sw.Elapsed;
                     LastError = null;
                     IsStale = false;
 
-                    // Refresh filter views
                     _optionTradesView?.Refresh();
                     _linearTradesView?.Refresh();
-
 
                     if (_consecutiveErrors > 0)
                     {
@@ -620,21 +641,19 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                             _pollTimer.Interval = _normalPollInterval;
                         }
                     }
+
+                    // D2.2C: efter refresh kan SelectedTrade peka på ny VM-instans,
+                    // så vi triggar details-load igen (men den är debounced via cancel/spärr).
+                    TriggerDetailsLoadForSelection();
                 }
                 catch (Exception ex)
                 {
-                    // ═══════════════════════════════════════════════════════════
-                    // FAILURE - behåll gamla trades, markera som stale
-                    // ═══════════════════════════════════════════════════════════
-
                     _consecutiveErrors++;
 
-                    // Exponential backoff: 2s → 4s → 8s → 16s → 30s
                     var backoffIndex = Math.Min(_consecutiveErrors - 1, _backoffIntervals.Length - 1);
                     var backoffSeconds = _backoffIntervals[backoffIndex];
                     var newInterval = TimeSpan.FromSeconds(backoffSeconds);
 
-                    // Uppdatera poll interval
                     if (_pollTimer.IsEnabled)
                     {
                         _pollTimer.Interval = newInterval;
@@ -643,13 +662,9 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                     LastError = $"Refresh failed (retry #{_consecutiveErrors} in {backoffSeconds}s): {ex.Message}";
                     IsStale = true;
 
-                    System.Diagnostics.Debug.WriteLine($"[BlotterVM] Error #{_consecutiveErrors}, backoff to {backoffSeconds}s: {ex}");
+                    Debug.WriteLine($"[BlotterVM] Error #{_consecutiveErrors}, backoff to {backoffSeconds}s: {ex}");
 
-                    // VIKTIGT: Vi clearar INTE OptionTrades/LinearTrades här!
-                    // Gamla data stannar kvar tills nästa lyckade refresh.
-
-                    // Notera: LastRefreshUtc/Duration och counts ändras INTE vid fel
-                    // så statusraden kan visa "last OK refresh" timestamp
+                    // Vi clearar INTE trades vid fel.
                 }
                 finally
                 {
@@ -661,8 +676,6 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                 Interlocked.Exchange(ref _refreshInFlight, 0);
             }
         }
-
-
 
         private void RestoreSelection(string selectedOptionId, string selectedLinearId)
         {
@@ -683,6 +696,120 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                 {
                     SelectedLinearTrade = vm;
                 }
+            }
+        }
+
+        // =========================
+        // D2.2C – Details loading
+        // =========================
+
+        private void TriggerDetailsLoadForSelection()
+        {
+            var selected = SelectedTrade;
+            if (selected == null)
+            {
+                ClearDetailsCollections();
+                return;
+            }
+
+            // fire-and-forget (cancellation + spärr gör det stabilt)
+            _ = LoadDetailsForSelectedTradeAsync(selected);
+        }
+
+        private void ClearDetailsCollections()
+        {
+            _selectedTradeSystemLinks.Clear();
+            _selectedTradeWorkflowEvents.Clear();
+            DetailsLastError = null;
+            IsDetailsBusy = false;
+        }
+
+        private async Task LoadDetailsForSelectedTradeAsync(TradeRowViewModel selected)
+        {
+            if (selected == null) return;
+
+            // En load i taget, men tillåt ny selection att cancella den gamla
+            CancelDetailsLoadInFlight();
+
+            _detailsCts = new CancellationTokenSource();
+            var token = _detailsCts.Token;
+
+            // Om en details-load redan pågår, låt ändå denna köra – men spärren hindrar parallell commit.
+            // (Vi använder Interlocked som "commit gate".)
+            if (Interlocked.CompareExchange(ref _detailsLoadInFlight, 1, 0) != 0)
+            {
+                // Det pågår redan en load; vi låter den senaste selectionen vinna via cancellation.
+                // Här returnerar vi bara.
+                return;
+            }
+
+            try
+            {
+                IsDetailsBusy = true;
+                DetailsLastError = null;
+
+                var stpTradeId = selected.StpTradeId;
+
+                if (stpTradeId <= 0)
+                {
+                    ClearDetailsCollections();
+                    return;
+                }
+
+                // Hämta båda parallellt
+                var linksTask = _readService.GetTradeSystemLinksAsync(stpTradeId);
+                var eventsTask = _readService.GetTradeWorkflowEventsAsync(stpTradeId, maxRows: 50);
+
+                await Task.WhenAll(linksTask, eventsTask).ConfigureAwait(true);
+
+                token.ThrowIfCancellationRequested();
+
+                var links = linksTask.Result ?? new List<TradeSystemLinkRow>();
+                var eventsList = eventsTask.Result ?? new List<TradeWorkflowEventRow>();
+
+                // Commit (clear + repopulate)
+                _selectedTradeSystemLinks.Clear();
+                foreach (var l in links)
+                {
+                    _selectedTradeSystemLinks.Add(l);
+                }
+
+                _selectedTradeWorkflowEvents.Clear();
+                foreach (var ev in eventsList)
+                {
+                    _selectedTradeWorkflowEvents.Add(ev);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                // no-op: ny selection vann
+            }
+            catch (Exception ex)
+            {
+                DetailsLastError = $"Details load failed: {ex.Message}";
+                Debug.WriteLine($"[BlotterVM] Details load failed: {ex}");
+            }
+            finally
+            {
+                IsDetailsBusy = false;
+                Interlocked.Exchange(ref _detailsLoadInFlight, 0);
+            }
+        }
+
+        private void CancelDetailsLoadInFlight()
+        {
+            try
+            {
+                _detailsCts?.Cancel();
+            }
+            catch
+            {
+                // no-op
+            }
+            finally
+            {
+                _detailsCts?.Dispose();
+                _detailsCts = null;
             }
         }
 
@@ -756,7 +883,7 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             var trade = GetSelectedTrade();
             if (trade == null) return;
 
-            System.Diagnostics.Debug.WriteLine($"Booking trade: {trade.TradeId}");
+            Debug.WriteLine($"Booking trade: {trade.TradeId}");
         }
 
         private bool CanExecuteDuplicateTrade()
@@ -769,7 +896,7 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             var trade = GetSelectedTrade();
             if (trade == null) return;
 
-            System.Diagnostics.Debug.WriteLine($"Duplicating trade: {trade.TradeId}");
+            Debug.WriteLine($"Duplicating trade: {trade.TradeId}");
         }
 
         private bool CanExecuteCopyToManualInput()
@@ -783,7 +910,7 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             if (trade == null) return;
 
             // TODO: Implementera copy to manual input
-            System.Diagnostics.Debug.WriteLine($"Copy to manual input: {trade.TradeId}");
+            Debug.WriteLine($"Copy to manual input: {trade.TradeId}");
         }
 
         private bool CanExecuteBookAsLiveTrade()
@@ -797,7 +924,7 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             if (trade == null) return;
 
             // TODO
-            System.Diagnostics.Debug.WriteLine($"Book as live trade: {trade.TradeId}");
+            Debug.WriteLine($"Book as live trade: {trade.TradeId}");
         }
 
         private bool CanExecuteCancelCalypsoTrade()
@@ -814,7 +941,7 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             if (trade == null) return;
 
             // TODO
-            System.Diagnostics.Debug.WriteLine($"Cancelling Calypso trade: {trade.TradeId}");
+            Debug.WriteLine($"Cancelling Calypso trade: {trade.TradeId}");
         }
 
         private bool CanExecuteDeleteRow()
@@ -848,7 +975,7 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             if (trade == null) return;
 
             // TODO
-            System.Diagnostics.Debug.WriteLine($"Checking if booked: {trade.TradeId}");
+            Debug.WriteLine($"Checking if booked: {trade.TradeId}");
         }
 
         private bool CanExecuteOpenErrorLog()
@@ -863,7 +990,7 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             if (trade == null) return;
 
             // TODO
-            System.Diagnostics.Debug.WriteLine($"Opening error log for: {trade.TradeId}");
+            Debug.WriteLine($"Opening error log for: {trade.TradeId}");
         }
 
         private TradeRowViewModel GetSelectedTrade()
@@ -894,6 +1021,5 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             _optionTradesView?.Refresh();
             _linearTradesView?.Refresh();
         }
-
     }
 }
