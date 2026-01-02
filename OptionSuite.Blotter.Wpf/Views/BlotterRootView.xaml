@@ -842,15 +842,37 @@
 
                                                                 <!-- Status badge -->
                                                                 <Border Grid.Row="0" Grid.Column="1" Grid.RowSpan="2"
-                                Style="{StaticResource Style.BlotterStatusBadge}"
-                                Margin="0,0,0,0">
+                                        Style="{StaticResource Style.BlotterStatusBadge}"
+                                        Margin="0,0,0,0">
                                                                     <StackPanel Orientation="Horizontal">
-                                                                        <Ellipse Width="6" Height="6" 
-                                         Fill="#FBBF24" 
-                                         Margin="0,0,6,0"
-                                         VerticalAlignment="Center"/>
-                                                                        <TextBlock Text="Pending" 
-                                           Style="{StaticResource Style.BlotterStatusBadgeText}"/>
+                                                                        <Ellipse Width="6" Height="6"
+                                                 Margin="0,0,6,0"
+                                                 VerticalAlignment="Center">
+                                                                            <Ellipse.Style>
+                                                                                <Style TargetType="Ellipse">
+                                                                                    <Setter Property="Fill" Value="{StaticResource Brush.TextMuted}"/>
+                                                                                    <Style.Triggers>
+                                                                                        <DataTrigger Binding="{Binding Status}" Value="New">
+                                                                                            <Setter Property="Fill" Value="#3B82F6"/>
+                                                                                        </DataTrigger>
+                                                                                        <DataTrigger Binding="{Binding Status}" Value="Booked">
+                                                                                            <Setter Property="Fill" Value="#2DD4BF"/>
+                                                                                        </DataTrigger>
+                                                                                        <DataTrigger Binding="{Binding Status}" Value="Pending">
+                                                                                            <Setter Property="Fill" Value="#FBBF24"/>
+                                                                                        </DataTrigger>
+                                                                                        <DataTrigger Binding="{Binding Status}" Value="Rejected">
+                                                                                            <Setter Property="Fill" Value="#FB7185"/>
+                                                                                        </DataTrigger>
+                                                                                        <DataTrigger Binding="{Binding Status}" Value="Partial">
+                                                                                            <Setter Property="Fill" Value="#FB923C"/>
+                                                                                        </DataTrigger>
+                                                                                    </Style.Triggers>
+                                                                                </Style>
+                                                                            </Ellipse.Style>
+                                                                        </Ellipse>
+                                                                        <TextBlock Text="{Binding Status, TargetNullValue=Unknown}"
+                                                   Style="{StaticResource Style.BlotterStatusBadgeText}"/>
                                                                     </StackPanel>
                                                                 </Border>
 
