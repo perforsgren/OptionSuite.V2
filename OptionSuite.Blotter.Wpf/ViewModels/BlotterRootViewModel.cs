@@ -73,6 +73,8 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
         private CancellationTokenSource _detailsCts;
         private int _detailsLoadInFlight; // 0/1
 
+        private int _detailsRequestVersion = 0;  // request version för concurrency
+
         public event PropertyChangedEventHandler PropertyChanged;
 
         public string Title { get; set; } = "Trade Blotter";
@@ -724,6 +726,11 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             IsDetailsBusy = false;
         }
 
+        /// <summary>
+        /// Laddar TradeSystemLinks och TradeWorkflowEvents för vald trade asynkront.
+        /// Använder cancellation token och request version pattern för att hantera snabba selection-ändringar.
+        /// </summary>
+        /// <param name="selected">Vald trade (kan vara null vid deselection)</param>
         private async Task LoadDetailsForSelectedTradeAsync(TradeRowViewModel selected)
         {
             if (selected == null) return;
@@ -733,6 +740,9 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
 
             _detailsCts = new CancellationTokenSource();
             var token = _detailsCts.Token;
+
+            // Increment version BEFORE fetch för att detektera stale results
+            var thisVersion = Interlocked.Increment(ref _detailsRequestVersion);
 
             // Om en details-load redan pågår, låt ändå denna köra – men spärren hindrar parallell commit.
             // (Vi använder Interlocked som "commit gate".)
@@ -756,16 +766,22 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                     return;
                 }
 
-                // Hämta båda parallellt
+                // Hämta båda parallellt för bättre performance
                 var linksTask = _readService.GetTradeSystemLinksAsync(stpTradeId);
                 var eventsTask = _readService.GetTradeWorkflowEventsAsync(stpTradeId, maxRows: 50);
 
                 await Task.WhenAll(linksTask, eventsTask).ConfigureAwait(true);
 
+                // Check både cancellation OCH version för robust concurrency handling
                 token.ThrowIfCancellationRequested();
+                if (Volatile.Read(ref _detailsRequestVersion) != thisVersion)
+                {
+                    return; // Stale result, ignore
+                }
 
-                var links = linksTask.Result ?? new List<TradeSystemLinkRow>();
-                var eventsList = eventsTask.Result ?? new List<TradeWorkflowEventRow>();
+                // Await istället för .Result (idiomatisk async pattern)
+                var links = await linksTask.ConfigureAwait(true) ?? new List<TradeSystemLinkRow>();
+                var eventsList = await eventsTask.ConfigureAwait(true) ?? new List<TradeWorkflowEventRow>();
 
                 // Commit (clear + repopulate)
                 _selectedTradeSystemLinks.Clear();
@@ -782,7 +798,7 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             }
             catch (OperationCanceledException)
             {
-                // no-op: ny selection vann
+                // no-op: ny selection vann, expected behavior
             }
             catch (Exception ex)
             {
@@ -795,6 +811,8 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                 Interlocked.Exchange(ref _detailsLoadInFlight, 0);
             }
         }
+
+
 
         private void CancelDetailsLoadInFlight()
         {
