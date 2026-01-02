@@ -834,16 +834,16 @@
 
                                                 <!-- D2.2D: Error Message -->
                                                 <Border Background="#1AEF4444"
-                                                        BorderBrush="#EF4444"
-                                                        BorderThickness="1"
-                                                        CornerRadius="{StaticResource Radius.Button}"
-                                                        Padding="10"
-                                                        Margin="0,0,0,10"
-                                                        Visibility="{Binding DetailsLastError, Converter={StaticResource NullToCollapsed}}">
+            BorderBrush="#EF4444"
+            BorderThickness="1"
+            CornerRadius="{StaticResource Radius.Button}"
+            Padding="10"
+            Margin="0,0,0,10"
+            Visibility="{Binding DetailsLastError, Converter={StaticResource NullToCollapsed}}">
                                                     <TextBlock Text="{Binding DetailsLastError}" 
-                                                               Foreground="#EF4444" 
-                                                               TextWrapping="Wrap"
-                                                               FontSize="11"/>
+                   Foreground="#EF4444" 
+                   TextWrapping="Wrap"
+                   FontSize="11"/>
                                                 </Border>
 
                                                 <!-- D2.2D: System Links Card -->
@@ -853,7 +853,7 @@
                                                             <TextBlock Text="ROUTING / SYSTEM LINKS" Style="{StaticResource Style.BlotterRightSectionTitle}"/>
                                                         </Border>
 
-                                                        <!-- D2.2D: Bind till SelectedTradeSystemLinks -->
+                                                        <!-- D2.2D: Bind till SelectedTradeSystemLinks med utökade fält -->
                                                         <ItemsControl ItemsSource="{Binding SelectedTradeSystemLinks}">
                                                             <ItemsControl.ItemTemplate>
                                                                 <DataTemplate>
@@ -867,21 +867,24 @@
                                                                                 <RowDefinition Height="Auto"/>
                                                                                 <RowDefinition Height="Auto"/>
                                                                                 <RowDefinition Height="Auto"/>
+                                                                                <RowDefinition Height="Auto"/>
+                                                                                <RowDefinition Height="Auto"/>
+                                                                                <RowDefinition Height="Auto"/>
                                                                             </Grid.RowDefinitions>
 
                                                                             <!-- System name -->
                                                                             <TextBlock Grid.Row="0" Grid.Column="0" 
-                                                                                       Text="{Binding SystemCode}" 
-                                                                                       Style="{StaticResource Style.BlotterSystemName}"/>
+                                           Text="{Binding SystemCode}" 
+                                           Style="{StaticResource Style.BlotterSystemName}"/>
 
                                                                             <!-- Status badge -->
                                                                             <Border Grid.Row="0" Grid.Column="1" Grid.RowSpan="2"
-                                                                                    Style="{StaticResource Style.BlotterStatusBadge}"
-                                                                                    Margin="0,0,0,0">
+                                        Style="{StaticResource Style.BlotterStatusBadge}"
+                                        Margin="0,0,0,0">
                                                                                 <StackPanel Orientation="Horizontal">
                                                                                     <Ellipse Width="6" Height="6" 
-                                                                                             Margin="0,0,6,0"
-                                                                                             VerticalAlignment="Center">
+                                                 Margin="0,0,6,0"
+                                                 VerticalAlignment="Center">
                                                                                         <Ellipse.Style>
                                                                                             <Style TargetType="Ellipse">
                                                                                                 <Setter Property="Fill" Value="{StaticResource Brush.TextMuted}"/>
@@ -898,43 +901,115 @@
                                                                                                     <DataTrigger Binding="{Binding Status}" Value="Error">
                                                                                                         <Setter Property="Fill" Value="#EF4444"/>
                                                                                                     </DataTrigger>
+                                                                                                    <DataTrigger Binding="{Binding Status}" Value="Failed">
+                                                                                                        <Setter Property="Fill" Value="#EF4444"/>
+                                                                                                    </DataTrigger>
                                                                                                 </Style.Triggers>
                                                                                             </Style>
                                                                                         </Ellipse.Style>
                                                                                     </Ellipse>
-                                                                                    <TextBlock Text="{Binding Status}" 
-                                                                                               Style="{StaticResource Style.BlotterStatusBadgeText}"/>
+                                                                                    <TextBlock Text="{Binding Status, TargetNullValue=Unknown}" 
+                                                   Style="{StaticResource Style.BlotterStatusBadgeText}"/>
                                                                                 </StackPanel>
                                                                             </Border>
 
-                                                                            <!-- System code + timestamp -->
+                                                                            <!-- SystemLinkId -->
                                                                             <TextBlock Grid.Row="1" Grid.Column="0"
-                                                                                       Style="{StaticResource Style.BlotterSystemCode}">
-                                                                                <Run Text="SystemLinkId="/>
-                                                                                <Run Text="{Binding SystemLinkId, Mode=OneWay}"/>
+                                           Style="{StaticResource Style.BlotterSystemCode}">
+                                    <Run Text="SystemLinkId="/>
+                                    <Run Text="{Binding SystemLinkId, Mode=OneWay}"/>
                                                                             </TextBlock>
 
-                                                                            <!-- External info & LastStatus timestamp -->
-                                                                            <Grid Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,8,0,0">
+                                                                            <!-- External TradeID -->
+                                                                            <Grid Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,6,0,0">
                                                                                 <Grid.ColumnDefinitions>
                                                                                     <ColumnDefinition Width="Auto"/>
                                                                                     <ColumnDefinition Width="*"/>
                                                                                 </Grid.ColumnDefinitions>
 
                                                                                 <TextBlock Grid.Column="0"
-                                                                                           Text="External TradeID:" 
-                                                                                           Foreground="{StaticResource Brush.TextMuted2}"
-                                                                                           FontSize="11"
-                                                                                           Margin="0,0,6,0"
-                                                                                           VerticalAlignment="Center"/>
+                                               Text="External TradeID:" 
+                                               Foreground="{StaticResource Brush.TextMuted2}"
+                                               FontSize="11"
+                                               Margin="0,0,8,0"
+                                               VerticalAlignment="Center"/>
 
                                                                                 <TextBlock Grid.Column="1"
-                                                                                           Text="{Binding SystemTradeId, TargetNullValue=—}" 
-                                                                                           Foreground="{StaticResource Brush.TextMuted}"
-                                                                                           FontSize="11"
-                                                                                           VerticalAlignment="Center"
-                                                                                           FontFamily="{StaticResource Font.Mono}"/>
+                                               Text="{Binding SystemTradeId, TargetNullValue=—}" 
+                                               Foreground="{StaticResource Brush.TextMuted}"
+                                               FontSize="11"
+                                               FontFamily="{StaticResource Font.Mono}"
+                                               VerticalAlignment="Center"
+                                               TextWrapping="Wrap"/>
                                                                             </Grid>
+
+                                                                            <!-- Portfolio -->
+                                                                            <Grid Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,4,0,0">
+                                                                                <Grid.ColumnDefinitions>
+                                                                                    <ColumnDefinition Width="Auto"/>
+                                                                                    <ColumnDefinition Width="*"/>
+                                                                                </Grid.ColumnDefinitions>
+
+                                                                                <TextBlock Grid.Column="0"
+                                               Text="Portfolio:" 
+                                               Foreground="{StaticResource Brush.TextMuted2}"
+                                               FontSize="11"
+                                               Margin="0,0,8,0"
+                                               VerticalAlignment="Center"/>
+
+                                                                                <TextBlock Grid.Column="1"
+                                               Text="{Binding PortfolioCode, TargetNullValue=—}" 
+                                               Foreground="{StaticResource Brush.Text}"
+                                               FontSize="11"
+                                               FontWeight="SemiBold"
+                                               VerticalAlignment="Center"/>
+                                                                            </Grid>
+
+                                                                            <!-- Last Status timestamp -->
+                                                                            <Grid Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,4,0,0">
+                                                                                <Grid.ColumnDefinitions>
+                                                                                    <ColumnDefinition Width="Auto"/>
+                                                                                    <ColumnDefinition Width="*"/>
+                                                                                </Grid.ColumnDefinitions>
+
+                                                                                <TextBlock Grid.Column="0"
+                                               Text="Last Status:" 
+                                               Foreground="{StaticResource Brush.TextMuted2}"
+                                               FontSize="11"
+                                               Margin="0,0,8,0"
+                                               VerticalAlignment="Center"/>
+
+                                                                                <TextBlock Grid.Column="1"
+                                               Text="{Binding LastStatusUtc, StringFormat='yyyy-MM-dd HH:mm:ss', TargetNullValue=—}" 
+                                               Foreground="{StaticResource Brush.TextMuted}"
+                                               FontSize="11"
+                                               FontFamily="{StaticResource Font.Mono}"
+                                               VerticalAlignment="Center"/>
+                                                                            </Grid>
+
+                                                                            <!-- Error message (conditional) -->
+                                                                            <Border Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="2" 
+                                        Margin="0,8,0,0"
+                                        Background="#1AEF4444"
+                                        BorderBrush="#EF4444"
+                                        BorderThickness="1"
+                                        CornerRadius="{StaticResource Radius.Button}"
+                                        Padding="8,6"
+                                        Visibility="{Binding LastError, Converter={StaticResource NullToCollapsed}}">
+                                                                                <StackPanel Orientation="Horizontal">
+                                                                                    <TextBlock Text="⚠ " 
+                                                   Foreground="#EF4444"
+                                                   FontSize="11"
+                                                   Margin="0,0,4,0"
+                                                   VerticalAlignment="Top"/>
+                                                                                    <TextBlock Text="{Binding LastError}" 
+                                                   Foreground="#EF4444"
+                                                   FontSize="11"
+                                                   TextWrapping="Wrap"
+                                                   VerticalAlignment="Center"/>
+                                                                                </StackPanel>
+                                                                            </Border>
+
                                                                         </Grid>
                                                                     </Border>
                                                                 </DataTemplate>
@@ -943,10 +1018,10 @@
 
                                                         <!-- Empty state -->
                                                         <TextBlock Text="No system links found"
-                                                                   Foreground="{StaticResource Brush.TextMuted2}"
-                                                                   FontStyle="Italic"
-                                                                   Margin="10"
-                                                                   HorizontalAlignment="Center">
+                       Foreground="{StaticResource Brush.TextMuted2}"
+                       FontStyle="Italic"
+                       Margin="10"
+                       HorizontalAlignment="Center">
                                                             <TextBlock.Style>
                                                                 <Style TargetType="TextBlock">
                                                                     <Setter Property="Visibility" Value="Collapsed"/>
@@ -981,19 +1056,19 @@
                                                                             </Grid.ColumnDefinitions>
 
                                                                             <TextBlock Grid.Column="0"
-                                                                                       Text="{Binding TimestampUtc, StringFormat='HH:mm:ss'}" 
-                                                                                       Style="{StaticResource Style.BlotterEventTime}"/>
+                                           Text="{Binding TimestampUtc, StringFormat='HH:mm:ss'}" 
+                                           Style="{StaticResource Style.BlotterEventTime}"/>
 
                                                                             <StackPanel Grid.Column="1">
                                                                                 <StackPanel Orientation="Horizontal">
                                                                                     <TextBlock Text="{Binding EventType}" 
-                                                                                               Style="{StaticResource Style.BlotterEventTitle}"/>
+                                                   Style="{StaticResource Style.BlotterEventTitle}"/>
                                                                                     <TextBlock Text="{Binding SystemCode, StringFormat=' ({0})'}" 
-                                                                                               Style="{StaticResource Style.BlotterEventTitle}"
-                                                                                               Foreground="{StaticResource Brush.TextMuted}"/>
+                                                   Style="{StaticResource Style.BlotterEventTitle}"
+                                                   Foreground="{StaticResource Brush.TextMuted}"/>
                                                                                 </StackPanel>
-                                                                                <TextBlock Text="{Binding Details}" 
-                                                                                           Style="{StaticResource Style.BlotterEventBody}"/>
+                                                                                <TextBlock Text="{Binding Details, TargetNullValue=—}" 
+                                               Style="{StaticResource Style.BlotterEventBody}"/>
                                                                             </StackPanel>
                                                                         </Grid>
                                                                     </Border>
@@ -1003,10 +1078,10 @@
 
                                                         <!-- Empty state -->
                                                         <TextBlock Text="No workflow events found"
-                                                                   Foreground="{StaticResource Brush.TextMuted2}"
-                                                                   FontStyle="Italic"
-                                                                   Margin="10"
-                                                                   HorizontalAlignment="Center">
+                       Foreground="{StaticResource Brush.TextMuted2}"
+                       FontStyle="Italic"
+                       Margin="10"
+                       HorizontalAlignment="Center">
                                                             <TextBlock.Style>
                                                                 <Style TargetType="TextBlock">
                                                                     <Setter Property="Visibility" Value="Collapsed"/>
@@ -1023,6 +1098,7 @@
                                                 </Border>
 
                                             </StackPanel>
+
 
                                         </ScrollViewer>
 
