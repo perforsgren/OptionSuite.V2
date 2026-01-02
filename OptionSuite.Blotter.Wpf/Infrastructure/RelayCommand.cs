@@ -29,5 +29,7 @@ namespace OptionSuite.Blotter.Wpf.Infrastructure
             add { CommandManager.RequerySuggested += value; }
             remove { CommandManager.RequerySuggested -= value; }
         }
+
+
     }
 }

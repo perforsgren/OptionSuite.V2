@@ -69,11 +69,8 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
         private bool _isDetailsBusy;
         private string _detailsLastError;
 
-        private readonly ObservableCollection<TradeSystemLinkRow> _selectedTradeSystemLinks =
-            new ObservableCollection<TradeSystemLinkRow>();
-
-        private readonly ObservableCollection<TradeWorkflowEventRow> _selectedTradeWorkflowEvents =
-            new ObservableCollection<TradeWorkflowEventRow>();
+        private readonly ObservableCollection<TradeSystemLinkRow> _selectedTradeSystemLinks = new ObservableCollection<TradeSystemLinkRow>();
+        private readonly ObservableCollection<TradeWorkflowEventRow> _selectedTradeWorkflowEvents = new ObservableCollection<TradeWorkflowEventRow>();
 
         private CancellationTokenSource _detailsCts;
 
@@ -84,11 +81,9 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
         public string Title { get; set; } = "Trade Blotter";
         public string Subtitle { get; set; } = "v2";
 
-        public ObservableCollection<TradeRowViewModel> OptionTrades { get; } =
-            new ObservableCollection<TradeRowViewModel>();
+        public ObservableCollection<TradeRowViewModel> OptionTrades { get; } = new ObservableCollection<TradeRowViewModel>();
 
-        public ObservableCollection<TradeRowViewModel> LinearTrades { get; } =
-            new ObservableCollection<TradeRowViewModel>();
+        public ObservableCollection<TradeRowViewModel> LinearTrades { get; } = new ObservableCollection<TradeRowViewModel>();
 
         public bool IsBusy
         {
@@ -374,8 +369,13 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
 
             RefreshCommand = new RelayCommand(async () => await RefreshAsync().ConfigureAwait(true));
 
-            // Context Menu Commands
-            BookTradeCommand = new RelayCommand(() => ExecuteBookTrade(), () => CanExecuteBookTrade());
+            BookTradeCommand = new RelayCommand(
+                execute: OnBookTrade,
+                canExecute: () => SelectedTrade != null && SelectedTrade.Status == "New"
+            );
+
+
+            //BookTradeCommand = new RelayCommand(() => ExecuteBookTrade(), () => CanExecuteBookTrade());
             DuplicateTradeCommand = new RelayCommand(() => ExecuteDuplicateTrade(), () => CanExecuteDuplicateTrade());
             CopyToManualInputCommand = new RelayCommand(() => ExecuteCopyToManualInput(), () => CanExecuteCopyToManualInput());
             BookAsLiveTradeCommand = new RelayCommand(() => ExecuteBookAsLiveTrade(), () => CanExecuteBookAsLiveTrade());
@@ -417,6 +417,23 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
 
                 await RefreshAsync().ConfigureAwait(true);
             };
+        }
+
+        private void OnBookTrade()
+        {
+            if (SelectedTrade == null)
+                return;
+
+            // Endast Options för nu
+            if (string.IsNullOrEmpty(SelectedTrade.CallPut))
+            {
+                MessageBox.Show("Linear booking not yet implemented.", "Not Supported",
+                    MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            var systemCode = "MX3";
+            _ = ExecuteBookTradeAsync(SelectedTrade.StpTradeId, systemCode);
         }
 
         public Task InitialLoadAsync()
@@ -912,73 +929,52 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
         }
 
         /// <summary>
-        /// D4.2c: Bokar vald trade till MX3 med optimistic update.
-        /// 
-        /// Workflow:
-        /// 1. Optimistic update: Sätt Status = PENDING i UI
-        /// 2. Anropa command service (XML + DB update)
-        /// 3. Targeted refresh: Hämta updated trade från DB
-        /// 4. Om error: Rollback till original status + visa error
+        /// D4.2c: Bokar vald trade till MX3.
+        /// Skriver till DB, refreshar sedan trade från DB för att uppdatera UI.
         /// </summary>
         public async Task ExecuteBookTradeAsync(long stpTradeId, string systemCode)
         {
-            // 1. Hitta trade i UI (sök i både Options och Linear)
-            var tradeVm = OptionTrades.FirstOrDefault(t => t.StpTradeId == stpTradeId)
-                       ?? LinearTrades.FirstOrDefault(t => t.StpTradeId == stpTradeId);
-
-            if (tradeVm == null)
-            {
-                MessageBox.Show($"Trade {stpTradeId} not found in UI.", "Book Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                return;
-            }
-
-            // Spara original status för rollback
-            var originalStatus = tradeVm.Status;
-
             try
             {
-                // 2. Optimistic update: Sätt PENDING direkt i UI
-                tradeVm.Status = "PENDING";
+                // 1. Anropa command service (skriver till DB)
+                FxTradeHub.Services.Blotter.BookTradeResult result = null;
 
-                // 3. Anropa command service
-                BookTradeResult result = null;
                 if (systemCode == "MX3")
                 {
                     result = await _commandService.BookOptionToMx3Async(stpTradeId).ConfigureAwait(true);
                 }
                 else
                 {
-                    MessageBox.Show($"System {systemCode} not yet supported.", "Book Error", MessageBoxButton.OK, MessageBoxImage.Warning);
-                    tradeVm.Status = originalStatus; // Rollback
+                    System.Windows.MessageBox.Show($"System {systemCode} not yet supported.", "Book Error",
+                        System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
                     return;
                 }
 
-                // 4. Check result
+                // 2. Check result
                 if (!result.Success)
                 {
-                    // Rollback + visa error
-                    tradeVm.Status = originalStatus;
-                    MessageBox.Show($"Book failed: {result.ErrorMessage}", "Book Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    System.Windows.MessageBox.Show($"Book failed: {result.ErrorMessage}", "Book Error",
+                        System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
                     return;
                 }
 
-                // 5. Targeted refresh: Hämta updated trade från DB
+                // 3. Targeted refresh: Hämta updated trade från DB och uppdatera UI
                 await RefreshSingleTradeAsync(stpTradeId).ConfigureAwait(true);
 
-                MessageBox.Show($"Trade {stpTradeId} booked successfully!\nXML: {result.XmlFileName}", "Book Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                System.Windows.MessageBox.Show($"Trade {stpTradeId} booked successfully!\nXML: {result.XmlFileName}",
+                    "Book Success", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
-                // Rollback på exception
-                tradeVm.Status = originalStatus;
-                MessageBox.Show($"Book failed: {ex.Message}", "Book Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                System.Windows.MessageBox.Show($"Book failed: {ex.Message}", "Book Error",
+                    System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
             }
         }
 
 
         /// <summary>
         /// D4.2c: Refreshar en enskild trade från DB och uppdaterar UI.
-        /// Används efter Book för att få korrekt status utan full refresh.
+        /// Recreate TradeRowViewModel från DB-data och ersätt i collection.
         /// </summary>
         private async Task RefreshSingleTradeAsync(long stpTradeId)
         {
@@ -990,28 +986,113 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                 if (updatedTrade == null)
                     return;
 
-                // Hitta trade i UI (sök i både Options och Linear)
-                var tradeVm = OptionTrades.FirstOrDefault(t => t.StpTradeId == stpTradeId)
-                           ?? LinearTrades.FirstOrDefault(t => t.StpTradeId == stpTradeId);
+                // Kolla om detta är selected trade (spara innan vi ersätter)
+                bool wasSelected = SelectedTrade?.StpTradeId == stpTradeId;
 
-                if (tradeVm != null)
+                // Hitta trade i rätt collection
+                var optionIndex = -1;
+                var linearIndex = -1;
+
+                for (int i = 0; i < OptionTrades.Count; i++)
                 {
-                    // Uppdatera properties (minst Status, men helst alla)
-                    tradeVm.Status = updatedTrade.Status;
-                    tradeVm.SystemTradeId = updatedTrade.SystemTradeId;
-                    tradeVm.LastStatusUtc = updatedTrade.LastChangeUtc;
-
-                    // Om detta är selected trade, uppdatera details också
-                    if (SelectedTrade?.StpTradeId == stpTradeId)
+                    if (OptionTrades[i].StpTradeId == stpTradeId)
                     {
-                        _ = LoadDetailsForSelectedTradeAsync(tradeVm);
+                        optionIndex = i;
+                        break;
                     }
+                }
+
+                if (optionIndex == -1)
+                {
+                    for (int i = 0; i < LinearTrades.Count; i++)
+                    {
+                        if (LinearTrades[i].StpTradeId == stpTradeId)
+                        {
+                            linearIndex = i;
+                            break;
+                        }
+                    }
+                }
+
+                // Recreate ViewModel från DB-data
+                var newVm = MapToTradeRowViewModel(updatedTrade);
+
+                // Ersätt i collection
+                if (optionIndex >= 0)
+                {
+                    OptionTrades[optionIndex] = newVm;
+
+                    // Återställ selection om den var selected
+                    if (wasSelected)
+                    {
+                        SelectedOptionTrade = newVm;
+                    }
+                }
+                else if (linearIndex >= 0)
+                {
+                    LinearTrades[linearIndex] = newVm;
+
+                    // Återställ selection om den var selected
+                    if (wasSelected)
+                    {
+                        SelectedLinearTrade = newVm;
+                    }
+                }
+
+                // Om traden var selected, ladda details direkt (för Routing/WorkflowEvents update)
+                if (wasSelected)
+                {
+                    _ = LoadDetailsForSelectedTradeAsync(newVm);
                 }
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"[BlotterVM] RefreshSingleTradeAsync failed: {ex.Message}");
             }
+        }
+
+
+        /// <summary>
+        /// D4.2c: Mappar BlotterTradeRow (från DB) till TradeRowViewModel.
+        /// Återanvänd samma logik som i RefreshAsync.
+        /// </summary>
+        private TradeRowViewModel MapToTradeRowViewModel(FxTradeHub.Contracts.Dtos.BlotterTradeRow trade)
+        {
+            // Använd samma mapping som i RefreshAsync
+            return new TradeRowViewModel(
+                stpTradeId: trade.StpTradeId,
+                tradeId: trade.TradeId,
+                counterparty: trade.CounterpartyCode,
+                ccyPair: trade.CcyPair,
+                buySell: trade.BuySell,
+                callPut: trade.CallPut,
+                strike: trade.Strike,
+                expiryDate: trade.ExpiryDate,
+                notional: trade.Notional,
+                notionalCcy: trade.NotionalCcy,
+                premium: trade.Premium,
+                premiumCcy: trade.PremiumCcy,
+                portfolioMx3: trade.PortfolioMx3,
+                trader: trade.TraderId,
+                status: trade.Status,
+                time: trade.TradeDate ?? DateTime.MinValue,
+                system: trade.SystemCode,
+                product: trade.ProductType,
+                spotRate: trade.SpotRate,
+                swapPoints: trade.SwapPoints,
+                settlementDate: trade.SettlementDate,
+                hedgeRate: trade.HedgeRate,
+                hedgeType: trade.HedgeType,
+                calypsoPortfolio: trade.CalypsoPortfolio,
+                mx3Status: trade.SystemCode == "MX3" ? trade.Status : null,
+                calypsoStatus: trade.SystemCode == "CALYPSO" ? trade.Status : null,
+                mic: trade.Mic,
+                tvtic: trade.Tvtic,
+                isin: trade.Isin,
+                invDecisionId: trade.InvId,
+                isNew: false,
+                isUpdated: false
+            );
         }
 
 

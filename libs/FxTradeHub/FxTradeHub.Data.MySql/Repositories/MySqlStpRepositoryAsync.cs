@@ -613,7 +613,7 @@ WHERE StpTradeId = @StpTradeId
         {
             const string sql = @"
 INSERT INTO trade_stp.TradeWorkflowEvent 
-(StpTradeId, EventType, SystemCode, EventTimeUtc, UserId, Details)
+(StpTradeId, EventType, SystemCode, TimestampUtc, UserId, Details)
 VALUES 
 (@StpTradeId, @EventType, @SystemCode, UTC_TIMESTAMP(), @UserId, @Details);
 ";
