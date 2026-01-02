@@ -80,7 +80,7 @@ namespace FxTradeHub.Services.Blotter
                     eventType: "Mx3BookingRequested",
                     systemCode: "MX3",
                     userId: Environment.UserName,
-                    details: $"XML file: {exportResult.FileName}, Portfolio: {trade.PortfolioMX3}"
+                    details: $"XML file: {exportResult.FileName}, Portfolio: {trade.PortfolioMx3}"
                 ).ConfigureAwait(false);
 
                 return new BookTradeResult

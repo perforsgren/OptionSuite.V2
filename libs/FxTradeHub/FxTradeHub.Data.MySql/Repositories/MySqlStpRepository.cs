@@ -739,11 +739,6 @@ SELECT LAST_INSERT_ID();";
         }
 
 
-
-
-
-
-
         /// <summary>
         /// Infogar en ny rad i tabellen trade_stp.tradeworkflowevent och returnerar det genererade WorkflowEventId.
         /// Mappning:

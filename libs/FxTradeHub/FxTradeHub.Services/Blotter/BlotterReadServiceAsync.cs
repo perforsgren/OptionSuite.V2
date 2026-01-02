@@ -308,5 +308,14 @@ namespace FxTradeHub.Services
                     return false;
             }
         }
+
+        /// <summary>
+        /// D4.2c: Delegerar till repository för targeted refresh.
+        /// </summary>
+        public async Task<BlotterTradeRow> GetTradeByIdAsync(long stpTradeId)
+        {
+            return await _repository.GetTradeByIdAsync(stpTradeId).ConfigureAwait(false);
+        }
+
     }
 }

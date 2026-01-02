@@ -12,12 +12,15 @@ using FxTradeHub.Contracts.Dtos;
 using FxTradeHub.Services;
 using OptionSuite.Blotter.Wpf.Infrastructure;
 using System.Windows.Data;
+using FxTradeHub.Services.Blotter;
+using System.Windows;
 
 namespace OptionSuite.Blotter.Wpf.ViewModels
 {
     public sealed class BlotterRootViewModel : INotifyPropertyChanged
     {
         private readonly IBlotterReadServiceAsync _readService;
+        private readonly IBlotterCommandServiceAsync _commandService;
 
         private TradeRowViewModel _selectedOptionTrade;
         private TradeRowViewModel _selectedLinearTrade;
@@ -364,9 +367,10 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
 
         public TradeRowViewModel SelectedTrade => _selectedOptionTrade ?? _selectedLinearTrade;
 
-        public BlotterRootViewModel(IBlotterReadServiceAsync readService)
+        public BlotterRootViewModel(IBlotterReadServiceAsync readService, IBlotterCommandServiceAsync commandService)
         {
             _readService = readService ?? throw new ArgumentNullException(nameof(readService));
+            _commandService = commandService ?? throw new ArgumentNullException(nameof(commandService));
 
             RefreshCommand = new RelayCommand(async () => await RefreshAsync().ConfigureAwait(true));
 
@@ -906,6 +910,111 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
+
+        /// <summary>
+        /// D4.2c: Bokar vald trade till MX3 med optimistic update.
+        /// 
+        /// Workflow:
+        /// 1. Optimistic update: Sätt Status = PENDING i UI
+        /// 2. Anropa command service (XML + DB update)
+        /// 3. Targeted refresh: Hämta updated trade från DB
+        /// 4. Om error: Rollback till original status + visa error
+        /// </summary>
+        public async Task ExecuteBookTradeAsync(long stpTradeId, string systemCode)
+        {
+            // 1. Hitta trade i UI (sök i både Options och Linear)
+            var tradeVm = OptionTrades.FirstOrDefault(t => t.StpTradeId == stpTradeId)
+                       ?? LinearTrades.FirstOrDefault(t => t.StpTradeId == stpTradeId);
+
+            if (tradeVm == null)
+            {
+                MessageBox.Show($"Trade {stpTradeId} not found in UI.", "Book Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            // Spara original status för rollback
+            var originalStatus = tradeVm.Status;
+
+            try
+            {
+                // 2. Optimistic update: Sätt PENDING direkt i UI
+                tradeVm.Status = "PENDING";
+
+                // 3. Anropa command service
+                BookTradeResult result = null;
+                if (systemCode == "MX3")
+                {
+                    result = await _commandService.BookOptionToMx3Async(stpTradeId).ConfigureAwait(true);
+                }
+                else
+                {
+                    MessageBox.Show($"System {systemCode} not yet supported.", "Book Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    tradeVm.Status = originalStatus; // Rollback
+                    return;
+                }
+
+                // 4. Check result
+                if (!result.Success)
+                {
+                    // Rollback + visa error
+                    tradeVm.Status = originalStatus;
+                    MessageBox.Show($"Book failed: {result.ErrorMessage}", "Book Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+
+                // 5. Targeted refresh: Hämta updated trade från DB
+                await RefreshSingleTradeAsync(stpTradeId).ConfigureAwait(true);
+
+                MessageBox.Show($"Trade {stpTradeId} booked successfully!\nXML: {result.XmlFileName}", "Book Success", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                // Rollback på exception
+                tradeVm.Status = originalStatus;
+                MessageBox.Show($"Book failed: {ex.Message}", "Book Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+
+        /// <summary>
+        /// D4.2c: Refreshar en enskild trade från DB och uppdaterar UI.
+        /// Används efter Book för att få korrekt status utan full refresh.
+        /// </summary>
+        private async Task RefreshSingleTradeAsync(long stpTradeId)
+        {
+            try
+            {
+                // Hämta updated trade från DB
+                var updatedTrade = await _readService.GetTradeByIdAsync(stpTradeId).ConfigureAwait(true);
+
+                if (updatedTrade == null)
+                    return;
+
+                // Hitta trade i UI (sök i både Options och Linear)
+                var tradeVm = OptionTrades.FirstOrDefault(t => t.StpTradeId == stpTradeId)
+                           ?? LinearTrades.FirstOrDefault(t => t.StpTradeId == stpTradeId);
+
+                if (tradeVm != null)
+                {
+                    // Uppdatera properties (minst Status, men helst alla)
+                    tradeVm.Status = updatedTrade.Status;
+                    tradeVm.SystemTradeId = updatedTrade.SystemTradeId;
+                    tradeVm.LastStatusUtc = updatedTrade.LastChangeUtc;
+
+                    // Om detta är selected trade, uppdatera details också
+                    if (SelectedTrade?.StpTradeId == stpTradeId)
+                    {
+                        _ = LoadDetailsForSelectedTradeAsync(tradeVm);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[BlotterVM] RefreshSingleTradeAsync failed: {ex.Message}");
+            }
+        }
+
+
 
         // === CONTEXT MENU COMMAND HANDLERS ===
 

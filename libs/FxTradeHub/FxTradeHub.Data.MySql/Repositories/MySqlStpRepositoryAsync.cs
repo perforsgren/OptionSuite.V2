@@ -498,6 +498,197 @@ namespace FxTradeHub.Data.MySql.Repositories
 
 
         /// <summary>
+        /// D4.2b: Hämtar en trade med systemlänk-info för bokning.
+        /// Joinar Trade + TradeSystemLink för att få komplett BlotterTradeRow.
+        /// </summary>
+        public async Task<BlotterTradeRow> GetTradeByIdAsync(long stpTradeId)
+        {
+            const string sql = @"
+SELECT 
+    t.StpTradeId,
+    t.TradeId,
+    t.MessageInId,
+    t.ProductType,
+    t.SourceType,
+    t.SourceVenueCode,
+    t.CounterpartyCode,
+    t.BrokerCode,
+    t.TraderId,
+    t.InvId,
+    t.ReportingEntityId,
+    t.CurrencyPair AS CcyPair,
+    t.BuySell,
+    t.CallPut,
+    t.Notional,
+    t.NotionalCurrency AS NotionalCcy,
+    t.Strike,
+    t.Cut,
+    t.TradeDate,
+    t.ExpiryDate,
+    t.SettlementDate,
+    t.ExecutionTimeUtc,
+    t.Mic,
+    t.Isin,
+    t.Premium,
+    t.PremiumCurrency AS PremiumCcy,
+    t.PremiumDate,
+    t.PortfolioMx3,
+    t.CalypsoBook AS CalypsoPortfolio,
+    t.Margin,
+    t.Tvtic,
+    t.IsDeleted AS TradeIsDeleted,
+    t.LastUpdatedUtc AS TradeLastUpdatedUtc,
+    t.LastUpdatedBy AS TradeLastUpdatedBy,
+    tsl.SystemLinkId,
+    tsl.SystemCode,
+    tsl.Status,
+    tsl.Status AS SystemStatus,
+    tsl.SystemTradeId,
+    tsl.SystemTradeId AS ExternalTradeId,
+    tsl.LastStatusUtc,
+    GREATEST(COALESCE(t.LastUpdatedUtc, '1970-01-01'), COALESCE(tsl.LastStatusUtc, '1970-01-01')) AS LastChangeUtc
+FROM trade_stp.Trade t
+LEFT JOIN trade_stp.TradeSystemLink tsl ON t.StpTradeId = tsl.StpTradeId AND tsl.SystemCode = 'MX3' AND tsl.IsDeleted = 0
+WHERE t.StpTradeId = @StpTradeId
+  AND t.IsDeleted = 0
+LIMIT 1;
+";
+
+            using (var conn = CreateConnection())
+            {
+                await conn.OpenAsync().ConfigureAwait(false);
+
+                using (var cmd = new MySqlCommand(sql, conn))
+                {
+                    cmd.Parameters.AddWithValue("@StpTradeId", stpTradeId);
+
+                    using (var reader = await cmd.ExecuteReaderAsync(CommandBehavior.SingleRow).ConfigureAwait(false))
+                    {
+                        if (await reader.ReadAsync().ConfigureAwait(false))
+                        {
+                            return MapBlotterTradeRow(reader);
+                        }
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// D4.2b: Uppdaterar status för TradeSystemLink.
+        /// </summary>
+        public async Task UpdateTradeSystemLinkStatusAsync(long stpTradeId, string systemCode, string status, string lastError)
+        {
+            const string sql = @"
+UPDATE trade_stp.TradeSystemLink
+SET Status = @Status,
+    LastStatusUtc = UTC_TIMESTAMP(),
+    LastError = @LastError
+WHERE StpTradeId = @StpTradeId
+  AND SystemCode = @SystemCode
+  AND IsDeleted = 0;
+";
+
+            using (var conn = CreateConnection())
+            {
+                await conn.OpenAsync().ConfigureAwait(false);
+
+                using (var cmd = new MySqlCommand(sql, conn))
+                {
+                    cmd.Parameters.AddWithValue("@StpTradeId", stpTradeId);
+                    cmd.Parameters.AddWithValue("@SystemCode", systemCode);
+                    cmd.Parameters.AddWithValue("@Status", status);
+                    cmd.Parameters.AddWithValue("@LastError", (object)lastError ?? DBNull.Value);
+
+                    await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+                }
+            }
+        }
+
+        /// <summary>
+        /// D4.2b: Skapar ett nytt TradeWorkflowEvent.
+        /// </summary>
+        public async Task InsertTradeWorkflowEventAsync(long stpTradeId, string eventType, string systemCode, string userId, string details)
+        {
+            const string sql = @"
+INSERT INTO trade_stp.TradeWorkflowEvent 
+(StpTradeId, EventType, SystemCode, EventTimeUtc, UserId, Details)
+VALUES 
+(@StpTradeId, @EventType, @SystemCode, UTC_TIMESTAMP(), @UserId, @Details);
+";
+
+            using (var conn = CreateConnection())
+            {
+                await conn.OpenAsync().ConfigureAwait(false);
+
+                using (var cmd = new MySqlCommand(sql, conn))
+                {
+                    cmd.Parameters.AddWithValue("@StpTradeId", stpTradeId);
+                    cmd.Parameters.AddWithValue("@EventType", eventType);
+                    cmd.Parameters.AddWithValue("@SystemCode", systemCode);
+                    cmd.Parameters.AddWithValue("@UserId", userId);
+                    cmd.Parameters.AddWithValue("@Details", (object)details ?? DBNull.Value);
+
+                    await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+                }
+            }
+        }
+
+        /// <summary>
+        /// D4.2b: Helper för att mappa DataReader till BlotterTradeRow.
+        /// </summary>
+        private BlotterTradeRow MapBlotterTradeRow(MySqlDataReader reader)
+        {
+            return new BlotterTradeRow
+            {
+                StpTradeId = reader.GetInt64("StpTradeId"),
+                SystemLinkId = reader.IsDBNull(reader.GetOrdinal("SystemLinkId")) ? 0 : reader.GetInt64("SystemLinkId"),
+                TradeId = reader.GetString("TradeId"),
+                MessageInId = reader.IsDBNull(reader.GetOrdinal("MessageInId")) ? (long?)null : reader.GetInt64("MessageInId"),
+                ProductType = reader.IsDBNull(reader.GetOrdinal("ProductType")) ? null : reader.GetString("ProductType"),
+                SourceType = reader.IsDBNull(reader.GetOrdinal("SourceType")) ? null : reader.GetString("SourceType"),
+                SourceVenueCode = reader.IsDBNull(reader.GetOrdinal("SourceVenueCode")) ? null : reader.GetString("SourceVenueCode"),
+                CounterpartyCode = reader.IsDBNull(reader.GetOrdinal("CounterpartyCode")) ? null : reader.GetString("CounterpartyCode"),
+                BrokerCode = reader.IsDBNull(reader.GetOrdinal("BrokerCode")) ? null : reader.GetString("BrokerCode"),
+                TraderId = reader.IsDBNull(reader.GetOrdinal("TraderId")) ? null : reader.GetString("TraderId"),
+                InvId = reader.IsDBNull(reader.GetOrdinal("InvId")) ? null : reader.GetString("InvId"),
+                ReportingEntityId = reader.IsDBNull(reader.GetOrdinal("ReportingEntityId")) ? null : reader.GetString("ReportingEntityId"),
+                CcyPair = reader.IsDBNull(reader.GetOrdinal("CcyPair")) ? null : reader.GetString("CcyPair"),
+                BuySell = reader.IsDBNull(reader.GetOrdinal("BuySell")) ? null : reader.GetString("BuySell"),
+                CallPut = reader.IsDBNull(reader.GetOrdinal("CallPut")) ? null : reader.GetString("CallPut"),
+                Notional = reader.GetDecimal("Notional"),
+                NotionalCcy = reader.IsDBNull(reader.GetOrdinal("NotionalCcy")) ? null : reader.GetString("NotionalCcy"),
+                Strike = reader.IsDBNull(reader.GetOrdinal("Strike")) ? (decimal?)null : reader.GetDecimal("Strike"),
+                Cut = reader.IsDBNull(reader.GetOrdinal("Cut")) ? null : reader.GetString("Cut"),
+                TradeDate = reader.IsDBNull(reader.GetOrdinal("TradeDate")) ? (DateTime?)null : reader.GetDateTime("TradeDate"),
+                ExpiryDate = reader.IsDBNull(reader.GetOrdinal("ExpiryDate")) ? (DateTime?)null : reader.GetDateTime("ExpiryDate"),
+                SettlementDate = reader.IsDBNull(reader.GetOrdinal("SettlementDate")) ? (DateTime?)null : reader.GetDateTime("SettlementDate"),
+                ExecutionTimeUtc = reader.IsDBNull(reader.GetOrdinal("ExecutionTimeUtc")) ? (DateTime?)null : reader.GetDateTime("ExecutionTimeUtc"),
+                Mic = reader.IsDBNull(reader.GetOrdinal("Mic")) ? null : reader.GetString("Mic"),
+                Isin = reader.IsDBNull(reader.GetOrdinal("Isin")) ? null : reader.GetString("Isin"),
+                Premium = reader.IsDBNull(reader.GetOrdinal("Premium")) ? (decimal?)null : reader.GetDecimal("Premium"),
+                PremiumCcy = reader.IsDBNull(reader.GetOrdinal("PremiumCcy")) ? null : reader.GetString("PremiumCcy"),
+                PremiumDate = reader.IsDBNull(reader.GetOrdinal("PremiumDate")) ? (DateTime?)null : reader.GetDateTime("PremiumDate"),
+                PortfolioMx3 = reader.IsDBNull(reader.GetOrdinal("PortfolioMx3")) ? null : reader.GetString("PortfolioMx3"),
+                CalypsoPortfolio = reader.IsDBNull(reader.GetOrdinal("CalypsoPortfolio")) ? null : reader.GetString("CalypsoPortfolio"),
+                Margin = reader.IsDBNull(reader.GetOrdinal("Margin")) ? (decimal?)null : reader.GetDecimal("Margin"),
+                Tvtic = reader.IsDBNull(reader.GetOrdinal("Tvtic")) ? null : reader.GetString("Tvtic"),
+                TradeIsDeleted = reader.GetBoolean("TradeIsDeleted"),
+                TradeLastUpdatedUtc = reader.IsDBNull(reader.GetOrdinal("TradeLastUpdatedUtc")) ? (DateTime?)null : reader.GetDateTime("TradeLastUpdatedUtc"),
+                TradeLastUpdatedBy = reader.IsDBNull(reader.GetOrdinal("TradeLastUpdatedBy")) ? null : reader.GetString("TradeLastUpdatedBy"),
+                SystemCode = reader.IsDBNull(reader.GetOrdinal("SystemCode")) ? null : reader.GetString("SystemCode"),
+                Status = reader.IsDBNull(reader.GetOrdinal("Status")) ? null : reader.GetString("Status"),
+                SystemStatus = reader.IsDBNull(reader.GetOrdinal("SystemStatus")) ? null : reader.GetString("SystemStatus"),
+                SystemTradeId = reader.IsDBNull(reader.GetOrdinal("SystemTradeId")) ? null : reader.GetString("SystemTradeId"),
+                ExternalTradeId = reader.IsDBNull(reader.GetOrdinal("ExternalTradeId")) ? null : reader.GetString("ExternalTradeId"),
+                LastChangeUtc = reader.IsDBNull(reader.GetOrdinal("LastChangeUtc")) ? (DateTime?)null : reader.GetDateTime("LastChangeUtc")
+            };
+        }
+
+
+
+        /// <summary>
         /// Mappar databaskod (VARCHAR) till ProductType-enum.
         /// </summary>
         private static ProductType MapProductTypeFromDatabaseValue(string value)

@@ -67,5 +67,35 @@ namespace FxTradeHub.Domain.Interfaces
         Task<IReadOnlyList<TradeWorkflowEventRow>> GetTradeWorkflowEventsAsync(long stpTradeId, int maxRows);
 
 
+
+        /// <summary>
+        /// D4.2b: Hämtar en komplett trade (BlotterTradeRow) baserat på StpTradeId.
+        /// Används för att bygga Mx3OptionExportRequest vid bokning.
+        /// </summary>
+        /// <param name="stpTradeId">StpTradeId för traden</param>
+        /// <returns>BlotterTradeRow eller null om inte funnen</returns>
+        Task<BlotterTradeRow> GetTradeByIdAsync(long stpTradeId);
+
+        /// <summary>
+        /// D4.2b: Uppdaterar status för en TradeSystemLink.
+        /// Används för att sätta Status=PENDING när bokning initieras.
+        /// </summary>
+        /// <param name="stpTradeId">StpTradeId</param>
+        /// <param name="systemCode">Systemkod (t.ex. MX3, CALYPSO)</param>
+        /// <param name="status">Ny status (t.ex. PENDING, BOOKED, ERROR)</param>
+        /// <param name="lastError">Felmeddelande eller null om success</param>
+        Task UpdateTradeSystemLinkStatusAsync(long stpTradeId, string systemCode, string status, string lastError);
+
+        /// <summary>
+        /// D4.2b: Skapar ett nytt TradeWorkflowEvent.
+        /// Används för att logga Mx3BookingRequested, Mx3Booked, Mx3Error etc.
+        /// </summary>
+        /// <param name="stpTradeId">StpTradeId</param>
+        /// <param name="eventType">Event-typ (t.ex. Mx3BookingRequested)</param>
+        /// <param name="systemCode">Systemkod (t.ex. MX3)</param>
+        /// <param name="userId">Användare som initierade eventet</param>
+        /// <param name="details">Detaljer om eventet (t.ex. filnamn, portfolio)</param>
+        Task InsertTradeWorkflowEventAsync(long stpTradeId, string eventType, string systemCode, string userId, string details);
+
     }
 }

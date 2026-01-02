@@ -34,5 +34,11 @@ namespace FxTradeHub.Services
         /// Read-only lista – UI ska inte mutera.
         /// </summary>
         Task<IReadOnlyList<TradeWorkflowEventRow>> GetTradeWorkflowEventsAsync(long stpTradeId, int maxRows);
+
+        /// <summary>
+        /// D4.2c: Hämtar en enskild trade för targeted refresh.
+        /// </summary>
+        Task<BlotterTradeRow> GetTradeByIdAsync(long stpTradeId);
+
     }
 }

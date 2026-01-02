@@ -3,27 +3,24 @@ using FxTradeHub.Domain.Interfaces;
 using FxTradeHub.Services;
 using OptionSuite.Blotter.Wpf.ViewModels;
 using FxSharedConfig;
+using FxTradeHub.Services.Blotter;
 
 namespace OptionSuite.Blotter.Host.Wpf
 {
     internal static class BlotterCompositionRoot
     {
-         
-        public static IBlotterReadServiceAsync CreateReadService()
-        {
-            var cs = AppDbConfig.GetConnectionString("trade_stp"); 
-
-            // VIKTIGT: detta måste vara en repo som implementerar IStpRepositoryAsync
-            IStpRepositoryAsync repo = new MySqlStpRepositoryAsync(cs);
-
-            return new BlotterReadServiceAsync(repo);
-        }
 
         public static BlotterRootViewModel CreateRootViewModel()
         {
-            var readService = CreateReadService();
-            return new BlotterRootViewModel(readService);
+            var cs = AppDbConfig.GetConnectionString("trade_stp");
+            var repo = new MySqlStpRepositoryAsync(cs);
+
+            var readService = new BlotterReadServiceAsync(repo);
+            var commandService = new BlotterCommandServiceAsync(repo);
+
+            return new BlotterRootViewModel(readService, commandService);
         }
+
 
     }
 }
