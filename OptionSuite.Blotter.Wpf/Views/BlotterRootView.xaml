@@ -832,14 +832,6 @@
 
                                             <StackPanel>
 
-                                                <!-- D2.2D: Busy Indicator -->
-                                                <TextBlock Text="Loading details..." 
-                                                           FontStyle="Italic" 
-                                                           Foreground="{StaticResource Brush.TextMuted}"
-                                                           Margin="0,10,0,10"
-                                                           HorizontalAlignment="Center"
-                                                           Visibility="{Binding IsDetailsBusy, Converter={StaticResource BoolToVisConverter}}"/>
-
                                                 <!-- D2.2D: Error Message -->
                                                 <Border Background="#1AEF4444"
                                                         BorderBrush="#EF4444"

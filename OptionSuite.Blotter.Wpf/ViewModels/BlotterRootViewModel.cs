@@ -58,6 +58,8 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
         private readonly int[] _backoffIntervals = { 2, 4, 8, 16, 30 };  // sekunder
         private readonly TimeSpan _normalPollInterval = TimeSpan.FromSeconds(2);
 
+        private bool _isRefreshing; // förhindra detail-clear under refresh
+
         // =========================
         // D2.2C – Details (links/events)
         // =========================
@@ -448,6 +450,12 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             _userInteractionDebounceTimer.Start();
         }
 
+        /// <summary>
+        /// Hämtar nya trades från backend och uppdaterar OptionTrades/LinearTrades collections.
+        /// D2.2D-fix: Använder _isRefreshing flagga för att förhindra detail-clear under collection rebuild.
+        /// Återställer selection efter clear genom att hitta samma TradeId i nya collections.
+        /// Triggar piggyback detail-refresh efter lyckad refresh för att hålla högerpanel uppdaterad.
+        /// </summary>
         private async Task RefreshAsync()
         {
             // gemensam spärr för knapp + timer
@@ -592,32 +600,41 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                         }
                     }
 
-                    OptionTrades.Clear();
-                    LinearTrades.Clear();
-
-                    foreach (var trade in newOptionTrades)
+                    // D2.2D-fix: Sätt flagga för att förhindra detail-clear från selection bindings
+                    _isRefreshing = true;
+                    try
                     {
-                        OptionTrades.Add(trade);
-                    }
+                        OptionTrades.Clear();
+                        LinearTrades.Clear();
 
-                    foreach (var trade in newLinearTrades)
+                        foreach (var trade in newOptionTrades)
+                        {
+                            OptionTrades.Add(trade);
+                        }
+
+                        foreach (var trade in newLinearTrades)
+                        {
+                            LinearTrades.Add(trade);
+                        }
+
+                        _seenTradeIds.Clear();
+                        foreach (var id in nextSignatures.Keys)
+                        {
+                            _seenTradeIds.Add(id);
+                        }
+
+                        _lastSignatureByTradeId.Clear();
+                        foreach (var kvp in nextSignatures)
+                        {
+                            _lastSignatureByTradeId[kvp.Key] = kvp.Value;
+                        }
+
+                        RestoreSelection(selectedOptionId, selectedLinearId);
+                    }
+                    finally
                     {
-                        LinearTrades.Add(trade);
+                        _isRefreshing = false;
                     }
-
-                    _seenTradeIds.Clear();
-                    foreach (var id in nextSignatures.Keys)
-                    {
-                        _seenTradeIds.Add(id);
-                    }
-
-                    _lastSignatureByTradeId.Clear();
-                    foreach (var kvp in nextSignatures)
-                    {
-                        _lastSignatureByTradeId[kvp.Key] = kvp.Value;
-                    }
-
-                    RestoreSelection(selectedOptionId, selectedLinearId);
 
                     sw.Stop();
 
@@ -679,6 +696,7 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             }
         }
 
+
         private void RestoreSelection(string selectedOptionId, string selectedLinearId)
         {
             if (!string.IsNullOrWhiteSpace(selectedOptionId))
@@ -701,22 +719,27 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             }
         }
 
-        // =========================
-        // D2.2C – Details loading
-        // =========================
-
+        /// <summary>
+        /// Triggar async load av details för currently selected trade.
+        /// Skippar clear om vi är mitt i refresh (förhindrar race condition).
+        /// </summary>
         private void TriggerDetailsLoadForSelection()
         {
             var selected = SelectedTrade;
             if (selected == null)
             {
-                ClearDetailsCollections();
+                // Cleara INTE om vi är mitt i refresh (selection blir tillfälligt null när grid clearas)
+                if (!_isRefreshing)
+                {
+                    ClearDetailsCollections();
+                }
                 return;
             }
 
             // fire-and-forget (cancellation + spärr gör det stabilt)
             _ = LoadDetailsForSelectedTradeAsync(selected);
         }
+
 
         private void ClearDetailsCollections()
         {
