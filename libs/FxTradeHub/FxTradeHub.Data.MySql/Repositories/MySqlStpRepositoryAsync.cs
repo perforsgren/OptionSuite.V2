@@ -768,5 +768,132 @@ VALUES
                     throw new ArgumentOutOfRangeException(nameof(value), value, "Unknown TradeSystemStatus database value.");
             }
         }
+
+
+
+
+        // ==========================================
+        // LEADER ELECTION METHODS (D4.3)
+        // ==========================================
+
+        public async Task UpdatePresenceAsync(string nodeId, string userName, string machineName)
+        {
+            const string sql = @"
+        INSERT INTO stp_blotter_presence (NodeId, UserName, MachineName, LastSeen)
+        VALUES (@NodeId, @UserName, @MachineName, UTC_TIMESTAMP())
+        ON DUPLICATE KEY UPDATE LastSeen = UTC_TIMESTAMP()";
+
+            using (var conn = new MySqlConnection(_connectionString))
+            {
+                await conn.OpenAsync().ConfigureAwait(false);
+                using (var cmd = new MySqlCommand(sql, conn))
+                {
+                    cmd.Parameters.AddWithValue("@NodeId", nodeId);
+                    cmd.Parameters.AddWithValue("@UserName", userName);
+                    cmd.Parameters.AddWithValue("@MachineName", machineName);
+                    await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+                }
+            }
+        }
+
+        public async Task<List<string>> GetOnlineUsersAsync()
+        {
+            const string sql = @"
+        SELECT DISTINCT UserName 
+        FROM stp_blotter_presence
+        WHERE LastSeen > DATE_SUB(UTC_TIMESTAMP(), INTERVAL 30 SECOND)";
+
+            var users = new List<string>();
+
+            using (var conn = new MySqlConnection(_connectionString))
+            {
+                await conn.OpenAsync().ConfigureAwait(false);
+                using (var cmd = new MySqlCommand(sql, conn))
+                using (var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false))
+                {
+                    while (await reader.ReadAsync().ConfigureAwait(false))
+                    {
+                        users.Add(reader.GetString(0));
+                    }
+                }
+            }
+
+            return users;
+        }
+
+        public async Task<List<string>> GetMasterPriorityAsync()
+        {
+            const string sql = @"
+        SELECT UserName 
+        FROM stp_blotter_master_priority
+        ORDER BY OrderNo ASC";
+
+            var priority = new List<string>();
+
+            using (var conn = new MySqlConnection(_connectionString))
+            {
+                await conn.OpenAsync().ConfigureAwait(false);
+                using (var cmd = new MySqlCommand(sql, conn))
+                using (var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false))
+                {
+                    while (await reader.ReadAsync().ConfigureAwait(false))
+                    {
+                        priority.Add(reader.GetString(0));
+                    }
+                }
+            }
+
+            return priority;
+        }
+
+        public async Task<bool> TryAcquireMasterLockAsync(string lockName, string candidateUser, string machineName)
+        {
+            const string sql = @"
+        UPDATE stp_blotter_master_lock
+        SET HeldByUser = @CandidateUser,
+            HeldByMachine = @MachineName,
+            LastHeartbeat = UTC_TIMESTAMP(),
+            ExpiresAt = DATE_ADD(UTC_TIMESTAMP(), INTERVAL 30 SECOND)
+        WHERE LockName = @LockName
+          AND (ExpiresAt < UTC_TIMESTAMP() 
+               OR HeldByUser = @CandidateUser)";
+
+            using (var conn = new MySqlConnection(_connectionString))
+            {
+                await conn.OpenAsync().ConfigureAwait(false);
+                using (var cmd = new MySqlCommand(sql, conn))
+                {
+                    cmd.Parameters.AddWithValue("@LockName", lockName);
+                    cmd.Parameters.AddWithValue("@CandidateUser", candidateUser);
+                    cmd.Parameters.AddWithValue("@MachineName", machineName);
+
+                    var affectedRows = await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+                    return affectedRows > 0;
+                }
+            }
+        }
+
+        public async Task<string> GetCurrentMasterAsync(string lockName)
+        {
+            const string sql = @"
+        SELECT HeldByUser 
+        FROM stp_blotter_master_lock
+        WHERE LockName = @LockName
+          AND ExpiresAt > UTC_TIMESTAMP()";
+
+            using (var conn = new MySqlConnection(_connectionString))
+            {
+                await conn.OpenAsync().ConfigureAwait(false);
+                using (var cmd = new MySqlCommand(sql, conn))
+                {
+                    cmd.Parameters.AddWithValue("@LockName", lockName);
+
+                    var result = await cmd.ExecuteScalarAsync().ConfigureAwait(false);
+                    return result?.ToString();
+                }
+            }
+        }
+
+
     }
 }

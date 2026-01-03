@@ -2,6 +2,7 @@
 using System.Globalization;
 using System.Xml;
 using FxTradeHub.Contracts.Dtos;
+using FxSharedConfig;
 
 namespace FxTradeHub.Services.Mx3Export
 {
@@ -11,8 +12,6 @@ namespace FxTradeHub.Services.Mx3Export
     /// </summary>
     public sealed class Mx3OptionExportService
     {
-        // TODO: Flytta till appsettings/config
-        private const string MX3_EXPORT_DIRECTORY = @"C:\MX3_EXPORT\";
 
         /// <summary>
         /// D4.2a: Skapar en MX3 XML-fil för en option-trade.
@@ -26,10 +25,14 @@ namespace FxTradeHub.Services.Mx3Export
 
             try
             {
+
+                // Hämta path från config (samma pattern som GetConnectionString)
+                var exportFolder = AppPaths.Mx3ExportFolder;
+
                 var xmlDoc = BuildXmlDocument(request);
 
                 var fileName = $"{request.TradeId}.xml";
-                var filePath = System.IO.Path.Combine(MX3_EXPORT_DIRECTORY, fileName);
+                var filePath = System.IO.Path.Combine(exportFolder, fileName);
 
                 // Skapa katalog om den inte finns
                 var directory = System.IO.Path.GetDirectoryName(filePath);

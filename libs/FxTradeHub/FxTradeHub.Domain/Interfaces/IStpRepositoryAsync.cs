@@ -97,5 +97,37 @@ namespace FxTradeHub.Domain.Interfaces
         /// <param name="details">Detaljer om eventet (t.ex. filnamn, portfolio)</param>
         Task InsertTradeWorkflowEventAsync(long stpTradeId, string eventType, string systemCode, string userId, string details);
 
+        // ==========================================
+        // LEADER ELECTION METHODS (D4.3)
+        // ==========================================
+
+        /// <summary>
+        /// Uppdaterar presence (heartbeat) för denna blotter-instans.
+        /// </summary>
+        Task UpdatePresenceAsync(string nodeId, string userName, string machineName);
+
+        /// <summary>
+        /// Hämtar lista av användare som är online (LastSeen inom senaste 30 sek).
+        /// </summary>
+        Task<List<string>> GetOnlineUsersAsync();
+
+        /// <summary>
+        /// Hämtar master priority chain (ordning på vem som ska vara master).
+        /// </summary>
+        Task<List<string>> GetMasterPriorityAsync();
+
+        /// <summary>
+        /// Försöker ta master-locket för angiven kandidat.
+        /// Returnerar true om vi fick locket, false annars.
+        /// </summary>
+        Task<bool> TryAcquireMasterLockAsync(string lockName, string candidateUser, string machineName);
+
+        /// <summary>
+        /// Hämtar nuvarande master från lock-tabellen.
+        /// Returnerar null om ingen master eller låset har gått ut.
+        /// </summary>
+        Task<string> GetCurrentMasterAsync(string lockName);
+
+
     }
 }
