@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Xml;
 using FxTradeHub.Contracts.Dtos;
 using FxSharedConfig;
+using System.IO;
 
 namespace FxTradeHub.Services.Mx3Export
 {
@@ -20,34 +21,25 @@ namespace FxTradeHub.Services.Mx3Export
         /// <returns>Resultat med filnamn och path, eller error om något gick fel</returns>
         public Mx3OptionExportResult CreateXmlFile(Mx3OptionExportRequest request)
         {
-            if (request == null)
-                throw new ArgumentNullException(nameof(request));
-
             try
             {
-
-                // Hämta path från config (samma pattern som GetConnectionString)
                 var exportFolder = AppPaths.Mx3ExportFolder;
 
+                // NYTT FORMAT: {StpTradeId}_{TradeId}.xml
+                var fileName = $"{request.StpTradeId}_{request.TradeId}.xml";
+                var fullPath = Path.Combine(exportFolder, fileName);
+
+                // Skapa XML
                 var xmlDoc = BuildXmlDocument(request);
 
-                var fileName = $"{request.TradeId}.xml";
-                var filePath = System.IO.Path.Combine(exportFolder, fileName);
-
-                // Skapa katalog om den inte finns
-                var directory = System.IO.Path.GetDirectoryName(filePath);
-                if (!string.IsNullOrEmpty(directory) && !System.IO.Directory.Exists(directory))
-                {
-                    System.IO.Directory.CreateDirectory(directory);
-                }
-
-                xmlDoc.Save(filePath);
+                // Spara
+                xmlDoc.Save(fullPath);
 
                 return new Mx3OptionExportResult
                 {
                     Success = true,
                     FileName = fileName,
-                    FilePath = filePath
+                    FilePath = fullPath
                 };
             }
             catch (Exception ex)
@@ -55,10 +47,11 @@ namespace FxTradeHub.Services.Mx3Export
                 return new Mx3OptionExportResult
                 {
                     Success = false,
-                    ErrorMessage = $"XML export failed: {ex.Message}"
+                    ErrorMessage = ex.Message
                 };
             }
         }
+
 
         /// <summary>
         /// D4.2a: Bygger MX3 XML-dokumentet för en option trade.

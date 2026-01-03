@@ -17,6 +17,7 @@ namespace OptionSuite.Blotter.Wpf.Services
         public string ErrorMessage { get; set; }
     }
 
+
     /// <summary>
     /// Parsar MX3 response-filer (3 filer per trade).
     /// </summary>
@@ -30,38 +31,36 @@ namespace OptionSuite.Blotter.Wpf.Services
         {
             try
             {
-                // Extrahera StpTradeId från filnamn
-                // Format: "{StpTradeId}-{suffix}.xml_*_{Mx3Id}_{FileNumber}.xml"
                 var fileNameOnly = Path.GetFileName(anyFileName);
 
-                // Hitta första '-' för att få StpTradeId
-                var dashIndex = fileNameOnly.IndexOf('-');
-                if (dashIndex <= 0)
-                {
-                    throw new InvalidOperationException($"Cannot parse StpTradeId from filename: {fileNameOnly}");
-                }
+                // NYTT FORMAT: {StpTradeId}_{TradeId}.xml_evs_ans_ok...
+                // Exempel: 127_3070345-L1.xml_evs_ans_ok.dtd_37933607_2.xml
 
-                var stpTradeIdStr = fileNameOnly.Substring(0, dashIndex);
-                if (!long.TryParse(stpTradeIdStr, out var stpTradeId))
-                {
-                    throw new InvalidOperationException($"Invalid StpTradeId in filename: {fileNameOnly}");
-                }
-
-                // Hitta original filnamn (allt innan första '_')
-                // 3070342-L1.xml_evs_ans_ok... → 3070342-L1.xml
-                var underscoreIndex = fileNameOnly.IndexOf('_');
-                if (underscoreIndex <= 0)
+                // Första delen före _ är StpTradeId
+                var parts = fileNameOnly.Split('_');
+                if (parts.Length < 2)
                 {
                     throw new InvalidOperationException($"Invalid response filename format: {fileNameOnly}");
                 }
 
-                var originalFileName = fileNameOnly.Substring(0, underscoreIndex);
+                if (!long.TryParse(parts[0], out var stpTradeId))
+                {
+                    throw new InvalidOperationException($"Cannot parse StpTradeId from filename: {fileNameOnly}");
+                }
 
-                // Hitta alla 3 filer för denna trade med samma original filename
+                // Hitta original filename: "{StpTradeId}_{TradeId}.xml"
+                var xmlIndex = fileNameOnly.IndexOf(".xml_");
+                if (xmlIndex <= 0)
+                {
+                    throw new InvalidOperationException($"Cannot find .xml marker in filename: {fileNameOnly}");
+                }
+
+                var originalFileName = fileNameOnly.Substring(0, xmlIndex + 4); // +4 för ".xml"
+
+                // Hitta alla 3 filer
                 var basePattern = $"{originalFileName}_*";
                 var allFiles = Directory.GetFiles(responseFolder, basePattern);
 
-                // Hitta success-fil (*_2.xml) och error-fil (*_3.xml)
                 var successFile = allFiles.FirstOrDefault(f => f.Contains("_evs_ans_ok.") && f.EndsWith("_2.xml"));
                 var errorFile = allFiles.FirstOrDefault(f => f.Contains("_evs_ans_err.") && f.EndsWith("_3.xml"));
 
@@ -79,14 +78,12 @@ namespace OptionSuite.Blotter.Wpf.Services
                     if (answerStatus == "OK")
                     {
                         result.IsSuccess = true;
-
-                        // Extrahera MX3 IDs
                         result.Mx3ContractId = successXml.Descendants("contractId").FirstOrDefault()?.Value;
                         result.Mx3TradeId = successXml.Descendants("tradeInternalId").FirstOrDefault()?.Value;
                     }
                 }
 
-                // Parse error-fil (warnings kan finnas även om OK)
+                // Parse error-fil
                 if (!string.IsNullOrEmpty(errorFile) && File.Exists(errorFile))
                 {
                     var errorXml = XDocument.Load(errorFile);
@@ -114,6 +111,7 @@ namespace OptionSuite.Blotter.Wpf.Services
                 };
             }
         }
+
 
     }
 }

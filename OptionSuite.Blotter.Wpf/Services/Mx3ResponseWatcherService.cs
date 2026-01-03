@@ -1,25 +1,24 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using FxTradeHub.Domain.Entities;
-using FxTradeHub.Domain.Enums;
 using FxTradeHub.Domain.Interfaces;
+using FxTradeHub.Domain.Entities;
 using FxSharedConfig;
 
 namespace OptionSuite.Blotter.Wpf.Services
 {
-    /// <summary>
-    /// Tittar på MX3 response-mappen och processar filer.
-    /// Körs ENDAST när denna instans är master.
-    /// </summary>
     public sealed class Mx3ResponseWatcherService : IDisposable
     {
         private readonly IStpRepositoryAsync _repository;
         private readonly string _responseFolder;
         private FileSystemWatcher _watcher;
         private bool _isWatching;
+
+        // Deduplication - spara redan processade filer
+        private readonly HashSet<string> _processedFiles = new HashSet<string>();
 
         public Mx3ResponseWatcherService(IStpRepositoryAsync repository, string responseFolder)
         {
@@ -40,13 +39,12 @@ namespace OptionSuite.Blotter.Wpf.Services
             // 2. Starta FileSystemWatcher
             _watcher = new FileSystemWatcher(_responseFolder)
             {
-                Filter = "*_2.xml",  // Bara success-filer (de är avgörande)
-                NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite,
+                Filter = "*_2.xml",
+                NotifyFilter = NotifyFilters.FileName,  // BARA FileName, INTE LastWrite
                 EnableRaisingEvents = true
             };
 
-            _watcher.Created += OnFileCreated;
-            _watcher.Changed += OnFileChanged;
+            _watcher.Created += OnFileCreated;  // BARA Created, INTE Changed
 
             _isWatching = true;
         }
@@ -61,6 +59,7 @@ namespace OptionSuite.Blotter.Wpf.Services
             _watcher?.Dispose();
             _watcher = null;
             _isWatching = false;
+            _processedFiles.Clear();
         }
 
         private async Task StartupScanAsync()
@@ -87,21 +86,28 @@ namespace OptionSuite.Blotter.Wpf.Services
         private async void OnFileCreated(object sender, FileSystemEventArgs e)
         {
             // Vänta lite för att MX3 ska bli klar med att skriva
-            await Task.Delay(500);
-            await ProcessResponseFileAsync(e.FullPath);
-        }
-
-        private async void OnFileChanged(object sender, FileSystemEventArgs e)
-        {
-            await Task.Delay(500);
+            await Task.Delay(1000);
             await ProcessResponseFileAsync(e.FullPath);
         }
 
         private async Task ProcessResponseFileAsync(string filePath)
         {
+            var fileName = Path.GetFileName(filePath);
+
+            // Deduplication - skippa om redan processat
+            lock (_processedFiles)
+            {
+                if (_processedFiles.Contains(fileName))
+                {
+                    Debug.WriteLine($"[Watcher] Already processed: {fileName}, skipping.");
+                    return;
+                }
+                _processedFiles.Add(fileName);
+            }
+
             try
             {
-                Debug.WriteLine($"[Watcher] Processing file: {Path.GetFileName(filePath)}");
+                Debug.WriteLine($"[Watcher] Processing file: {fileName}");
 
                 // Parse response
                 var response = Mx3ResponseParserService.Parse(_responseFolder, filePath);
@@ -112,7 +118,17 @@ namespace OptionSuite.Blotter.Wpf.Services
                     return;
                 }
 
-                // Uppdatera status (4 parametrar: stpTradeId, systemCode, status, lastError)
+                // VIKTIGT: Kolla om trade finns i DB först
+                var tradeExists = await _repository.GetTradeByIdAsync(response.StpTradeId);
+                if (tradeExists == null)
+                {
+                    Debug.WriteLine($"[Watcher] ⚠️ StpTradeId {response.StpTradeId} does NOT exist in database. Skipping.");
+                    // Arkivera ändå så vi inte processar om och om igen
+                    ArchiveResponseFiles(response.StpTradeId, filePath);
+                    return;
+                }
+
+                // Uppdatera status
                 var status = response.IsSuccess ? "BOOKED" : "ERROR";
                 var errorMsg = response.IsSuccess ? null : response.ErrorMessage;
 
@@ -123,7 +139,7 @@ namespace OptionSuite.Blotter.Wpf.Services
                     errorMsg
                 );
 
-                // Insert WorkflowEvent (5 parametrar: stpTradeId, eventType, systemCode, userId, details)
+                // Insert WorkflowEvent
                 var eventType = response.IsSuccess ? "BookingConfirmed" : "BookingRejected";
                 var details = response.IsSuccess
                     ? $"MX3 Trade ID: {response.Mx3TradeId}, Contract ID: {response.Mx3ContractId}"
@@ -141,11 +157,16 @@ namespace OptionSuite.Blotter.Wpf.Services
 
                 // Arkivera alla 3 filer för denna trade
                 ArchiveResponseFiles(response.StpTradeId, filePath);
-
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[Watcher] Error processing file: {ex.Message}");
+                Debug.WriteLine($"[Watcher] ❌ Error processing file: {ex.Message}");
+
+                // Ta bort från processed-listan så vi kan försöka igen
+                lock (_processedFiles)
+                {
+                    _processedFiles.Remove(fileName);
+                }
             }
         }
 
@@ -183,7 +204,7 @@ namespace OptionSuite.Blotter.Wpf.Services
 
                     // Flytta till archive (overwrite om den redan finns)
                     File.Move(file, archivePath, overwrite: true);
-                    Debug.WriteLine($"[Watcher] Archived: {fn}");
+                    Debug.WriteLine($"[Watcher] 📁 Archived: {fn}");
                 }
             }
             catch (Exception ex)
@@ -191,9 +212,6 @@ namespace OptionSuite.Blotter.Wpf.Services
                 Debug.WriteLine($"[Watcher] Archive failed: {ex.Message}");
             }
         }
-
-
-
 
         public void Dispose()
         {
