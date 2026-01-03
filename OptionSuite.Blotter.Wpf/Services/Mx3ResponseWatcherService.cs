@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using FxTradeHub.Domain.Entities;
 using FxTradeHub.Domain.Enums;
 using FxTradeHub.Domain.Interfaces;
-using FxTradeHub.Domain.Entities;
+using FxSharedConfig;
 
 namespace OptionSuite.Blotter.Wpf.Services
 {
@@ -112,41 +112,88 @@ namespace OptionSuite.Blotter.Wpf.Services
                     return;
                 }
 
-                // Uppdatera DB endast om status fortfarande är PENDING
-                var status = response.IsSuccess
-                    ? TradeSystemStatus.Booked
-                    : TradeSystemStatus.Error;
+                // Uppdatera status (4 parametrar: stpTradeId, systemCode, status, lastError)
+                var status = response.IsSuccess ? "BOOKED" : "ERROR";
+                var errorMsg = response.IsSuccess ? null : response.ErrorMessage;
 
                 await _repository.UpdateTradeSystemLinkStatusAsync(
                     response.StpTradeId,
                     "MX3",
                     status,
-                    response.Mx3TradeId ?? response.Mx3ContractId,
-                    response.ErrorMessage
+                    errorMsg
                 );
 
-                // Insert WorkflowEvent
-                await _repository.InsertTradeWorkflowEventAsync(new TradeWorkflowEvent
-                {
-                    StpTradeId = response.StpTradeId,
-                    EventType = response.IsSuccess ? "BookingConfirmed" : "BookingRejected",
-                    SystemCode = SystemCode.Mx3,
-                    EventTimeUtc = DateTime.UtcNow,
-                    InitiatorId = "MX3_WATCHER",
-                    Description = response.IsSuccess
-                        ? $"MX3 Trade ID: {response.Mx3TradeId}, Contract ID: {response.Mx3ContractId}"
-                        : $"Errors: {response.ErrorMessage}"
-                });
+                // Insert WorkflowEvent (5 parametrar: stpTradeId, eventType, systemCode, userId, details)
+                var eventType = response.IsSuccess ? "BookingConfirmed" : "BookingRejected";
+                var details = response.IsSuccess
+                    ? $"MX3 Trade ID: {response.Mx3TradeId}, Contract ID: {response.Mx3ContractId}"
+                    : $"Errors: {response.ErrorMessage}";
+
+                await _repository.InsertTradeWorkflowEventAsync(
+                    response.StpTradeId,
+                    eventType,
+                    "MX3",
+                    "MX3_WATCHER",
+                    details
+                );
 
                 Debug.WriteLine($"[Watcher] ✅ Updated StpTradeId {response.StpTradeId}: {status}");
 
-                // TODO: Arkivera fil? Eller låt MX3 hantera det?
+                // Arkivera alla 3 filer för denna trade
+                ArchiveResponseFiles(response.StpTradeId, filePath);
+
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"[Watcher] Error processing file: {ex.Message}");
             }
         }
+
+        private void ArchiveResponseFiles(long stpTradeId, string processedFileName)
+        {
+            try
+            {
+                var archiveFolder = AppPaths.Mx3ArchiveFolder;
+
+                // Skapa archive-mapp om den inte finns
+                if (!Directory.Exists(archiveFolder))
+                {
+                    Directory.CreateDirectory(archiveFolder);
+                }
+
+                // Extrahera original filename från processed file
+                var fileName = Path.GetFileName(processedFileName);
+                var underscoreIndex = fileName.IndexOf('_');
+                if (underscoreIndex <= 0)
+                {
+                    Debug.WriteLine($"[Watcher] Cannot determine base pattern from: {fileName}");
+                    return;
+                }
+
+                var originalFileName = fileName.Substring(0, underscoreIndex);
+
+                // Hitta alla 3 filer för denna trade
+                var basePattern = $"{originalFileName}_*";
+                var allFiles = Directory.GetFiles(_responseFolder, basePattern);
+
+                foreach (var file in allFiles)
+                {
+                    var fn = Path.GetFileName(file);
+                    var archivePath = Path.Combine(archiveFolder, fn);
+
+                    // Flytta till archive (overwrite om den redan finns)
+                    File.Move(file, archivePath, overwrite: true);
+                    Debug.WriteLine($"[Watcher] Archived: {fn}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[Watcher] Archive failed: {ex.Message}");
+            }
+        }
+
+
+
 
         public void Dispose()
         {
