@@ -177,6 +177,10 @@
         <!-- D2.2D: Converters -->
         <BooleanToVisibilityConverter x:Key="BoolToVisConverter"/>
         <converters:NullToCollapsedConverter x:Key="NullToCollapsed"/>
+        <converters:DetailsToLinesConverter x:Key="DetailsToLines"/>
+        <converters:EventTypeToIconConverter x:Key="EventTypeToIcon"/>
+        <converters:EventTypeToColorConverter x:Key="EventTypeToColor"/>
+
 
     </UserControl.Resources>
 
@@ -1050,26 +1054,85 @@
                                                                 <DataTemplate>
                                                                     <Border Style="{StaticResource Style.BlotterEventRow}">
                                                                         <Grid>
+                                                                            <Grid.RowDefinitions>
+                                                                                <RowDefinition Height="Auto"/>
+                                                                                <RowDefinition Height="Auto"/>
+                                                                            </Grid.RowDefinitions>
+
                                                                             <Grid.ColumnDefinitions>
                                                                                 <ColumnDefinition Width="Auto"/>
+                                                                                <!-- Timestamp -->
+                                                                                <ColumnDefinition Width="12"/>
+                                                                                <!-- Spacing -->
+                                                                                <ColumnDefinition Width="Auto"/>
+                                                                                <!-- Icon -->
+                                                                                <ColumnDefinition Width="12"/>
+                                                                                <!-- Spacing -->
                                                                                 <ColumnDefinition Width="*"/>
+                                                                                <!-- Content -->
                                                                             </Grid.ColumnDefinitions>
 
-                                                                            <TextBlock Grid.Column="0"
-                                           Text="{Binding TimestampUtc, StringFormat='HH:mm:ss'}" 
-                                           Style="{StaticResource Style.BlotterEventTime}"/>
+                                                                            <!-- Timestamp - TA BORT Style, sätt properties direkt -->
+                                                                            <TextBlock Grid.Row="0" Grid.Column="0"
+                               Text="{Binding TimestampUtc, StringFormat='HH:mm:ss'}"
+                               FontFamily="{StaticResource Font.Mono}"
+                               FontSize="11"
+                               Foreground="{StaticResource Brush.TextMuted2}"
+                               VerticalAlignment="Center"
+                               Margin="0"/>
 
-                                                                            <StackPanel Grid.Column="1">
-                                                                                <StackPanel Orientation="Horizontal">
-                                                                                    <TextBlock Text="{Binding EventType}" 
-                                                   Style="{StaticResource Style.BlotterEventTitle}"/>
-                                                                                    <TextBlock Text="{Binding SystemCode, StringFormat=' ({0})'}" 
-                                                   Style="{StaticResource Style.BlotterEventTitle}"
-                                                   Foreground="{StaticResource Brush.TextMuted}"/>
-                                                                                </StackPanel>
-                                                                                <TextBlock Text="{Binding Details, TargetNullValue=—}" 
-                                               Style="{StaticResource Style.BlotterEventBody}"/>
+                                                                            <!-- Event Type Icon -->
+                                                                            <TextBlock Grid.Row="0" Grid.Column="2"
+                               Text="{Binding EventType, Converter={StaticResource EventTypeToIcon}}"
+                               FontSize="14"
+                               Foreground="{Binding EventType, Converter={StaticResource EventTypeToColor}}"
+                               VerticalAlignment="Center"
+                               Margin="0"/>
+
+                                                                            <!-- Event Type + System Code Badge -->
+                                                                            <StackPanel Grid.Row="0" Grid.Column="4" 
+                                Orientation="Horizontal" 
+                                VerticalAlignment="Center">
+
+                                                                                <TextBlock Text="{Binding EventType}" 
+                                   FontSize="13"
+                                   FontWeight="SemiBold"
+                                   Foreground="{StaticResource Brush.Text}"
+                                   VerticalAlignment="Center"
+                                   Margin="0"/>
+
+                                                                                <!-- System Code badge -->
+                                                                                <Border Background="#1A64748B"
+                                BorderBrush="#64748B"
+                                BorderThickness="1"
+                                CornerRadius="4"
+                                Padding="6,2"
+                                Margin="8,0,0,0"
+                                VerticalAlignment="Center">
+                                                                                    <TextBlock Text="{Binding SystemCode}" 
+                                       FontSize="10"
+                                       FontFamily="{StaticResource Font.Mono}"
+                                       Foreground="{StaticResource Brush.TextMuted}"
+                                       FontWeight="SemiBold"
+                                       VerticalAlignment="Center"/>
+                                                                                </Border>
                                                                             </StackPanel>
+
+                                                                            <!-- Details (bullet list) -->
+                                                                            <ItemsControl Grid.Row="1" Grid.Column="4"
+                                  ItemsSource="{Binding Details, Converter={StaticResource DetailsToLines}}"
+                                  Margin="0,6,0,0">
+                                                                                <ItemsControl.ItemTemplate>
+                                                                                    <DataTemplate>
+                                                                                        <TextBlock Text="{Binding}"
+                                           FontSize="11"
+                                           Foreground="{StaticResource Brush.TextMuted}"
+                                           Margin="0,0,0,2"
+                                           TextWrapping="Wrap"/>
+                                                                                    </DataTemplate>
+                                                                                </ItemsControl.ItemTemplate>
+                                                                            </ItemsControl>
+
                                                                         </Grid>
                                                                     </Border>
                                                                 </DataTemplate>
