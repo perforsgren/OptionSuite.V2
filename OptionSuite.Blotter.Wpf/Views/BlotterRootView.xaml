@@ -370,7 +370,7 @@
                                                  Command="{Binding SetFilterAllCommand}"
                                                  CommandParameter="ALL">
                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                            <TextBlock Text="All" Style="{StaticResource Style.BlotterStripLabel}"/>
+                                            <TextBlock Text="All" Style="{StaticResource Style.BlotterStripLabel}" VerticalAlignment="Center"/>
                                             <Border Style="{StaticResource Style.BlotterCountPill}" Margin="8,0,0,0">
                                                 <TextBlock Text="{Binding TotalTrades}" Style="{StaticResource Style.BlotterCountPillText}"/>
                                             </Border>
@@ -383,7 +383,7 @@
                                                  Command="{Binding SetFilterNewCommand}"
                                                  CommandParameter="NEW">
                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                            <TextBlock Text="New" Style="{StaticResource Style.BlotterStripLabel}"/>
+                                            <TextBlock Text="New" Style="{StaticResource Style.BlotterStripLabel}" VerticalAlignment="Center"/>
                                             <Border Style="{StaticResource Style.BlotterCountPill}" Margin="8,0,0,0">
                                                 <TextBlock Text="{Binding NewCount}" Style="{StaticResource Style.BlotterCountPillText}"/>
                                             </Border>
@@ -396,7 +396,7 @@
                                                  Command="{Binding SetFilterPendingCommand}"
                                                  CommandParameter="PENDING">
                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                            <TextBlock Text="Pending" Style="{StaticResource Style.BlotterStripLabel}"/>
+                                            <TextBlock Text="Pending" Style="{StaticResource Style.BlotterStripLabel}" VerticalAlignment="Center"/>
                                             <Border Style="{StaticResource Style.BlotterCountPill}" Margin="8,0,0,0">
                                                 <TextBlock Text="{Binding PendingCount}" Style="{StaticResource Style.BlotterCountPillText}"/>
                                             </Border>
@@ -409,7 +409,7 @@
                                                  Command="{Binding SetFilterBookedCommand}"
                                                  CommandParameter="BOOKED">
                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                            <TextBlock Text="Booked" Style="{StaticResource Style.BlotterStripLabel}"/>
+                                            <TextBlock Text="Booked" Style="{StaticResource Style.BlotterStripLabel}" VerticalAlignment="Center"/>
                                             <Border Style="{StaticResource Style.BlotterCountPill}" Margin="8,0,0,0">
                                                 <TextBlock Text="{Binding BookedCount}" Style="{StaticResource Style.BlotterCountPillText}"/>
                                             </Border>
@@ -422,7 +422,7 @@
                                                  Command="{Binding SetFilterErrorsCommand}"
                                                  CommandParameter="ERRORS">
                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                            <TextBlock Text="Errors" Style="{StaticResource Style.BlotterStripLabel}"/>
+                                            <TextBlock Text="Errors" Style="{StaticResource Style.BlotterStripLabel}" VerticalAlignment="Center"/>
                                             <Border Style="{StaticResource Style.BlotterCountPill}" Margin="8,0,0,0">
                                                 <TextBlock Text="{Binding ErrorCount}" Style="{StaticResource Style.BlotterCountPillText}"/>
                                             </Border>

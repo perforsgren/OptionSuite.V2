@@ -160,7 +160,6 @@
 
     <!-- =========================
          BLOTTER: SEGMENTED STRIP
-         (ska kännas som samma familj som toolbar buttons)
          ========================= -->
 
     <!-- Segmented strip: label + pill ska bete sig som målbild -->
@@ -187,19 +186,35 @@
 
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="B" Property="Background" Value="{StaticResource Brush.Surface.Hover}"/>
-                            <Setter Property="Foreground" Value="{StaticResource Brush.TextMuted}"/>
+                            <Setter TargetName="B" Property="Background">
+                                <Setter.Value>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                        <GradientStop Color="#08FFFFFF" Offset="0.0"/>
+                                        <GradientStop Color="#04FFFFFF" Offset="1.0"/>
+                                    </LinearGradientBrush>
+                                </Setter.Value>
+                            </Setter>
+                            <Setter TargetName="B" Property="BorderBrush">
+                                <Setter.Value>
+                                    <SolidColorBrush Color="#20FFFFFF"/>
+                                </Setter.Value>
+                            </Setter>
                         </Trigger>
 
                         <Trigger Property="IsChecked" Value="True">
-                            <Setter TargetName="B" Property="Background" Value="{StaticResource Brush.Surface.Selected}"/>
-                            <Setter TargetName="B" Property="BorderBrush" Value="{StaticResource Brush.Border}"/>
-                            <Setter Property="Foreground" Value="{StaticResource Brush.Text}"/>
+                            <Setter TargetName="B" Property="Background" Value="#1A2DD4BF"/>
+                            <Setter TargetName="B" Property="BorderBrush" Value="#2DD4BF"/>
+                            <Setter Property="Foreground" Value="#2DD4BF"/>
                         </Trigger>
 
-                        <Trigger Property="IsEnabled" Value="False">
-                            <Setter Property="Opacity" Value="0.5"/>
-                        </Trigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsChecked" Value="True"/>
+                                <Condition Property="IsMouseOver" Value="True"/>
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="B" Property="Background" Value="#262DD4BF"/>
+                            <Setter TargetName="B" Property="BorderBrush" Value="#2DD4BF"/>
+                        </MultiTrigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
@@ -213,12 +228,11 @@
         <Setter Property="Background" Value="{StaticResource Brush.PanelChromeTitle}"/>
         <Setter Property="BorderBrush" Value="{StaticResource Brush.BorderSoft}"/>
         <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="Padding" Value="8,0"/>
+        <Setter Property="Padding" Value="6,2"/>
         <Style.Triggers>
             <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType={x:Type RadioButton}}}"
-                     Value="True">
-                <Setter Property="Background" Value="{StaticResource Brush.Surface.Selected}"/>
-                <Setter Property="BorderBrush" Value="{StaticResource Brush.Border}"/>
+                 Value="True">
+                <Setter Property="Background" Value="Transparent"/>
             </DataTrigger>
         </Style.Triggers>
     </Style>
@@ -228,15 +242,16 @@
         <Setter Property="Foreground" Value="{StaticResource Brush.TextMuted2}"/>
         <Style.Triggers>
             <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType={x:Type RadioButton}}}"
-                     Value="True">
-                <Setter Property="Foreground" Value="{StaticResource Brush.Text}"/>
+                 Value="True">
+                <Setter Property="Foreground" Value="#2DD4BF"/>
             </DataTrigger>
         </Style.Triggers>
     </Style>
 
+
     <!-- Label i filterstrip: ljusare när INTE selected, vit när selected -->
     <Style x:Key="Style.BlotterStripLabel" TargetType="{x:Type TextBlock}">
-        <!-- INTE selected: ljusare än idag -->
+        <!-- INTE selected -->
         <Setter Property="Foreground" Value="{StaticResource Brush.TextMuted2}"/>
         <Setter Property="FontSize" Value="12"/>
 
