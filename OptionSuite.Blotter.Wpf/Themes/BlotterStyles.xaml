@@ -503,18 +503,13 @@
                             <Setter TargetName="LeftAccent" Property="Background" Value="{StaticResource Brush.AccentSoft}"/>
                         </Trigger>
 
-                        <!-- UPDATED (NY) -->
+                        <!-- UPDATED -->
                         <DataTrigger Binding="{Binding IsUpdated}" Value="True">
                             <Setter TargetName="UpdatedOverlay" Property="Opacity" Value="0.22"/>
                             <Setter TargetName="TopLine" Property="Opacity" Value="1"/>
                             <Setter TargetName="BottomLine" Property="Opacity" Value="1"/>
                             <Setter TargetName="TopLine" Property="Background" Value="{StaticResource Brush.AccentSoft}"/>
                             <Setter TargetName="BottomLine" Property="Background" Value="{StaticResource Brush.AccentSoft}"/>
-                        </DataTrigger>
-
-                        <!-- NEW (har du redan, men lämnar kvar) -->
-                        <DataTrigger Binding="{Binding IsNew}" Value="True">
-                            <Setter TargetName="FlashOverlay" Property="Opacity" Value="0.18"/>
                         </DataTrigger>
 
                         <!-- Selected (ska vinna över flash/updated) -->
@@ -1153,6 +1148,23 @@
                             <Setter TargetName="BottomLine" Property="Background" Value="#2DD4BF"/>
                         </DataTrigger>
 
+                        <!-- IsNew flash (LÄGG TILL DENNA!) -->
+                        <DataTrigger Binding="{Binding IsNew}" Value="True">
+                            <DataTrigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="FlashOverlay" 
+                                 Storyboard.TargetProperty="Opacity" 
+                                 From="0" To="0.65" Duration="0:0:0.3"/>
+                                        <DoubleAnimation Storyboard.TargetName="FlashOverlay"
+                                 Storyboard.TargetProperty="Opacity"
+                                 From="0.65" To="0" Duration="0:0:1.5"
+                                 BeginTime="0:0:1.0"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </DataTrigger.EnterActions>
+                        </DataTrigger>
+
                         <!-- IsMouseOver - Hover effect -->
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="RowFill" Property="Background">
@@ -1254,6 +1266,23 @@
                             <Setter TargetName="BottomLine" Property="Opacity" Value="1"/>
                             <Setter TargetName="TopLine" Property="Background" Value="#A78BFA"/>
                             <Setter TargetName="BottomLine" Property="Background" Value="#A78BFA"/>
+                        </DataTrigger>
+
+                        <!-- IsNew flash (LÄGG TILL DENNA!) -->
+                        <DataTrigger Binding="{Binding IsNew}" Value="True">
+                            <DataTrigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="FlashOverlay" 
+                                 Storyboard.TargetProperty="Opacity" 
+                                 From="0" To="0.65" Duration="0:0:0.3"/>
+                                        <DoubleAnimation Storyboard.TargetName="FlashOverlay"
+                                 Storyboard.TargetProperty="Opacity"
+                                 From="0.65" To="0" Duration="0:0:1.5"
+                                 BeginTime="0:0:1.0"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </DataTrigger.EnterActions>
                         </DataTrigger>
 
                         <!-- IsMouseOver - Hover effect (purple) -->
