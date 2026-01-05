@@ -65,16 +65,20 @@ namespace FxTradeHub.Services.Blotter
                 }
 
                 // 4. Uppdatera TradeSystemLink: Status = PENDING
-                // TODO: Implementera UpdateTradeSystemLinkStatusAsync i repository
-                await _repository.UpdateTradeSystemLinkStatusAsync(
+                //await _repository.UpdateTradeSystemLinkStatusAsync(
+                //    stpTradeId: stpTradeId,
+                //    systemCode: "MX3",
+                //    status: "PENDING",
+                //    lastError: null
+                //).ConfigureAwait(false);
+
+                await _repository.UpdateTradeSystemLinkOnBookingAsync(
                     stpTradeId: stpTradeId,
                     systemCode: "MX3",
-                    status: "PENDING",
-                    lastError: null
+                    bookedBy: Environment.UserName
                 ).ConfigureAwait(false);
 
                 // 5. Skapa TradeWorkflowEvent: Mx3BookingRequested
-                // TODO: Implementera InsertTradeWorkflowEventAsync i repository
                 await _repository.InsertTradeWorkflowEventAsync(
                     stpTradeId: stpTradeId,
                     eventType: "Mx3BookingRequested",

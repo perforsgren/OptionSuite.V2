@@ -607,6 +607,87 @@ WHERE StpTradeId = @StpTradeId
         }
 
         /// <summary>
+        /// D4.2b: Uppdaterar TradeSystemLink vid bokning.
+        /// Sätter Status=PENDING, BookedBy=userId, och uppdaterar timestamp.
+        /// Atomisk guard: endast om Status är NEW eller ERROR.
+        /// </summary>
+        public async Task UpdateTradeSystemLinkOnBookingAsync(long stpTradeId, string systemCode, string bookedBy)
+        {
+            const string sql = @"
+UPDATE trade_stp.TradeSystemLink
+SET Status = 'PENDING',
+    BookedBy = @BookedBy,
+    LastStatusUtc = UTC_TIMESTAMP()
+WHERE StpTradeId = @StpTradeId
+  AND SystemCode = @SystemCode
+  AND IsDeleted = 0
+  AND Status IN ('NEW', 'ERROR');
+";
+
+            using (var conn = CreateConnection())
+            {
+                await conn.OpenAsync().ConfigureAwait(false);
+
+                using (var cmd = new MySqlCommand(sql, conn))
+                {
+                    cmd.Parameters.AddWithValue("@StpTradeId", stpTradeId);
+                    cmd.Parameters.AddWithValue("@SystemCode", systemCode);
+                    cmd.Parameters.AddWithValue("@BookedBy", bookedBy);
+
+                    var rowsAffected = await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+
+                    if (rowsAffected == 0)
+                    {
+                        throw new InvalidOperationException(
+                            $"Trade {stpTradeId} / {systemCode} already booked or not found");
+                    }
+                }
+            }
+        }
+
+
+        /// <summary>
+        /// D4.3: Uppdaterar TradeSystemLink efter MX3 response.
+        /// Sätter Status=BOOKED/ERROR, SystemTradeId (ContractID), och uppdaterar timestamp.
+        /// </summary>
+        public async Task UpdateTradeSystemLinkOnResponseAsync(
+            long stpTradeId,
+            string systemCode,
+            string status,
+            string systemTradeId,
+            string lastError)
+        {
+            const string sql = @"
+UPDATE trade_stp.TradeSystemLink
+SET Status = @Status,
+    SystemTradeId = @SystemTradeId,
+    LastStatusUtc = UTC_TIMESTAMP(),
+    LastError = @LastError,
+    LastBookedUtc = CASE WHEN @Status = 'BOOKED' THEN UTC_TIMESTAMP() ELSE LastBookedUtc END
+WHERE StpTradeId = @StpTradeId
+  AND SystemCode = @SystemCode
+  AND IsDeleted = 0;
+";
+
+            using (var conn = CreateConnection())
+            {
+                await conn.OpenAsync().ConfigureAwait(false);
+
+                using (var cmd = new MySqlCommand(sql, conn))
+                {
+                    cmd.Parameters.AddWithValue("@StpTradeId", stpTradeId);
+                    cmd.Parameters.AddWithValue("@SystemCode", systemCode);
+                    cmd.Parameters.AddWithValue("@Status", status);
+                    cmd.Parameters.AddWithValue("@SystemTradeId", (object)systemTradeId ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@LastError", (object)lastError ?? DBNull.Value);
+
+                    await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+                }
+            }
+        }
+
+
+        /// <summary>
         /// D4.2b: Skapar ett nytt TradeWorkflowEvent.
         /// </summary>
         public async Task InsertTradeWorkflowEventAsync(long stpTradeId, string eventType, string systemCode, string userId, string details)

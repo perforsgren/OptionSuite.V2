@@ -130,13 +130,21 @@ namespace OptionSuite.Blotter.Wpf.Services
 
                 // Uppdatera status
                 var status = response.IsSuccess ? "BOOKED" : "ERROR";
-                var errorMsg = response.IsSuccess ? null : response.ErrorMessage;
+                //var errorMsg = response.IsSuccess ? null : response.ErrorMessage;
 
-                await _repository.UpdateTradeSystemLinkStatusAsync(
-                    response.StpTradeId,
-                    "MX3",
-                    status,
-                    errorMsg
+                //await _repository.UpdateTradeSystemLinkStatusAsync(
+                //    response.StpTradeId,
+                //    "MX3",
+                //    status,
+                //    errorMsg
+                //);
+
+                await _repository.UpdateTradeSystemLinkOnResponseAsync(
+                    stpTradeId: response.StpTradeId,
+                    systemCode: "MX3",
+                    status: response.IsSuccess ? "BOOKED" : "ERROR",
+                    systemTradeId: response.Mx3ContractId,  // <- NYTT: MX3 ContractID
+                    lastError: response.IsSuccess ? null : response.ErrorMessage
                 );
 
                 // Insert WorkflowEvent

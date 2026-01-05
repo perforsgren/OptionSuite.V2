@@ -84,7 +84,27 @@ namespace FxTradeHub.Domain.Interfaces
         /// <param name="systemCode">Systemkod (t.ex. MX3, CALYPSO)</param>
         /// <param name="status">Ny status (t.ex. PENDING, BOOKED, ERROR)</param>
         /// <param name="lastError">Felmeddelande eller null om success</param>
-        Task UpdateTradeSystemLinkStatusAsync(long stpTradeId, string systemCode, string status, string lastError);
+        Task UpdateTradeSystemLinkStatusAsync(long stpTradeId, string systemCode, string status, string lastError);   //////////////////////////////////
+
+        /// <summary>
+        /// D4.2b: Uppdaterar TradeSystemLink vid bokning.
+        /// Sätter Status=PENDING, BookedBy=userId, och uppdaterar timestamp.
+        /// </summary>
+        Task UpdateTradeSystemLinkOnBookingAsync(
+            long stpTradeId,
+            string systemCode,
+            string bookedBy);
+
+        /// <summary>
+        /// D4.3: Uppdaterar TradeSystemLink efter MX3 response.
+        /// Sätter Status=BOOKED/ERROR, SystemTradeId (ContractID), och uppdaterar timestamp.
+        /// </summary>
+        Task UpdateTradeSystemLinkOnResponseAsync(
+            long stpTradeId,
+            string systemCode,
+            string status,           // "BOOKED" eller "ERROR"
+            string systemTradeId,    // MX3 ContractID
+            string lastError);
 
         /// <summary>
         /// D4.2b: Skapar ett nytt TradeWorkflowEvent.
