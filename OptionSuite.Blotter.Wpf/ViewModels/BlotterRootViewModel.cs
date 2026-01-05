@@ -621,7 +621,7 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
 
                         var isNew = _isNewFlags.ContainsKey(tradeId)
                             ? _isNewFlags[tradeId]
-                            : (!isColdStart && !_seenTradeIds.Contains(tradeId));
+                            : !_seenTradeIds.Contains(tradeId);
 
                         var isUpdated = _isUpdatedFlags.ContainsKey(tradeId)
                             ? _isUpdatedFlags[tradeId]
@@ -665,15 +665,17 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                         );
 
                         // Spara flags för nästa refresh
-                        if (isNew)
-                            _isNewFlags[tradeId] = true;
-                        if (isUpdated)
-                            _isUpdatedFlags[tradeId] = true;
-
-                        // Starta timer för clear
-                        if (trade.IsNew)
+                        // Starta timer för clear ENDAST om detta är första gången
+                        if (isNew && !_isNewFlags.ContainsKey(tradeId))
                         {
+                            _isNewFlags[tradeId] = true;
                             _ = ClearFlagLaterAsync(trade, clearNew: true, delayMs: 5000);
+                        }
+
+                        if (isUpdated && !_isUpdatedFlags.ContainsKey(tradeId))
+                        {
+                            _isUpdatedFlags[tradeId] = true;
+                            _ = ClearFlagLaterAsync(trade, clearNew: false, delayMs: 2000);
                         }
 
                         if (IsOptionProduct(r.ProductType))
@@ -683,18 +685,6 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                         else
                         {
                             newLinearTrades.Add(trade);
-                        }
-
-                        if (trade.IsNew)
-                        {
-                            _isNewFlags[tradeId] = true;  // <- LÄGG TILL
-                            _ = ClearFlagLaterAsync(trade, clearNew: true, delayMs: 5000);
-                        }
-
-                        if (trade.IsUpdated)
-                        {
-                            _isUpdatedFlags[tradeId] = true;  // <- LÄGG TILL
-                            _ = ClearFlagLaterAsync(trade, clearNew: false, delayMs: 2000);
                         }
 
                         var status = trade.Status?.ToUpperInvariant() ?? "";
