@@ -6,31 +6,54 @@ namespace OptionSuite.Blotter.Wpf.Converters
 {
     /// <summary>
     /// Konverterar "PENDING" → "Pending", "NEW" → "New", etc.
+    /// Helt säker mot alla null/empty/exception-fall.
     /// </summary>
-    public sealed class ProperCaseConverter : IValueConverter
+    public class ProperCaseConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value == null || string.IsNullOrEmpty(value.ToString()))
-                return value;
+            try
+            {
+                // Null-säkerhet
+                if (value == null)
+                    return "Unknown";
 
-            var str = value.ToString();
+                // Tom sträng
+                var str = value.ToString();
+                if (string.IsNullOrWhiteSpace(str))
+                    return "Unknown";
 
-            // Special cases
-            if (str == "NEW") return "New";
-            if (str == "PENDING") return "Pending";
-            if (str == "BOOKED") return "Booked";
-            if (str == "ERROR") return "Error";
-            if (str == "REJECTED") return "Rejected";
-            if (str == "PARTIAL") return "Partial";
+                // Trim whitespace
+                str = str.Trim();
 
-            // Default: First letter uppercase, rest lowercase
-            return char.ToUpper(str[0]) + str.Substring(1).ToLower();
+                // Special cases (exakt match)
+                switch (str)
+                {
+                    case "NEW": return "New";
+                    case "PENDING": return "Pending";
+                    case "BOOKED": return "Booked";
+                    case "ERROR": return "Error";
+                    case "REJECTED": return "Rejected";
+                    case "PARTIAL": return "Partial";
+                    case "CANCELLED": return "Cancelled";
+                }
+
+                // Default: First letter uppercase, rest lowercase
+                if (str.Length == 1)
+                    return str.ToUpper();
+
+                return char.ToUpper(str[0]) + str.Substring(1).ToLower();
+            }
+            catch
+            {
+                // Failsafe - returnera originalvärdet eller fallback
+                return value?.ToString() ?? "Unknown";
+            }
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException("ProperCaseConverter does not support ConvertBack");
         }
     }
 }

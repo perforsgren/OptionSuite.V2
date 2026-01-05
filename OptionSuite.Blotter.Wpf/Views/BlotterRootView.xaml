@@ -913,9 +913,8 @@
                                                                                             </Style>
                                                                                         </Ellipse.Style>
                                                                                     </Ellipse>
-                                                                                    <TextBlock Text="{Binding Status, Converter={StaticResource ProperCase}, TargetNullValue=Unknown}" 
-           Style="{StaticResource Style.BlotterStatusBadgeText}"/>
-
+                                                                                    <TextBlock Text="{Binding Status, TargetNullValue=Unknown}" 
+                                                   Style="{StaticResource Style.BlotterStatusBadgeText}"/>
                                                                                 </StackPanel>
                                                                             </Border>
 
