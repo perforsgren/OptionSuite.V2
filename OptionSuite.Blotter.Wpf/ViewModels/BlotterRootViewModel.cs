@@ -76,6 +76,9 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
 
         private int _detailsRequestVersion = 0;  // request version för concurrency
 
+        // UI-skydd mot dubbelklick/race
+        private readonly HashSet<long> _inFlightBookings = new HashSet<long>();
+
         public event PropertyChangedEventHandler PropertyChanged;
 
         public string Title { get; set; } = "Trade Blotter";
@@ -302,6 +305,7 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
 
         // Context Menu Commands
         public ICommand BookTradeCommand { get; }
+        public ICommand BulkBookCommand { get; }
         public ICommand DuplicateTradeCommand { get; }
         public ICommand CopyToManualInputCommand { get; }
         public ICommand BookAsLiveTradeCommand { get; }
@@ -369,13 +373,30 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
 
             RefreshCommand = new RelayCommand(async () => await RefreshAsync().ConfigureAwait(true));
 
+            //BookTradeCommand = new RelayCommand(
+            //    execute: OnBookTrade,
+            //    canExecute: () => SelectedTrade != null && SelectedTrade.Status == "New"
+            //);
+
+
             BookTradeCommand = new RelayCommand(
                 execute: OnBookTrade,
-                canExecute: () => SelectedTrade != null && SelectedTrade.Status == "New"
+                canExecute: CanExecuteBookTrade
             );
 
+            BulkBookCommand = new RelayCommand(
+                execute: OnBulkBook,
+                canExecute: () => {
+                    var currentUser = Environment.UserName.ToUpper();
+                    return OptionTrades.Any(t =>
+                        t.Status == "New" &&
+                        t.Trader == currentUser) ||
+                           LinearTrades.Any(t =>
+                        t.Status == "New" &&
+                        t.Trader == currentUser);
+                }
+            );
 
-            //BookTradeCommand = new RelayCommand(() => ExecuteBookTrade(), () => CanExecuteBookTrade());
             DuplicateTradeCommand = new RelayCommand(() => ExecuteDuplicateTrade(), () => CanExecuteDuplicateTrade());
             CopyToManualInputCommand = new RelayCommand(() => ExecuteCopyToManualInput(), () => CanExecuteCopyToManualInput());
             BookAsLiveTradeCommand = new RelayCommand(() => ExecuteBookAsLiveTrade(), () => CanExecuteBookAsLiveTrade());
@@ -435,6 +456,65 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             var systemCode = "MX3";
             _ = ExecuteBookTradeAsync(SelectedTrade.StpTradeId, systemCode);
         }
+
+        private void OnBulkBook()
+        {
+            var currentUser = Environment.UserName.ToUpper();
+
+            // Filtrera: endast Options (för nu), Status=New, mitt TraderID
+            var tradesToBook = OptionTrades
+                .Where(t => t.Status == "New" &&
+                            t.Trader == currentUser &&
+                            !string.IsNullOrEmpty(t.CallPut))
+                .ToList();
+
+            if (tradesToBook.Count == 0)
+            {
+                MessageBox.Show("No trades to book.", "Bulk Book",
+                    MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            //var result = MessageBox.Show(
+            //    $"Book {tradesToBook.Count} trade(s) to MX3?",
+            //    "Bulk Book Confirmation",
+            //    MessageBoxButton.YesNo,
+            //    MessageBoxImage.Question);
+
+            //if (result != MessageBoxResult.Yes)
+            //    return;
+
+            // Book alla trades asynkront
+            _ = ExecuteBulkBookAsync(tradesToBook);
+        }
+
+
+
+        private async Task ExecuteBulkBookAsync(List<TradeRowViewModel> trades)
+        {
+            int successCount = 0;
+            int failCount = 0;
+
+            foreach (var trade in trades)
+            {
+                try
+                {
+                    await ExecuteBookTradeAsync(trade.StpTradeId, "MX3").ConfigureAwait(true);
+                    successCount++;
+                }
+                catch
+                {
+                    failCount++;
+                }
+            }
+
+            //MessageBox.Show(
+            //    $"Bulk book completed:\n✓ Success: {successCount}\n✗ Failed: {failCount}",
+            //    "Bulk Book Result",
+            //    MessageBoxButton.OK,
+            //    MessageBoxImage.Information);
+        }
+
 
         public Task InitialLoadAsync()
         {
@@ -873,8 +953,6 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             };
         }
 
-
-
         private void CancelDetailsLoadInFlight()
         {
             try
@@ -955,10 +1033,16 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
         /// </summary>
         public async Task ExecuteBookTradeAsync(long stpTradeId, string systemCode)
         {
+            // UI-SKYDD: Blocka dubbelklick
+            if (_inFlightBookings.Contains(stpTradeId))
+                return;
+
+            _inFlightBookings.Add(stpTradeId);
+
             try
             {
                 // 1. Anropa command service (skriver till DB)
-                FxTradeHub.Services.Blotter.BookTradeResult result = null;
+                BookTradeResult result = null;
 
                 if (systemCode == "MX3")
                 {
@@ -966,32 +1050,30 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                 }
                 else
                 {
-                    System.Windows.MessageBox.Show($"System {systemCode} not yet supported.", "Book Error",
-                        System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+                    MessageBox.Show($"System {systemCode} not yet supported.", "Book Error", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
 
                 // 2. Check result
                 if (!result.Success)
                 {
-                    System.Windows.MessageBox.Show($"Book failed: {result.ErrorMessage}", "Book Error",
-                        System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                    MessageBox.Show($"Book failed: {result.ErrorMessage}", "Book Error", MessageBoxButton.OK, MessageBoxImage.Error);
                     return;
                 }
 
                 // 3. Targeted refresh: Hämta updated trade från DB och uppdatera UI
                 await RefreshSingleTradeAsync(stpTradeId).ConfigureAwait(true);
-
-                //System.Windows.MessageBox.Show($"Trade {stpTradeId} booked successfully!\nXML: {result.XmlFileName}",
-                //    "Book Success", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
-                System.Windows.MessageBox.Show($"Book failed: {ex.Message}", "Book Error",
-                    System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                MessageBox.Show($"Book failed: {ex.Message}", "Book Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                // UI-SKYDD: Frigör
+                _inFlightBookings.Remove(stpTradeId);
             }
         }
-
 
         /// <summary>
         /// D4.2c: Refreshar en enskild trade från DB och uppdaterar UI.
@@ -1122,16 +1204,18 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
 
         private bool CanExecuteBookTrade()
         {
-            var trade = GetSelectedTrade();
-            return trade != null && trade.Status == "New";
-        }
+            if (SelectedTrade == null)
+                return false;
 
-        private void ExecuteBookTrade()
-        {
-            var trade = GetSelectedTrade();
-            if (trade == null) return;
+            // Blocka om Status inte är New eller Error
+            if (SelectedTrade.Status != "New" && SelectedTrade.Status != "Error")
+                return false;
 
-            Debug.WriteLine($"Booking trade: {trade.TradeId}");
+            // Blocka om booking pågår
+            if (_inFlightBookings.Contains(SelectedTrade.StpTradeId))
+                return false;
+
+            return true;
         }
 
         private bool CanExecuteDuplicateTrade()

@@ -3,6 +3,10 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:converters="clr-namespace:OptionSuite.Blotter.Wpf.Converters">
 
+    <UserControl.InputBindings>
+        <KeyBinding Key="B" Modifiers="Control" Command="{Binding BulkBookCommand}"/>
+    </UserControl.InputBindings>
+
 
     <UserControl.Resources>
 
@@ -252,7 +256,7 @@
                                             Margin="12"
                                             VerticalAlignment="Center">
 
-                                    <Button Command="{Binding BookTradeCommand}" 
+                                    <Button Command="{Binding BulkBookCommand}" 
         Margin="0,0,0,0"
         Cursor="Hand">
                                         <Button.Style>
