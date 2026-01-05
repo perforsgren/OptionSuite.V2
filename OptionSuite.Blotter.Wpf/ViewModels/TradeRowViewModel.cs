@@ -155,7 +155,10 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
         {
             // För Options: använd fallback (ingen dual-system booking)
             if (string.IsNullOrEmpty(CallPut) == false)
-                return fallbackStatus ?? "New";
+            {
+                var status = fallbackStatus ?? "New";
+                return ToProperCase(status); 
+            }
 
             // För Linear: beräkna från båda system
             var mx3 = mx3Status ?? "New";
@@ -176,6 +179,29 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
 
             return "New";
         }
+
+
+        private string ToProperCase(string status)
+        {
+            if (string.IsNullOrWhiteSpace(status))
+                return "New";
+
+            var normalized = status.Trim().ToUpper();
+
+            return normalized switch
+            {
+                "NEW" => "New",
+                "PENDING" => "Pending",
+                "BOOKED" => "Booked",
+                "ERROR" => "Error",
+                "REJECTED" => "Rejected",
+                "PARTIAL" => "Partial",
+                "CANCELLED" => "Cancelled",
+                "FAILED" => "Failed",
+                _ => char.ToUpper(status.Trim()[0]) + status.Trim().Substring(1).ToLower()
+            };
+        }
+
 
         private void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {

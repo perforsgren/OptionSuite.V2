@@ -826,6 +826,7 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                 _selectedTradeSystemLinks.Clear();
                 foreach (var l in links)
                 {
+                    l.Status = ToProperCase(l.Status);
                     _selectedTradeSystemLinks.Add(l);
                 }
 
@@ -851,6 +852,26 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             }
         }
 
+        private static string ToProperCase(string status)
+        {
+            if (string.IsNullOrWhiteSpace(status))
+                return "New";
+
+            var normalized = status.Trim().ToUpper();
+
+            return normalized switch
+            {
+                "NEW" => "New",
+                "PENDING" => "Pending",
+                "BOOKED" => "Booked",
+                "ERROR" => "Error",
+                "REJECTED" => "Rejected",
+                "PARTIAL" => "Partial",
+                "CANCELLED" => "Cancelled",
+                "FAILED" => "Failed",
+                _ => char.ToUpper(status.Trim()[0]) + status.Trim().Substring(1).ToLower()
+            };
+        }
 
 
 

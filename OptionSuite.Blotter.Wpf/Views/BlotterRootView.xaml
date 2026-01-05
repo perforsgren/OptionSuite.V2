@@ -13,7 +13,6 @@
         <converters:DetailsToLinesConverter x:Key="DetailsToLines"/>
         <converters:EventTypeToIconConverter x:Key="EventTypeToIcon"/>
         <converters:EventTypeToColorConverter x:Key="EventTypeToColor"/>
-        <converters:ProperCaseConverter x:Key="ProperCase"/>
 
         <!-- =========================================================
              SOFT FOG (token-baserad)
@@ -127,7 +126,7 @@
                             </Ellipse.Style>
                         </Ellipse>
 
-                        <TextBlock Text="{Binding Status, Converter={StaticResource ProperCase}}"
+                        <TextBlock Text="{Binding Status}"
            Foreground="{StaticResource Brush.Text}"
            FontSize="12"
            VerticalAlignment="Center"/>
@@ -916,7 +915,7 @@
                                                                                             </Style>
                                                                                         </Ellipse.Style>
                                                                                     </Ellipse>
-                                                                                    <TextBlock Text="{Binding Status, Converter={StaticResource ProperCase}, TargetNullValue=Unknown}" 
+                                                                                    <TextBlock Text="{Binding Status, TargetNullValue=Unknown}" 
            Style="{StaticResource Style.BlotterStatusBadgeText}"/>
 
                                                                                 </StackPanel>
