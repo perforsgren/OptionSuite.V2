@@ -6,6 +6,15 @@
 
     <UserControl.Resources>
 
+
+        <!-- D2.2D: Converters -->
+        <BooleanToVisibilityConverter x:Key="BoolToVisConverter"/>
+        <converters:NullToCollapsedConverter x:Key="NullToCollapsed"/>
+        <converters:DetailsToLinesConverter x:Key="DetailsToLines"/>
+        <converters:EventTypeToIconConverter x:Key="EventTypeToIcon"/>
+        <converters:EventTypeToColorConverter x:Key="EventTypeToColor"/>
+        <converters:ProperCaseConverter x:Key="ProperCase"/>
+
         <!-- =========================================================
              SOFT FOG (token-baserad)
              Bygger “dimmad” top-to-bottom känsla över hela contentytan.
@@ -175,13 +184,7 @@
             <Setter Property="BorderBrush" Value="{StaticResource Brush.BorderSoft}"/>
         </Style>
 
-        <!-- D2.2D: Converters -->
-        <BooleanToVisibilityConverter x:Key="BoolToVisConverter"/>
-        <converters:NullToCollapsedConverter x:Key="NullToCollapsed"/>
-        <converters:DetailsToLinesConverter x:Key="DetailsToLines"/>
-        <converters:EventTypeToIconConverter x:Key="EventTypeToIcon"/>
-        <converters:EventTypeToColorConverter x:Key="EventTypeToColor"/>
-        <converters:ProperCaseConverter x:Key="ProperCase"/>
+
 
     </UserControl.Resources>
 
@@ -913,8 +916,9 @@
                                                                                             </Style>
                                                                                         </Ellipse.Style>
                                                                                     </Ellipse>
-                                                                                    <TextBlock Text="{Binding Status, TargetNullValue=Unknown}" 
-                                                   Style="{StaticResource Style.BlotterStatusBadgeText}"/>
+                                                                                    <TextBlock Text="{Binding Status, Converter={StaticResource ProperCase}, TargetNullValue=Unknown}" 
+           Style="{StaticResource Style.BlotterStatusBadgeText}"/>
+
                                                                                 </StackPanel>
                                                                             </Border>
 

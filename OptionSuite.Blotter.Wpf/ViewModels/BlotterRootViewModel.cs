@@ -961,8 +961,8 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                 // 3. Targeted refresh: Hämta updated trade från DB och uppdatera UI
                 await RefreshSingleTradeAsync(stpTradeId).ConfigureAwait(true);
 
-                System.Windows.MessageBox.Show($"Trade {stpTradeId} booked successfully!\nXML: {result.XmlFileName}",
-                    "Book Success", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                //System.Windows.MessageBox.Show($"Trade {stpTradeId} booked successfully!\nXML: {result.XmlFileName}",
+                //    "Book Success", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
