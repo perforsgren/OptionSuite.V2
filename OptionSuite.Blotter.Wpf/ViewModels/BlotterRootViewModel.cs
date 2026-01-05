@@ -619,15 +619,21 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                         var signature = BuildSignature(r, time, system, fallbackStatus);
                         nextSignatures[tradeId] = signature;
 
-                        var isNew = _isNewFlags.ContainsKey(tradeId)
-                            ? _isNewFlags[tradeId]
-                            : !_seenTradeIds.Contains(tradeId);
+                        // EFTER (endast första gången):
+                        var isNew = !_seenTradeIds.Contains(tradeId);  // Ignorera dictionary, beräkna fresh
 
-                        var isUpdated = _isUpdatedFlags.ContainsKey(tradeId)
-                            ? _isUpdatedFlags[tradeId]
-                            : (!isNew &&
-                               _lastSignatureByTradeId.TryGetValue(tradeId, out var prevSig) &&
-                               !string.Equals(prevSig, signature, StringComparison.Ordinal));
+                        // Om flaggan redan finns, betyder det att vi redan visat flash
+                        // Sätt därför isNew = false för att inte triggra animation igen
+                        if (_isNewFlags.ContainsKey(tradeId))
+                            isNew = false;
+
+                        // EFTER:
+                        var isUpdated = !isNew &&
+                                        _lastSignatureByTradeId.TryGetValue(tradeId, out var prevSig) &&
+                                        !string.Equals(prevSig, signature, StringComparison.Ordinal);
+
+                        if (_isUpdatedFlags.ContainsKey(tradeId))
+                            isUpdated = false;
 
                         var trade = new TradeRowViewModel(
                             stpTradeId: r.StpTradeId,
