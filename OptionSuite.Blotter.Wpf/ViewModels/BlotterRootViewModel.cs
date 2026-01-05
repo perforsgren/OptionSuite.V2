@@ -42,6 +42,10 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
         private readonly HashSet<string> _seenTradeIds = new HashSet<string>(StringComparer.Ordinal);
         private readonly Dictionary<string, string> _lastSignatureByTradeId = new Dictionary<string, string>(StringComparer.Ordinal);
 
+        // Bevara IsNew/IsUpdated mellan refreshes
+        private readonly Dictionary<string, bool> _isNewFlags = new Dictionary<string, bool>(StringComparer.Ordinal);
+        private readonly Dictionary<string, bool> _isUpdatedFlags = new Dictionary<string, bool>(StringComparer.Ordinal);
+
         // reentrancy-skydd (knapp + timer delar samma spärr)
         private int _refreshInFlight; // 0/1
 
@@ -615,12 +619,15 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                         var signature = BuildSignature(r, time, system, fallbackStatus);
                         nextSignatures[tradeId] = signature;
 
-                        var isNew = !isColdStart && !_seenTradeIds.Contains(tradeId);
+                        var isNew = _isNewFlags.ContainsKey(tradeId)
+                            ? _isNewFlags[tradeId]
+                            : (!isColdStart && !_seenTradeIds.Contains(tradeId));
 
-                        var isUpdated =
-                            !isNew &&
-                            _lastSignatureByTradeId.TryGetValue(tradeId, out var prevSig) &&
-                            !string.Equals(prevSig, signature, StringComparison.Ordinal);
+                        var isUpdated = _isUpdatedFlags.ContainsKey(tradeId)
+                            ? _isUpdatedFlags[tradeId]
+                            : (!isNew &&
+                               _lastSignatureByTradeId.TryGetValue(tradeId, out var prevSig) &&
+                               !string.Equals(prevSig, signature, StringComparison.Ordinal));
 
                         var trade = new TradeRowViewModel(
                             stpTradeId: r.StpTradeId,
@@ -657,6 +664,18 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                             isUpdated: isUpdated
                         );
 
+                        // Spara flags för nästa refresh
+                        if (isNew)
+                            _isNewFlags[tradeId] = true;
+                        if (isUpdated)
+                            _isUpdatedFlags[tradeId] = true;
+
+                        // Starta timer för clear
+                        if (trade.IsNew)
+                        {
+                            _ = ClearFlagLaterAsync(trade, clearNew: true, delayMs: 5000);
+                        }
+
                         if (IsOptionProduct(r.ProductType))
                         {
                             newOptionTrades.Add(trade);
@@ -668,11 +687,13 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
 
                         if (trade.IsNew)
                         {
-                            _ = ClearFlagLaterAsync(trade, clearNew: true, delayMs: 20000);
+                            _isNewFlags[tradeId] = true;  // <- LÄGG TILL
+                            _ = ClearFlagLaterAsync(trade, clearNew: true, delayMs: 5000);
                         }
 
                         if (trade.IsUpdated)
                         {
+                            _isUpdatedFlags[tradeId] = true;  // <- LÄGG TILL
                             _ = ClearFlagLaterAsync(trade, clearNew: false, delayMs: 2000);
                         }
 
@@ -966,7 +987,7 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             }
         }
 
-        private static async Task ClearFlagLaterAsync(TradeRowViewModel trade, bool clearNew, int delayMs)
+        private async Task ClearFlagLaterAsync(TradeRowViewModel trade, bool clearNew, int delayMs)
         {
             try
             {
@@ -974,10 +995,12 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                 if (clearNew)
                 {
                     trade.IsNew = false;
+                    _isNewFlags.Remove(trade.TradeId);  // <- LÄGG TILL
                 }
                 else
                 {
                     trade.IsUpdated = false;
+                    _isUpdatedFlags.Remove(trade.TradeId);  // <- LÄGG TILL
                 }
             }
             catch
