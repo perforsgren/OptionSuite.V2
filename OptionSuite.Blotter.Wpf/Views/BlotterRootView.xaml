@@ -897,19 +897,19 @@
                                                                                             <Style TargetType="Ellipse">
                                                                                                 <Setter Property="Fill" Value="{StaticResource Brush.TextMuted}"/>
                                                                                                 <Style.Triggers>
-                                                                                                    <DataTrigger Binding="{Binding Status}" Value="NEW">
+                                                                                                    <DataTrigger Binding="{Binding Status}" Value="New">
                                                                                                         <Setter Property="Fill" Value="#3B82F6"/>
                                                                                                     </DataTrigger>
-                                                                                                    <DataTrigger Binding="{Binding Status}" Value="BOOKED">
+                                                                                                    <DataTrigger Binding="{Binding Status}" Value="Booked">
                                                                                                         <Setter Property="Fill" Value="#2DD4BF"/>
                                                                                                     </DataTrigger>
-                                                                                                    <DataTrigger Binding="{Binding Status}" Value="PENDING">
+                                                                                                    <DataTrigger Binding="{Binding Status}" Value="Pending">
                                                                                                         <Setter Property="Fill" Value="#FBBF24"/>
                                                                                                     </DataTrigger>
-                                                                                                    <DataTrigger Binding="{Binding Status}" Value="REJECTED">
+                                                                                                    <DataTrigger Binding="{Binding Status}" Value="Rejected">
                                                                                                         <Setter Property="Fill" Value="#FB7185"/>
                                                                                                     </DataTrigger>
-                                                                                                    <DataTrigger Binding="{Binding Status}" Value="PARTIAL">
+                                                                                                    <DataTrigger Binding="{Binding Status}" Value="Partial">
                                                                                                         <Setter Property="Fill" Value="#FB923C"/>
                                                                                                     </DataTrigger>
                                                                                                 </Style.Triggers>
