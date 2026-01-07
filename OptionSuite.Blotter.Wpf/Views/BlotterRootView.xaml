@@ -774,6 +774,27 @@
                                                                                 </Setter>
 
                                                                                 <Style.Triggers>
+                                                                                    <!-- Audit ska se ut som Ingested/Normalized (Success-färger) -->
+                                                                                    <DataTrigger Binding="{Binding Text}" Value="Audit: 2 events">
+                                                                                        <Setter Property="BorderBrush" Value="#10B981"/>
+                                                                                        <Setter Property="Background">
+                                                                                            <Setter.Value>
+                                                                                                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                                                                                    <GradientStop Color="#1A10B981" Offset="0.0"/>
+                                                                                                    <GradientStop Color="#0D10B981" Offset="1.0"/>
+                                                                                                </LinearGradientBrush>
+                                                                                            </Setter.Value>
+                                                                                        </Setter>
+                                                                                    </DataTrigger>
+
+                                                                                    <!-- MX3/Calypso: New ska ha blå border -->
+                                                                                    <DataTrigger Binding="{Binding Text}" Value="MX3: New">
+                                                                                        <Setter Property="BorderBrush" Value="{StaticResource NewBadgeBorderBrush}"/>
+                                                                                    </DataTrigger>
+                                                                                    <DataTrigger Binding="{Binding Text}" Value="CALYPSO: New">
+                                                                                        <Setter Property="BorderBrush" Value="{StaticResource NewBadgeBorderBrush}"/>
+                                                                                    </DataTrigger>
+
                                                                                     <DataTrigger Binding="{Binding Kind}" Value="Success">
                                                                                         <Setter Property="BorderBrush" Value="#10B981"/>
                                                                                         <Setter Property="Background">
@@ -798,6 +819,7 @@
                                                                                         </Setter>
                                                                                     </DataTrigger>
                                                                                 </Style.Triggers>
+
                                                                             </Style>
                                                                         </Border.Style>
 
