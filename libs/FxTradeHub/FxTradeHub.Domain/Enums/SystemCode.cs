@@ -28,6 +28,13 @@ namespace FxTradeHub.Domain.Enums
         /// RTNS / drop copy (t.ex. från JPM).
         /// DB-värde: "RTNS"
         /// </summary>
-        Rtns
+        Rtns,
+
+        Mail, // för interna system-events
+
+        Fix, // för interna system-events
+
+        Stp // för interna system-events
+
     }
 }

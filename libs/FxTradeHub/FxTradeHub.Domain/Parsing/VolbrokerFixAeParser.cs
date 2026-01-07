@@ -652,6 +652,17 @@ namespace FxTradeHub.Domain.Parsing
                         workflowEvents.Add(evt);
                     }
 
+
+                    // Event 2: TradeNormalized - minimal, bara produkttyp
+                    workflowEvents.Add(new TradeWorkflowEvent
+                    {
+                        EventType = "TradeNormalized",
+                        EventTimeUtc = DateTime.UtcNow,
+                        SystemCode = SystemCode.Stp,
+                        InitiatorId = "VolbrokerFixAeParser",
+                        Description = $"{trade.ProductType} normalized"
+                    });
+
                     parsedTrades.Add(new ParsedTradeResult
                     {
                         Trade = trade,

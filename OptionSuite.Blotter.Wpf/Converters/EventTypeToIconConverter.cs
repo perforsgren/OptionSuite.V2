@@ -27,7 +27,15 @@ namespace OptionSuite.Blotter.Wpf.Converters
             if (eventType.Contains("Export") && eventType.Contains("Fail"))
                 return "✕";  // Export failed
 
+
+
             // ========== PARSING / INGESTION ==========
+            if (eventType == "MessageInReceived")
+                return "↓";  // FIX message received
+
+            if (eventType == "TradeNormalized")
+                return "→";  // Trade normalized/routed
+
             if (eventType.Contains("Parsed") || eventType.Contains("Ingested"))
                 return "⊕";  // Successfully parsed
             

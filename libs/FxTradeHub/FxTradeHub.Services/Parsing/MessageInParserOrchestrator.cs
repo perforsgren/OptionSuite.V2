@@ -163,6 +163,19 @@ namespace FxTradeHub.Services.Parsing
 
                     var stpTradeId = _stpRepository.InsertTrade(trade);
 
+                    // Event 1: MessageInReceived - använd SourceVenueCode dynamiskt
+                    var seqNum = source.FixSeqNum.HasValue ? source.FixSeqNum.Value.ToString() : "N/A";
+                    var messageInEvent = new TradeWorkflowEvent
+                    {
+                        StpTradeId = stpTradeId,
+                        EventType = "MessageInReceived",
+                        EventTimeUtc = source.ReceivedUtc,
+                        SystemCode = SystemCode.Fix,      //TODO: Ändra till rätt. Kan vara fix, mail, xml m.fl
+                        InitiatorId = "STP",
+                        Description = $"FIX {source.FixMsgType ?? "AE"} from {source.SourceVenueCode}, SeqNum={seqNum}"
+                    };
+                    _stpRepository.InsertTradeWorkflowEvent(messageInEvent);
+
                     // 2) Skapa systemlänkar (routing) i orchestratorn
                     var systemLinks = BuildSystemLinksForTrade(source, trade);
 
