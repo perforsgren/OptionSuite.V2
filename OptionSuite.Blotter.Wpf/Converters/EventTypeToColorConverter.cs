@@ -24,6 +24,7 @@ namespace OptionSuite.Blotter.Wpf.Converters
                 eventType.Contains("Parsed") ||
                 eventType.Contains("AckReceived") ||
                 eventType.Contains("Acknowledged") ||
+                eventType.Contains("TradeNormalized") ||
                 (eventType.Contains("Compliance") && eventType.Contains("Pass")))
                 return new SolidColorBrush((Color)ColorConverter.ConvertFromString("#2DD4BF")); // Teal
 
