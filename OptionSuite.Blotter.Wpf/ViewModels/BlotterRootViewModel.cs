@@ -74,6 +74,27 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
         private readonly ObservableCollection<TradeSystemLinkRow> _selectedTradeSystemLinks = new ObservableCollection<TradeSystemLinkRow>();
         private readonly ObservableCollection<TradeWorkflowEventRow> _selectedTradeWorkflowEvents = new ObservableCollection<TradeWorkflowEventRow>();
 
+        private readonly ObservableCollection<WorkflowChip> _workflowChips = new ObservableCollection<WorkflowChip>();
+
+        public enum WorkflowChipKind
+        {
+            Success,
+            Warning,
+            Neutral
+        }
+
+        public sealed class WorkflowChip
+        {
+            public WorkflowChip(string text, WorkflowChipKind kind)
+            {
+                Text = text;
+                Kind = kind;
+            }
+
+            public string Text { get; }
+            public WorkflowChipKind Kind { get; }
+        }
+
         private CancellationTokenSource _detailsCts;
 
         private int _detailsRequestVersion = 0;  // request version för concurrency
@@ -303,6 +324,9 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
 
         public ObservableCollection<TradeWorkflowEventRow> SelectedTradeWorkflowEvents => _selectedTradeWorkflowEvents;
 
+        public ObservableCollection<WorkflowChip> WorkflowChips => _workflowChips;
+
+
         public ICommand RefreshCommand { get; }
 
         // Context Menu Commands
@@ -518,9 +542,19 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
         }
 
 
-        public Task InitialLoadAsync()
+        public async Task InitialLoadAsync()
         {
-            return RefreshAsync();
+            await RefreshAsync().ConfigureAwait(true);
+
+            // Auto-select första raden i Options grid om det finns trades
+            if (OptionTrades.Count > 0)
+            {
+                SelectedOptionTrade = OptionTrades[0];
+            }
+            else if (LinearTrades.Count > 0)
+            {
+                SelectedLinearTrade = LinearTrades[0];
+            }
         }
 
         public void StartPolling(TimeSpan interval)
@@ -861,15 +895,88 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
         {
             _selectedTradeSystemLinks.Clear();
             _selectedTradeWorkflowEvents.Clear();
+            _workflowChips.Clear();
             DetailsLastError = null;
             IsDetailsBusy = false;
         }
 
         /// <summary>
-        /// Laddar TradeSystemLinks och TradeWorkflowEvents för vald trade asynkront.
+        /// Bygger workflow-chips för summary-kortet baserat på selected trade, systemlinks och workflow events.
+        /// </summary>
+        private void BuildWorkflowChips()
+        {
+            _workflowChips.Clear();
+
+            if (SelectedTrade == null)
+                return;
+
+            // Pipeline
+            _workflowChips.Add(new WorkflowChip("Ingested", WorkflowChipKind.Success));
+
+            if (!string.IsNullOrWhiteSpace(SelectedTrade.Product) &&
+                !string.IsNullOrWhiteSpace(SelectedTrade.CcyPair))
+            {
+                _workflowChips.Add(new WorkflowChip("Normalized", WorkflowChipKind.Success));
+            }
+
+            // Option vs Linear
+            bool isOption = !string.IsNullOrWhiteSpace(SelectedTrade.CallPut);
+
+            AddSystemChip("MX3");
+            if (!isOption)
+            {
+                AddSystemChip("CALYPSO");
+            }
+
+            // Audit (ej klickbart)
+            var auditCount = _selectedTradeWorkflowEvents.Count;
+            if (auditCount > 0)
+            {
+                _workflowChips.Add(new WorkflowChip($"Audit: {auditCount} events", WorkflowChipKind.Neutral));
+            }
+        }
+
+        /// <summary>
+        /// Lägger till ett system-chip (t.ex. MX3/Calypso) baserat på TradeSystemLink-status.
+        /// </summary>
+        private void AddSystemChip(string systemCode)
+        {
+            string status = null;
+
+            foreach (var link in _selectedTradeSystemLinks)
+            {
+                if (string.Equals(link.SystemCode, systemCode, StringComparison.OrdinalIgnoreCase))
+                {
+                    status = string.IsNullOrWhiteSpace(link.Status) ? "New" : link.Status;
+                    break;
+                }
+            }
+
+            if (status == null)
+            {
+                _workflowChips.Add(new WorkflowChip($"{systemCode}: not linked", WorkflowChipKind.Neutral));
+                return;
+            }
+
+            var kind = status switch
+            {
+                "Booked" => WorkflowChipKind.Success,
+                "Pending" => WorkflowChipKind.Warning,
+                "Error" => WorkflowChipKind.Warning,
+                "Rejected" => WorkflowChipKind.Warning,
+                _ => WorkflowChipKind.Neutral
+            };
+
+            _workflowChips.Add(new WorkflowChip($"{systemCode}: {status}", kind));
+        }
+
+
+        /// <summary>
+        /// Laddar TradeSystemLinks och TradeWorkflowEvents för vald trade asynkront,
+        /// och bygger workflow-chips för summary-kortet.
         /// Använder cancellation token och request version pattern för att hantera snabba selection-ändringar.
         /// </summary>
-        /// <param name="selected">Vald trade (kan vara null vid deselection)</param>
+
         private async Task LoadDetailsForSelectedTradeAsync(TradeRowViewModel selected)
         {
             if (selected == null) return;
@@ -931,6 +1038,8 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                 {
                     _selectedTradeWorkflowEvents.Add(ev);
                 }
+
+                BuildWorkflowChips();
             }
             catch (OperationCanceledException)
             {

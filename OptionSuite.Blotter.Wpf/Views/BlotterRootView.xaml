@@ -610,7 +610,7 @@
                                         <DataGridTextColumn Header="Hedge Type" Binding="{Binding HedgeType}" Width="95"/>
                                         <DataGridTextColumn Header="Settlement Date" Binding="{Binding SettlementDate, StringFormat=yyyy-MM-dd}" Width="120"/>
                                         <DataGridTextColumn Header="Book Calypso" Binding="{Binding CalypsoPortfolio}" Width="110"/>
-                                        <DataGridTextColumn Header="Book MX3" Binding="{Binding PortfolioMx3}" Width="110"/>
+                                        <DataGridTextColumn Header="Portfolio MX3" Binding="{Binding PortfolioMx3}" Width="110"/>
                                         <DataGridTextColumn Header="Trader" Binding="{Binding Trader}" Width="80"/>
                                         <DataGridTemplateColumn Header="Status" Width="150" CellTemplate="{StaticResource StatusPillTemplate}" />
                                     </DataGrid.Columns>
@@ -750,20 +750,64 @@
                                                             <TextBlock Text="WORKFLOW" Style="{StaticResource Style.BlotterRightSectionTitle}"/>
                                                         </Border>
 
-                                                        <WrapPanel>
-                                                            <Border Style="{StaticResource Style.BlotterChip.Success}">
-                                                                <TextBlock Text="Ingested" Style="{StaticResource Style.BlotterChipText}"/>
-                                                            </Border>
-                                                            <Border Style="{StaticResource Style.BlotterChip.Success}">
-                                                                <TextBlock Text="Normalized" Style="{StaticResource Style.BlotterChipText}"/>
-                                                            </Border>
-                                                            <Border Style="{StaticResource Style.BlotterChip.Warning}">
-                                                                <TextBlock Text="MX3 link: pending" Style="{StaticResource Style.BlotterChipText}"/>
-                                                            </Border>
-                                                            <Border Style="{StaticResource Style.BlotterChip.Info}">
-                                                                <TextBlock Text="Audit: 4 events" Style="{StaticResource Style.BlotterChipText}"/>
-                                                            </Border>
-                                                        </WrapPanel>
+                                                        <ItemsControl ItemsSource="{Binding WorkflowChips}">
+                                                            <ItemsControl.ItemsPanel>
+                                                                <ItemsPanelTemplate>
+                                                                    <WrapPanel />
+                                                                </ItemsPanelTemplate>
+                                                            </ItemsControl.ItemsPanel>
+
+                                                            <ItemsControl.ItemTemplate>
+                                                                <DataTemplate>
+                                                                    <Border>
+                                                                        <Border.Style>
+                                                                            <Style TargetType="Border" BasedOn="{StaticResource Style.BlotterChip}">
+                                                                                <!-- Default = Info -->
+                                                                                <Setter Property="BorderBrush" Value="#2DD4BF"/>
+                                                                                <Setter Property="Background">
+                                                                                    <Setter.Value>
+                                                                                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                                                                            <GradientStop Color="#1A2DD4BF" Offset="0.0"/>
+                                                                                            <GradientStop Color="#0D2DD4BF" Offset="1.0"/>
+                                                                                        </LinearGradientBrush>
+                                                                                    </Setter.Value>
+                                                                                </Setter>
+
+                                                                                <Style.Triggers>
+                                                                                    <DataTrigger Binding="{Binding Kind}" Value="Success">
+                                                                                        <Setter Property="BorderBrush" Value="#10B981"/>
+                                                                                        <Setter Property="Background">
+                                                                                            <Setter.Value>
+                                                                                                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                                                                                    <GradientStop Color="#1A10B981" Offset="0.0"/>
+                                                                                                    <GradientStop Color="#0D10B981" Offset="1.0"/>
+                                                                                                </LinearGradientBrush>
+                                                                                            </Setter.Value>
+                                                                                        </Setter>
+                                                                                    </DataTrigger>
+
+                                                                                    <DataTrigger Binding="{Binding Kind}" Value="Warning">
+                                                                                        <Setter Property="BorderBrush" Value="#F59E0B"/>
+                                                                                        <Setter Property="Background">
+                                                                                            <Setter.Value>
+                                                                                                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                                                                                    <GradientStop Color="#1AF59E0B" Offset="0.0"/>
+                                                                                                    <GradientStop Color="#0DF59E0B" Offset="1.0"/>
+                                                                                                </LinearGradientBrush>
+                                                                                            </Setter.Value>
+                                                                                        </Setter>
+                                                                                    </DataTrigger>
+                                                                                </Style.Triggers>
+                                                                            </Style>
+                                                                        </Border.Style>
+
+                                                                        <TextBlock Text="{Binding Text}" Style="{StaticResource Style.BlotterChipText}"/>
+                                                                    </Border>
+                                                                </DataTemplate>
+                                                            </ItemsControl.ItemTemplate>
+
+                                                        </ItemsControl>
+
                                                     </StackPanel>
                                                 </Border>
 
