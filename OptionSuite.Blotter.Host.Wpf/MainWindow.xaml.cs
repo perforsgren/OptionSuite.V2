@@ -39,6 +39,7 @@ namespace OptionSuite.Blotter.Host.Wpf
             Closed += (s, e) =>
             {
                 _vm.StopPolling();
+                _vm.Dispose();
             };
         }
 

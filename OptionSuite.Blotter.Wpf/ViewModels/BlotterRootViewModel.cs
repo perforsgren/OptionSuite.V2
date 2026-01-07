@@ -13,8 +13,10 @@ using System.Windows;
 
 namespace OptionSuite.Blotter.Wpf.ViewModels
 {
-    public sealed class BlotterRootViewModel : INotifyPropertyChanged
+    public sealed class BlotterRootViewModel : INotifyPropertyChanged, IDisposable
     {
+        private bool _disposed;
+
         private readonly IBlotterReadServiceAsync _readService;
         private readonly IBlotterCommandServiceAsync _commandService;
 
@@ -620,12 +622,13 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                         nextSignatures[tradeId] = signature;
 
                         // EFTER (endast första gången):
-                        var isNew = !_seenTradeIds.Contains(tradeId);  // Ignorera dictionary, beräkna fresh
+                        var isNew = !isColdStart && !_seenTradeIds.Contains(tradeId);
 
-                        // Om flaggan redan finns, betyder det att vi redan visat flash
-                        // Sätt därför isNew = false för att inte triggra animation igen
+                        // Om vi redan visat NEW en gång för denna trade, trigga inte igen
                         if (_isNewFlags.ContainsKey(tradeId))
+                        {
                             isNew = false;
+                        }
 
                         // EFTER:
                         var isUpdated = !isNew &&
@@ -675,13 +678,13 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                         if (isNew && !_isNewFlags.ContainsKey(tradeId))
                         {
                             _isNewFlags[tradeId] = true;
-                            _ = ClearFlagLaterAsync(trade, clearNew: true, delayMs: 5000);
+                            FireAndForget(ClearFlagLaterAsync(trade, clearNew: true, delayMs: 5000));
                         }
 
                         if (isUpdated && !_isUpdatedFlags.ContainsKey(tradeId))
                         {
                             _isUpdatedFlags[tradeId] = true;
-                            _ = ClearFlagLaterAsync(trade, clearNew: false, delayMs: 2000);
+                            FireAndForget(ClearFlagLaterAsync(trade, clearNew: false, delayMs: 2000));
                         }
 
                         if (IsOptionProduct(r.ProductType))
@@ -968,42 +971,64 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
 
         private void CancelDetailsLoadInFlight()
         {
+            var oldCts = _detailsCts;
+            _detailsCts = null;  // ← Atomic write FÖRST
+
+            if (oldCts == null)
+                return;
+
             try
             {
-                _detailsCts?.Cancel();
+                oldCts.Cancel();
             }
             catch
             {
                 // no-op
             }
-            finally
+
+            // Vänta lite innan dispose (ger async tasks tid att checka token)
+            Task.Delay(100).ContinueWith(_ =>
             {
-                _detailsCts?.Dispose();
-                _detailsCts = null;
-            }
+                try
+                {
+                    oldCts.Dispose();
+                }
+                catch
+                {
+                    // no-op
+                }
+            }, TaskScheduler.Default);
         }
+
 
         private async Task ClearFlagLaterAsync(TradeRowViewModel trade, bool clearNew, int delayMs)
         {
             try
             {
                 await Task.Delay(delayMs).ConfigureAwait(true);
+
+                // Kolla om trade fortfarande är valid
+                if (trade == null)
+                    return;
+
                 if (clearNew)
                 {
                     trade.IsNew = false;
-                    _isNewFlags.Remove(trade.TradeId);  // <- LÄGG TILL
+                    _isNewFlags.Remove(trade.TradeId);
                 }
                 else
                 {
                     trade.IsUpdated = false;
-                    _isUpdatedFlags.Remove(trade.TradeId);  // <- LÄGG TILL
+                    _isUpdatedFlags.Remove(trade.TradeId);
                 }
             }
-            catch
+            catch (Exception ex)
             {
-                // no-op
+                // Logga istället för att swallowa
+                Debug.WriteLine($"[BlotterVM] ClearFlagLaterAsync failed for trade {trade?.TradeId}: {ex.Message}");
             }
         }
+
 
         private static string BuildSignature(dynamic r, DateTime time, string system, string fallbackStatus)
         {
@@ -1041,6 +1066,21 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
+
+        /// <summary>
+        /// Fire-and-forget wrapper som loggar exceptions istället för att swallowa dem.
+        /// </summary>
+        private void FireAndForget(Task task, [System.Runtime.CompilerServices.CallerMemberName] string caller = "")
+        {
+            _ = task.ContinueWith(t =>
+            {
+                if (t.IsFaulted && t.Exception != null)
+                {
+                    Debug.WriteLine($"[BlotterVM] Fire-and-forget task failed in {caller}: {t.Exception.InnerException?.Message ?? t.Exception.Message}");
+                }
+            }, TaskScheduler.Default);
+        }
+
 
         /// <summary>
         /// D4.2c: Bokar vald trade till MX3.
@@ -1368,5 +1408,45 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             _optionTradesView?.Refresh();
             _linearTradesView?.Refresh();
         }
+
+        public void Dispose()
+        {
+            if (_disposed)
+                return;
+
+            _disposed = true;
+
+            // Stop polling
+            try
+            {
+                if (_pollTimer != null && _pollTimer.IsEnabled)
+                {
+                    _pollTimer.Stop();
+                }
+            }
+            catch { /* no-op */ }
+
+            // Stop debounce timer
+            try
+            {
+                if (_userInteractionDebounceTimer != null && _userInteractionDebounceTimer.IsEnabled)
+                {
+                    _userInteractionDebounceTimer.Stop();
+                }
+            }
+            catch { /* no-op */ }
+
+            // Clear collections (frigör ViewModels och deras memory)
+            OptionTrades.Clear();
+            LinearTrades.Clear();
+
+            // Clear dictionaries
+            _seenTradeIds.Clear();
+            _lastSignatureByTradeId.Clear();
+            _isNewFlags.Clear();
+            _isUpdatedFlags.Clear();
+        }
+
+
     }
 }
