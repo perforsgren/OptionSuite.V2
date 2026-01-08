@@ -3,6 +3,11 @@ using System.Windows;
 using FxTradeHub.Data.MySql.Repositories;
 using FxSharedConfig;
 using OptionSuite.Blotter.Wpf.Services;
+using FxTradeHub.Services.Ingest;
+using FxTradeHub.Services.Parsing;
+using FxTradeHub.Domain.Parsing;
+using System.Collections.Generic;
+using FxTradeHub.Domain.Interfaces;
 
 namespace OptionSuite.Blotter.Host.Wpf
 {
@@ -11,6 +16,7 @@ namespace OptionSuite.Blotter.Host.Wpf
         private BlotterPresenceService _presenceService;
         private MasterElectionService _electionService;
         private Mx3ResponseWatcherService _responseWatcher;
+        private EmailInboxWatcherService _emailWatcher;
 
         protected override void OnStartup(StartupEventArgs e)
         {
@@ -18,25 +24,46 @@ namespace OptionSuite.Blotter.Host.Wpf
 
             try
             {
-                // 1. Skapa repository (shared av alla services)
+                // 1. Skapa repositories (både sync och async)
                 var connectionString = AppDbConfig.GetConnectionString("trade_stp");
-                var repository = new MySqlStpRepositoryAsync(connectionString);
+                var repositoryAsync = new MySqlStpRepositoryAsync(connectionString);
+                var repositorySync = new MySqlStpRepository(connectionString);
+                var messageInRepo = new MessageInRepository(connectionString);
+                var lookupRepo = new MySqlStpLookupRepository(connectionString);
 
                 // 2. Starta Presence Service (heartbeat)
-                _presenceService = new BlotterPresenceService(repository);
+                _presenceService = new BlotterPresenceService(repositoryAsync);
 
                 // 3. Starta Election Service
-                _electionService = new MasterElectionService(repository);
+                _electionService = new MasterElectionService(repositoryAsync);
 
-                // 4. Skapa FileWatcher (startas endast när vi blir master)
+                // 4. Skapa Mx3 FileWatcher (startas endast när vi blir master)
                 var responseFolder = AppPaths.Mx3ResponseFolder;
-                _responseWatcher = new Mx3ResponseWatcherService(repository, responseFolder);
+                _responseWatcher = new Mx3ResponseWatcherService(repositoryAsync, responseFolder);
 
-                // 5. Lyssna på master-status ändringar
+                // 5. Skapa Email FileWatcher (startas ALLTID - varje user har sitt eget OneDrive)
+                var emailInboxFolder = AppPaths.EmailInboxFolder.Replace("{USERNAME}", Environment.UserName);
+                var messageInService = new MessageInService(messageInRepo);
+                var fileInboxService = new FileInboxService(messageInService);
+
+                // Skapa parsers för MessageInParserOrchestrator
+                var parsers = new List<IInboundMessageParser>
+                {
+                    new VolbrokerFixAeParser(lookupRepo),
+                    new JpmSpotConfirmationParser(lookupRepo)
+                };
+
+                var parserOrchestrator = new MessageInParserOrchestrator(messageInRepo, repositorySync, parsers);
+
+                _emailWatcher = new EmailInboxWatcherService(fileInboxService, parserOrchestrator, emailInboxFolder);
+                _emailWatcher.Start();  // Starta ALLTID
+
+                // 6. Lyssna på master-status ändringar (för Mx3 watcher)
                 _electionService.MasterStatusChanged += OnMasterStatusChanged;
 
                 System.Diagnostics.Debug.WriteLine("[App] All services initialized successfully");
             }
+
             catch (Exception ex)
             {
                 MessageBox.Show(
@@ -54,12 +81,12 @@ namespace OptionSuite.Blotter.Host.Wpf
         {
             if (isMaster)
             {
-                System.Diagnostics.Debug.WriteLine("[App] ✅ I AM MASTER - Starting FileWatcher");
+                System.Diagnostics.Debug.WriteLine("[App] ✅ I AM MASTER - Starting Mx3 FileWatcher");
                 _responseWatcher?.Start();
             }
             else
             {
-                System.Diagnostics.Debug.WriteLine("[App] ❌ NOT MASTER - Stopping FileWatcher");
+                System.Diagnostics.Debug.WriteLine("[App] ❌ NOT MASTER - Stopping Mx3 FileWatcher");
                 _responseWatcher?.Stop();
             }
         }
@@ -69,6 +96,9 @@ namespace OptionSuite.Blotter.Host.Wpf
             System.Diagnostics.Debug.WriteLine("[App] Shutting down services...");
 
             // Stoppa alla services
+            _emailWatcher?.Stop();
+            _emailWatcher?.Dispose();
+
             _responseWatcher?.Stop();
             _responseWatcher?.Dispose();
 

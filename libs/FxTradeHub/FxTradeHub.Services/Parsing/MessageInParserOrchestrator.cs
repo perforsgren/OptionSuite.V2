@@ -163,18 +163,21 @@ namespace FxTradeHub.Services.Parsing
 
                     var stpTradeId = _stpRepository.InsertTrade(trade);
 
-                    // Event 1: MessageInReceived - använd SourceVenueCode dynamiskt
-                    var seqNum = source.FixSeqNum.HasValue ? source.FixSeqNum.Value.ToString() : "N/A";
+                    // Event 1: MessageInReceived - dynamisk baserat på SourceType
+                    var systemCode = DetermineSystemCode(source.SourceType);
+                    var description = BuildMessageInDescription(source);
+
                     var messageInEvent = new TradeWorkflowEvent
                     {
                         StpTradeId = stpTradeId,
                         EventType = "MessageInReceived",
                         EventTimeUtc = source.ReceivedUtc,
-                        SystemCode = SystemCode.Fix,      //TODO: Ändra till rätt. Kan vara fix, mail, xml m.fl
+                        SystemCode = systemCode,
                         InitiatorId = "STP",
-                        Description = $"FIX {source.FixMsgType ?? "AE"} from {source.SourceVenueCode}, SeqNum={seqNum}"
+                        Description = description
                     };
                     _stpRepository.InsertTradeWorkflowEvent(messageInEvent);
+
 
                     // 2) Skapa systemlänkar (routing) i orchestratorn
                     var systemLinks = BuildSystemLinksForTrade(source, trade);
@@ -353,5 +356,58 @@ namespace FxTradeHub.Services.Parsing
 
             _messageRepo.UpdateParsingState(msg);
         }
+
+        /// <summary>
+        /// Avgör SystemCode baserat på MessageIn.SourceType.
+        /// </summary>
+        private SystemCode DetermineSystemCode(string sourceType)
+        {
+            if (string.IsNullOrWhiteSpace(sourceType))
+                return SystemCode.Fix; // Fallback
+
+            var upperSourceType = sourceType.ToUpperInvariant();
+
+            switch (upperSourceType)
+            {
+                case "FIX":
+                    return SystemCode.Fix;
+                case "EMAIL":
+                case "MAIL":
+                    return SystemCode.Mail;
+                case "FILE":
+                    return SystemCode.Fix; // TODO: Lägg till SystemCode.File när FILE-import implementeras
+                default:
+                    return SystemCode.Fix;
+            }
+        }
+
+        /// <summary>
+        /// Bygger description för MessageInReceived event baserat på SourceType.
+        /// </summary>
+        private string BuildMessageInDescription(MessageIn source)
+        {
+            if (string.IsNullOrWhiteSpace(source.SourceType))
+                return "Message received";
+
+            var upperSourceType = source.SourceType.ToUpperInvariant();
+
+            switch (upperSourceType)
+            {
+                case "FIX":
+                    var seqNum = source.FixSeqNum.HasValue ? source.FixSeqNum.Value.ToString() : "N/A";
+                    return $"FIX {source.FixMsgType ?? "AE"} from {source.SourceVenueCode}, SeqNum={seqNum}";
+
+                case "EMAIL":
+                case "MAIL":
+                    return $"Email from {source.SourceVenueCode}";
+
+                case "FILE":
+                    return $"File from {source.SourceVenueCode}";
+
+                default:
+                    return $"Message from {source.SourceVenueCode}";
+            }
+        }
+
     }
 }
