@@ -1165,21 +1165,10 @@
                             </DataTrigger.EnterActions>
                         </DataTrigger>
 
-                        <!-- BOOKED trades - 60% opacity (LÄGG TILL DESSA!) -->
+                        <!-- BOOKED trades - 70% opacity (LÄGG TILL DESSA!) -->
                         <DataTrigger Binding="{Binding Status}" Value="Booked">
-                            <Setter Property="Opacity" Value="0.6"/>
+                            <Setter Property="Opacity" Value="0.70"/>
                         </DataTrigger>
-
-                        <!-- BOOKED + Hover - full opacity (LÄGG TILL DENNA!) -->
-                        <MultiTrigger>
-                            <MultiTrigger.Conditions>
-                                <Condition Property="IsMouseOver" Value="True"/>
-                                <Condition Binding="{Binding Status}" Value="Booked"/>
-                            </MultiTrigger.Conditions>
-                            <Setter Property="Opacity" Value="1.0"/>
-                        </MultiTrigger>
-
-
 
                         <!-- IsMouseOver - Hover effect -->
                         <Trigger Property="IsMouseOver" Value="True">
@@ -1191,6 +1180,7 @@
                             <Setter TargetName="TopLine" Property="Opacity" Value="1"/>
                             <Setter TargetName="BottomLine" Property="Opacity" Value="1"/>
                             <Setter TargetName="LeftAccent" Property="Background" Value="#2DD4BF"/>
+                            <Setter Property="Opacity" Value="1.0"/>
                         </Trigger>
 
                         <!-- IsSelected - Selected row style -->
@@ -1301,6 +1291,11 @@
                             </DataTrigger.EnterActions>
                         </DataTrigger>
 
+                        <!-- BOOKED trades - 60% opacity (LÄGG TILL DESSA!) -->
+                        <DataTrigger Binding="{Binding Status}" Value="Booked">
+                            <Setter Property="Opacity" Value="0.6"/>
+                        </DataTrigger>
+                        
                         <!-- IsMouseOver - Hover effect (purple) -->
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="RowFill" Property="Background">
@@ -1311,6 +1306,7 @@
                             <Setter TargetName="TopLine" Property="Opacity" Value="1"/>
                             <Setter TargetName="BottomLine" Property="Opacity" Value="1"/>
                             <Setter TargetName="LeftAccent" Property="Background" Value="#A78BFA"/>
+                            <Setter Property="Opacity" Value="1.0"/>
                         </Trigger>
 
                         <!-- IsSelected - Selected row style (purple) -->
