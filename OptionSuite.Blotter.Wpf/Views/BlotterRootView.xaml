@@ -10,13 +10,13 @@
 
     <UserControl.Resources>
 
-
-        <!-- D2.2D: Converters -->
+        <!-- Converters -->
         <BooleanToVisibilityConverter x:Key="BoolToVisConverter"/>
         <converters:NullToCollapsedConverter x:Key="NullToCollapsed"/>
         <converters:DetailsToLinesConverter x:Key="DetailsToLines"/>
         <converters:EventTypeToIconConverter x:Key="EventTypeToIcon"/>
         <converters:EventTypeToColorConverter x:Key="EventTypeToColor"/>
+        <converters:SystemStatusToColorConverter x:Key="SystemStatusToColor"/>
 
         <!-- =========================================================
              SOFT FOG (token-baserad)
@@ -747,91 +747,34 @@
                                                 <Border Style="{StaticResource Style.BlotterRightCard}">
                                                     <StackPanel>
                                                         <Border Style="{StaticResource Style.BlotterSectionHeaderBorder}">
-                                                            <TextBlock Text="WORKFLOW" Style="{StaticResource Style.BlotterRightSectionTitle}"/>
+                                                            <TextBlock Text="SYSTEM LINKS" Style="{StaticResource Style.BlotterRightSectionTitle}"/>
                                                         </Border>
 
-                                                        <ItemsControl ItemsSource="{Binding WorkflowChips}">
+                                                        <!-- System Links från DB -->
+                                                        <ItemsControl ItemsSource="{Binding SelectedTradeSystemLinks}">
                                                             <ItemsControl.ItemsPanel>
                                                                 <ItemsPanelTemplate>
-                                                                    <WrapPanel />
+                                                                    <WrapPanel/>
                                                                 </ItemsPanelTemplate>
                                                             </ItemsControl.ItemsPanel>
 
                                                             <ItemsControl.ItemTemplate>
                                                                 <DataTemplate>
-                                                                    <Border>
-                                                                        <Border.Style>
-                                                                            <Style TargetType="Border" BasedOn="{StaticResource Style.BlotterChip}">
-                                                                                <!-- Default = Info -->
-                                                                                <Setter Property="BorderBrush" Value="#2DD4BF"/>
-                                                                                <Setter Property="Background">
-                                                                                    <Setter.Value>
-                                                                                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                                                                                            <GradientStop Color="#1A2DD4BF" Offset="0.0"/>
-                                                                                            <GradientStop Color="#0D2DD4BF" Offset="1.0"/>
-                                                                                        </LinearGradientBrush>
-                                                                                    </Setter.Value>
-                                                                                </Setter>
-
-                                                                                <Style.Triggers>
-                                                                                    <!-- Audit ska se ut som Ingested/Normalized (Success-färger) -->
-                                                                                    <DataTrigger Binding="{Binding Text}" Value="Audit: 2 events">
-                                                                                        <Setter Property="BorderBrush" Value="#10B981"/>
-                                                                                        <Setter Property="Background">
-                                                                                            <Setter.Value>
-                                                                                                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                                                                                                    <GradientStop Color="#1A10B981" Offset="0.0"/>
-                                                                                                    <GradientStop Color="#0D10B981" Offset="1.0"/>
-                                                                                                </LinearGradientBrush>
-                                                                                            </Setter.Value>
-                                                                                        </Setter>
-                                                                                    </DataTrigger>
-
-                                                                                    <!-- MX3/Calypso: New ska ha blå border -->
-                                                                                    <DataTrigger Binding="{Binding Text}" Value="MX3: New">
-                                                                                        <Setter Property="BorderBrush" Value="{StaticResource NewBadgeBorderBrush}"/>
-                                                                                    </DataTrigger>
-                                                                                    <DataTrigger Binding="{Binding Text}" Value="CALYPSO: New">
-                                                                                        <Setter Property="BorderBrush" Value="{StaticResource NewBadgeBorderBrush}"/>
-                                                                                    </DataTrigger>
-
-                                                                                    <DataTrigger Binding="{Binding Kind}" Value="Success">
-                                                                                        <Setter Property="BorderBrush" Value="#10B981"/>
-                                                                                        <Setter Property="Background">
-                                                                                            <Setter.Value>
-                                                                                                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                                                                                                    <GradientStop Color="#1A10B981" Offset="0.0"/>
-                                                                                                    <GradientStop Color="#0D10B981" Offset="1.0"/>
-                                                                                                </LinearGradientBrush>
-                                                                                            </Setter.Value>
-                                                                                        </Setter>
-                                                                                    </DataTrigger>
-
-                                                                                    <DataTrigger Binding="{Binding Kind}" Value="Warning">
-                                                                                        <Setter Property="BorderBrush" Value="#F59E0B"/>
-                                                                                        <Setter Property="Background">
-                                                                                            <Setter.Value>
-                                                                                                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                                                                                                    <GradientStop Color="#1AF59E0B" Offset="0.0"/>
-                                                                                                    <GradientStop Color="#0DF59E0B" Offset="1.0"/>
-                                                                                                </LinearGradientBrush>
-                                                                                            </Setter.Value>
-                                                                                        </Setter>
-                                                                                    </DataTrigger>
-                                                                                </Style.Triggers>
-
-                                                                            </Style>
-                                                                        </Border.Style>
-
-                                                                        <TextBlock Text="{Binding Text}" Style="{StaticResource Style.BlotterChipText}"/>
+                                                                    <Border Style="{StaticResource Style.BlotterChip}"
+                            BorderBrush="{Binding Status, Converter={StaticResource SystemStatusToColor}}">
+                                                                        <TextBlock Style="{StaticResource Style.BlotterChipText}">
+                            <Run Text="{Binding SystemCode}"/>
+                            <Run Text=": "/>
+                            <Run Text="{Binding Status, TargetNullValue='New'}"/>
+                                                                        </TextBlock>
                                                                     </Border>
                                                                 </DataTemplate>
                                                             </ItemsControl.ItemTemplate>
-
                                                         </ItemsControl>
 
                                                     </StackPanel>
                                                 </Border>
+
 
                                             </StackPanel>
                                         </ScrollViewer>

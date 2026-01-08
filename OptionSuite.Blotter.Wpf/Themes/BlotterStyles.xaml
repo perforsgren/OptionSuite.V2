@@ -1164,8 +1164,22 @@
                                 </BeginStoryboard>
                             </DataTrigger.EnterActions>
                         </DataTrigger>
-                        
-                        
+
+                        <!-- BOOKED trades - 60% opacity (LÄGG TILL DESSA!) -->
+                        <DataTrigger Binding="{Binding Status}" Value="Booked">
+                            <Setter Property="Opacity" Value="0.6"/>
+                        </DataTrigger>
+
+                        <!-- BOOKED + Hover - full opacity (LÄGG TILL DENNA!) -->
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsMouseOver" Value="True"/>
+                                <Condition Binding="{Binding Status}" Value="Booked"/>
+                            </MultiTrigger.Conditions>
+                            <Setter Property="Opacity" Value="1.0"/>
+                        </MultiTrigger>
+
+
 
                         <!-- IsMouseOver - Hover effect -->
                         <Trigger Property="IsMouseOver" Value="True">
