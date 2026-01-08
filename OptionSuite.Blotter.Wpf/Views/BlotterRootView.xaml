@@ -603,10 +603,10 @@
                                                             Width="90"/>
                                         <DataGridTextColumn Header="Notional Ccy" Binding="{Binding NotionalCcy}" Width="100"/>
                                         <DataGridTextColumn Header="Hedge Rate" 
-                                                            Binding="{Binding HedgeRate, StringFormat=F4}" 
+                                                            Binding="{Binding HedgeRate, StringFormat=F6}" 
                                                             CellStyle="{StaticResource Style.BlotterDataGridCell.Numeric}"
                                                             HeaderStyle="{StaticResource Style.BlotterDataGridHeader.Numeric}"
-                                                            Width="95"/>
+                                                            Width="100"/>
                                         <DataGridTextColumn Header="Hedge Type" Binding="{Binding HedgeType}" Width="95"/>
                                         <DataGridTextColumn Header="Settlement Date" Binding="{Binding SettlementDate, StringFormat=yyyy-MM-dd}" Width="120"/>
                                         <DataGridTextColumn Header="Book Calypso" Binding="{Binding CalypsoPortfolio}" Width="110"/>

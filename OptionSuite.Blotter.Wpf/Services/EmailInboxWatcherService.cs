@@ -2,34 +2,36 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
+using System.Windows.Threading;
+using FxSharedConfig;
 using FxTradeHub.Services.Ingest;
 using FxTradeHub.Services.Parsing;
-using FxSharedConfig;
 
 namespace OptionSuite.Blotter.Wpf.Services
 {
     /// <summary>
-    /// Watchas email inbox folder för nya email-filer från Power Automate.
-    /// Processar filer genom FileInboxService och MessageInParserOrchestrator.
+    /// Pollar email inbox folder för nya email-filer från Power Automate.
+    /// Använder timer-baserad polling istället för FileSystemWatcher för att hantera OneDrive sync delay.
     /// </summary>
     public sealed class EmailInboxWatcherService : IDisposable
     {
         private readonly FileInboxService _fileInboxService;
         private readonly MessageInParserOrchestrator _parserOrchestrator;
         private readonly string _inboxFolder;
-        private FileSystemWatcher _watcher;
-        private bool _isWatching;
+        private DispatcherTimer _pollTimer;
+        private bool _isPolling;
         private bool _disposed;
 
-        private readonly HashSet<string> _processedFiles = new HashSet<string>();
+        private readonly HashSet<string> _processedFiles = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
         /// Skapar en ny instans av EmailInboxWatcherService.
         /// </summary>
         /// <param name="fileInboxService">Service för att läsa email-filer och skapa MessageIn.</param>
         /// <param name="parserOrchestrator">Orchestrator för att parsa MessageIn till Trade.</param>
-        /// <param name="inboxFolder">Path till folder som ska watchas (från AppPaths.EmailInboxFolder).</param>
+        /// <param name="inboxFolder">Path till folder som ska pollas (från AppPaths.EmailInboxFolder).</param>
         public EmailInboxWatcherService(
             FileInboxService fileInboxService,
             MessageInParserOrchestrator parserOrchestrator,
@@ -41,14 +43,14 @@ namespace OptionSuite.Blotter.Wpf.Services
         }
 
         /// <summary>
-        /// Startar FileSystemWatcher och kör startup scan för att plocka upp missade filer.
+        /// Startar polling timer och kör initial startup scan.
         /// </summary>
         public void Start()
         {
-            if (_isWatching || _disposed)
+            if (_isPolling || _disposed)
                 return;
 
-            Debug.WriteLine($"[EmailWatcher] Starting FileSystemWatcher on: {_inboxFolder}");
+            Debug.WriteLine($"[EmailWatcher] Starting polling on: {_inboxFolder}");
 
             // Skapa folder om den inte finns
             if (!Directory.Exists(_inboxFolder))
@@ -57,75 +59,80 @@ namespace OptionSuite.Blotter.Wpf.Services
                 Directory.CreateDirectory(_inboxFolder);
             }
 
-            // Startup scan (plocka upp filer som missades)
-            _ = Task.Run(async () => await StartupScanAsync());
+            // Initial startup scan
+            _ = Task.Run(async () => await ScanInboxAsync());
 
-            // Starta FileSystemWatcher
-            _watcher = new FileSystemWatcher(_inboxFolder)
+            // Starta polling timer
+            _pollTimer = new DispatcherTimer(DispatcherPriority.Background)
             {
-                Filter = "*.txt",
-                NotifyFilter = NotifyFilters.FileName,
-                EnableRaisingEvents = true
+                Interval = TimeSpan.FromSeconds(2)
             };
+            _pollTimer.Tick += async (s, e) => await ScanInboxAsync();
+            _pollTimer.Start();
 
-            _watcher.Created += OnFileCreated;
-
-            _isWatching = true;
+            _isPolling = true;
         }
 
         /// <summary>
-        /// Stoppar FileSystemWatcher.
+        /// Stoppar polling timer.
         /// </summary>
         public void Stop()
         {
-            if (!_isWatching)
+            if (!_isPolling)
                 return;
 
-            Debug.WriteLine("[EmailWatcher] Stopping FileSystemWatcher");
+            Debug.WriteLine("[EmailWatcher] Stopping polling");
 
-            if (_watcher != null)
+            if (_pollTimer != null)
             {
-                _watcher.Created -= OnFileCreated;
-                _watcher.Dispose();
-                _watcher = null;
+                _pollTimer.Stop();
+                _pollTimer = null;
             }
 
-            _isWatching = false;
+            _isPolling = false;
             _processedFiles.Clear();
         }
 
         /// <summary>
-        /// Scannar inbox folder vid startup för att plocka upp filer som missades.
+        /// Scannar inbox folder för nya .txt filer som inte processats än.
         /// </summary>
-        private async Task StartupScanAsync()
+        private async Task ScanInboxAsync()
         {
             try
             {
-                Debug.WriteLine("[EmailWatcher] Running startup scan...");
+                if (!Directory.Exists(_inboxFolder))
+                    return;
 
-                var files = Directory.GetFiles(_inboxFolder, "*.txt");
+                var files = Directory.GetFiles(_inboxFolder, "*.txt")
+                    .OrderBy(f => File.GetCreationTime(f)) // Processar äldsta först
+                    .ToArray();
+
+                if (files.Length == 0)
+                    return;
+
+                var newFilesCount = 0;
 
                 foreach (var file in files)
                 {
+                    var fileName = Path.GetFileName(file);
+
+                    // Deduplication - skippa redan processade filer
+                    if (_processedFiles.Contains(fileName))
+                        continue;
+
+                    newFilesCount++;
                     await ProcessEmailFileAsync(file);
                 }
 
-                Debug.WriteLine($"[EmailWatcher] Startup scan complete. Processed {files.Length} files.");
+                if (newFilesCount > 0)
+                {
+                    Debug.WriteLine($"[EmailWatcher] Scan complete. Processed {newFilesCount} new file(s).");
+                }
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[EmailWatcher] Startup scan error: {ex.Message}");
+                Debug.WriteLine($"[EmailWatcher] Scan error: {ex.Message}");
             }
-        }
-
-        /// <summary>
-        /// Event handler för FileSystemWatcher.Created.
-        /// </summary>
-        private async void OnFileCreated(object sender, FileSystemEventArgs e)
-        {
-            // Vänta lite för att Power Automate ska bli klar med att skriva
-            await Task.Delay(500);
-            await ProcessEmailFileAsync(e.FullPath);
         }
 
         /// <summary>
@@ -135,16 +142,8 @@ namespace OptionSuite.Blotter.Wpf.Services
         {
             var fileName = Path.GetFileName(filePath);
 
-            // Deduplication
-            lock (_processedFiles)
-            {
-                if (_processedFiles.Contains(fileName))
-                {
-                    Debug.WriteLine($"[EmailWatcher] Already processed: {fileName}, skipping.");
-                    return;
-                }
-                _processedFiles.Add(fileName);
-            }
+            // Markera som processad
+            _processedFiles.Add(fileName);
 
             try
             {
@@ -166,7 +165,7 @@ namespace OptionSuite.Blotter.Wpf.Services
 
                 Debug.WriteLine($"[EmailWatcher] Processed MessageIn {messageInId} successfully");
 
-                // 3. Arkivera eller radera fil (optional)
+                // 3. Arkivera fil
                 ArchiveFile(filePath);
             }
             catch (Exception ex)
@@ -210,7 +209,6 @@ namespace OptionSuite.Blotter.Wpf.Services
                 Debug.WriteLine($"[EmailWatcher] Failed to archive {filePath}: {ex.Message}");
             }
         }
-
 
         /// <summary>
         /// Disposes resources.

@@ -93,12 +93,15 @@ namespace FxTradeHub.Domain.Parsing
                     return ParseResult.Failed($"MX3 portfolio not found for {tradeData.CurrencyPair} SPOT");
                 }
 
+                // Lookup Calypso book för trader
+                var calypsoBook = _lookupRepository.GetCalypsoBookByTraderId(traderRouting.InternalUserId);
+
                 // Skapa Trade entity
                 var trade = new Trade
                 {
                     TradeId = tradeData.TradeId,
                     ProductType = ProductType.Spot,
-                    SourceType = "FILE",
+                    SourceType = "EMAIL",
                     SourceVenueCode = "JPM",
                     CounterpartyCode = counterpartyCode,
                     BrokerCode = "JPM",
@@ -106,6 +109,7 @@ namespace FxTradeHub.Domain.Parsing
                     InvId = traderRouting.InvId,
                     ReportingEntityId = traderRouting.ReportingEntityId,
                     CurrencyPair = tradeData.CurrencyPair,
+                    Mic = "XOFF",
                     TradeDate = tradeData.TradeDate,
                     ExecutionTimeUtc = tradeData.TradeTime,
                     BuySell = tradeData.BuySell,
@@ -113,9 +117,14 @@ namespace FxTradeHub.Domain.Parsing
                     NotionalCurrency = tradeData.NotionalCurrency,
                     SettlementDate = tradeData.ValueDate,
                     SpotRate = tradeData.SpotRate,
+                    HedgeRate = tradeData.SpotRate,
+                    HedgeType = "Spot",
+                    SettlementCurrency = tradeData.NotionalCurrency,
                     PortfolioMx3 = portfolioMx3,
+                    CalypsoBook = calypsoBook?.CalypsoBook,
                     IsNonDeliverable = false
                 };
+
 
                 // Skapa TradeNormalized workflow event
                 var workflowEvents = new List<TradeWorkflowEvent>
@@ -175,6 +184,7 @@ namespace FxTradeHub.Domain.Parsing
 
         /// <summary>
         /// Parsar trade fields från plain text (tabulerad format från JPM email).
+        /// Hanterar både ORDER-format (Customer Owner) och DIRECT TRADE-format (Customer User fallback).
         /// </summary>
         private JpmTradeData ParseTradeFields(string plainText)
         {
@@ -186,8 +196,14 @@ namespace FxTradeHub.Domain.Parsing
             // Parse fields med regex patterns
             data.TradeId = ExtractField(plainText, @"Trade ID:\s+(\S+)");
             data.TradeType = ExtractField(plainText, @"Trade Type:\s+(\w+)");
-            data.CurrencyPair = ExtractField(plainText, @"Currency Pair:\s+(\w+)");
+            data.CurrencyPair = ExtractField(plainText, @"Currency Pair:\s+([\w/]+)");
+
+            // Customer Owner (ORDER format) ELLER Customer User (DIRECT TRADE format)
             data.CustomerOwner = ExtractField(plainText, @"Customer Owner:\s+(\w+)");
+            if (string.IsNullOrWhiteSpace(data.CustomerOwner))
+            {
+                data.CustomerOwner = ExtractField(plainText, @"Customer User:\s+(\w+)");
+            }
 
             // Parse dates
             var tradeDateStr = ExtractField(plainText, @"Trade Date:\s+([\d\-A-Z]+)");
@@ -200,11 +216,18 @@ namespace FxTradeHub.Domain.Parsing
             data.ValueDate = ParseJpmDate(valueDateStr);
 
             // Parse amounts (BUY: EUR 500,000.00 / SELL: SEK 5,406,034.00)
-            var buyLine = ExtractField(plainText, @"BUY:\s+([\w\s,\.]+)");
-            var sellLine = ExtractField(plainText, @"SELL:\s+([\w\s,\.]+)");
+            // Hanterar både med och utan leading whitespace (DIRECT TRADE vs ORDER format)
+            var buyLine = ExtractField(plainText, @"^\s*BUY:\s+([\w\s,\.]+)", RegexOptions.Multiline);
+            var sellLine = ExtractField(plainText, @"^\s*SELL:\s+([\w\s,\.]+)", RegexOptions.Multiline);
 
             ParseBuySellLine(buyLine, out var buyCcy, out var buyAmount);
             ParseBuySellLine(sellLine, out var sellCcy, out var sellAmount);
+
+            // Normalize Currency Pair (CNH/SEK → CNHSEK)
+            if (!string.IsNullOrWhiteSpace(data.CurrencyPair))
+            {
+                data.CurrencyPair = data.CurrencyPair.Replace("/", string.Empty);
+            }
 
             // Determine BuySell based on CurrencyPair base currency
             if (!string.IsNullOrWhiteSpace(data.CurrencyPair) && data.CurrencyPair.Length >= 3)
@@ -224,8 +247,13 @@ namespace FxTradeHub.Domain.Parsing
                 }
             }
 
-            // Parse spot rate
+            // Parse spot rate (försök först "Spot Rate:", sedan "All In Rate:")
             var spotRateStr = ExtractField(plainText, @"Spot Rate:\s+([\d\.]+)");
+            if (string.IsNullOrWhiteSpace(spotRateStr))
+            {
+                spotRateStr = ExtractField(plainText, @"All In Rate:\s+([\d\.]+)");
+            }
+
             if (decimal.TryParse(spotRateStr, NumberStyles.Any, CultureInfo.InvariantCulture, out var spotRate))
             {
                 data.SpotRate = spotRate;
@@ -234,14 +262,25 @@ namespace FxTradeHub.Domain.Parsing
             return data;
         }
 
+
         /// <summary>
         /// Extraherar field från text med regex pattern.
         /// </summary>
         private string ExtractField(string text, string pattern)
         {
-            var match = Regex.Match(text, pattern, RegexOptions.Singleline | RegexOptions.IgnoreCase);
+            return ExtractField(text, pattern, RegexOptions.Singleline | RegexOptions.IgnoreCase);
+        }
+
+        /// <summary>
+        /// Extraherar field från text med regex pattern och custom options.
+        /// </summary>
+        private string ExtractField(string text, string pattern, RegexOptions options)
+        {
+            var match = Regex.Match(text, pattern, options);
             return match.Success && match.Groups.Count > 1 ? match.Groups[1].Value.Trim() : null;
         }
+
+
 
         /// <summary>
         /// Parsar JPM datum format: "05-JAN-2026" → DateTime.

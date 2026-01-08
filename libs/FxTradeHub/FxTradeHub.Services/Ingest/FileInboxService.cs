@@ -42,7 +42,7 @@ namespace FxTradeHub.Services.Ingest
             try
             {
                 var fileContent = File.ReadAllText(filePath, Encoding.UTF8);
-                System.Diagnostics.Debug.WriteLine($"[FileInboxService] Read {fileContent.Length} chars from file");
+                //System.Diagnostics.Debug.WriteLine($"[FileInboxService] Read {fileContent.Length} chars from file");
 
                 var email = ParseEmailFile(fileContent);
 
@@ -58,7 +58,7 @@ namespace FxTradeHub.Services.Ingest
                     return -1;
                 }
 
-                System.Diagnostics.Debug.WriteLine($"[FileInboxService] Parsed email: From={email.From}, Subject={email.Subject}, BodyLength={email.Body.Length}");
+                //System.Diagnostics.Debug.WriteLine($"[FileInboxService] Parsed email: From={email.From}, Subject={email.Subject}, BodyLength={email.Body.Length}");
 
                 var payloadHash = ComputeSha256Hash(email.Body);
 
@@ -75,7 +75,7 @@ namespace FxTradeHub.Services.Ingest
                     RawPayloadHash = payloadHash
                 };
 
-                System.Diagnostics.Debug.WriteLine($"[FileInboxService] SourceVenueCode={messageIn.SourceVenueCode}");
+                //System.Diagnostics.Debug.WriteLine($"[FileInboxService] SourceVenueCode={messageIn.SourceVenueCode}");
 
                 var messageInId = _messageInService.InsertMessage(messageIn);
 
