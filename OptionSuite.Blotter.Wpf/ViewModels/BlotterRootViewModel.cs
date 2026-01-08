@@ -932,7 +932,7 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             var auditCount = _selectedTradeWorkflowEvents.Count;
             if (auditCount > 0)
             {
-                _workflowChips.Add(new WorkflowChip($"Audit: {auditCount} events", WorkflowChipKind.Neutral));
+                _workflowChips.Add(new WorkflowChip($"Audit: {auditCount} events", WorkflowChipKind.Success));
             }
         }
 
