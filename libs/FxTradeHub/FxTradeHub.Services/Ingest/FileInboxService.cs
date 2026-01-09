@@ -165,33 +165,37 @@ namespace FxTradeHub.Services.Ingest
             };
         }
 
-        /// <summary>
-        /// Avgör SourceVenueCode baserat på From/Subject.
-        /// Används för att identifiera broker i counterpartynamepattern-lookup.
-        /// </summary>
         private string DetermineVenueCode(string from, string subject)
         {
             if (string.IsNullOrWhiteSpace(from) && string.IsNullOrWhiteSpace(subject))
                 return "UNKNOWN";
 
-            var fromLower = (from ?? string.Empty).ToLowerInvariant();
-            var subjectLower = (subject ?? string.Empty).ToLowerInvariant();
+            var combined = (from ?? "") + " " + (subject ?? "");
+            var upper = combined.ToUpperInvariant();
 
-            // JPM detection
-            if (fromLower.Contains("jpmorgan") || fromLower.Contains("jpm") ||
-                subjectLower.Contains("jpm trade"))
+            // JPM
+            if (upper.IndexOf("JPMORGAN", StringComparison.Ordinal) >= 0 ||
+                upper.IndexOf("JPM", StringComparison.Ordinal) >= 0)
             {
                 return "JPM";
             }
 
-            // Barclays detection
-            if (subjectLower.Contains("barx has booked") || subjectLower.Contains("barclays"))
+            // Barclays
+            if (upper.IndexOf("BARCLAYS", StringComparison.Ordinal) >= 0 ||
+                upper.IndexOf("BARX", StringComparison.Ordinal) >= 0)
             {
                 return "BARX";
             }
 
+            // NatWest
+            if (upper.IndexOf("NATWEST", StringComparison.Ordinal) >= 0)
+            {
+                return "NATWEST";
+            }
+
             return "UNKNOWN";
         }
+
 
 
         /// <summary>

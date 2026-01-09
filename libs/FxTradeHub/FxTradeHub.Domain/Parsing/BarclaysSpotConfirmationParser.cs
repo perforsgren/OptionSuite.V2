@@ -111,7 +111,7 @@ namespace FxTradeHub.Domain.Parsing
                     SourceType = "EMAIL",
                     SourceVenueCode = "BARX",
                     CounterpartyCode = counterpartyCode,
-                    BrokerCode = "BARX",
+                    //BrokerCode = "BARX",
                     TraderId = traderRouting.InternalUserId,
                     InvId = traderRouting.InvId,
                     ReportingEntityId = traderRouting.ReportingEntityId,

@@ -51,7 +51,8 @@ namespace OptionSuite.Blotter.Host.Wpf
                 {
                     new VolbrokerFixAeParser(lookupRepo),
                     new JpmSpotConfirmationParser(lookupRepo),
-                    new BarclaysSpotConfirmationParser(lookupRepo)
+                    new BarclaysSpotConfirmationParser(lookupRepo),
+                    new NatWestSpotConfirmationParser(lookupRepo)
                 };
 
                 var parserOrchestrator = new MessageInParserOrchestrator(messageInRepo, repositorySync, parsers);

@@ -26,6 +26,7 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
         public string NotionalCcy { get; }
         public decimal? Premium { get; }
         public string PremiumCcy { get; }
+        public DateTime? PremiumDate { get; }
         public string PortfolioMx3 { get; }
         public string Trader { get; }
         public string Status { get; }
@@ -44,12 +45,17 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
         public decimal? HedgeRate { get; }
         public string HedgeType { get; }
         public string CalypsoPortfolio { get; }
+        public string SettlementCurrency { get; }
+        public bool? IsNonDeliverable { get; }
+        public DateTime? FixingDate { get; }
 
         // Regulatory fields
         public string Mic { get; }
         public string Tvtic { get; }
         public string Isin { get; }
         public string InvDecisionId { get; }
+        public string ReportingEntityId { get; }
+        public decimal? Margin { get; }
 
         public bool IsNew
         {
@@ -90,6 +96,7 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             string notionalCcy,
             decimal? premium,
             string premiumCcy,
+            DateTime? premiumDate,
             string portfolioMx3,
             string trader,
             string status,
@@ -102,12 +109,17 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             decimal? hedgeRate = null,
             string hedgeType = null,
             string calypsoPortfolio = null,
+            string settlementCurrency = null,
+            bool? isNonDeliverable = null,
+            DateTime? fixingDate = null,
             string mx3Status = null,
             string calypsoStatus = null,
             string mic = null,
             string tvtic = null,
             string isin = null,
             string invDecisionId = null,
+            string reportingEntityId = null,
+            decimal? margin = null,
             bool isNew = false,
             bool isUpdated = false)
         {
@@ -124,6 +136,7 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             NotionalCcy = notionalCcy ?? string.Empty;
             Premium = premium;
             PremiumCcy = premiumCcy ?? string.Empty;
+            PremiumDate = premiumDate;
             PortfolioMx3 = portfolioMx3 ?? string.Empty;
             Trader = trader ?? string.Empty;
 
@@ -141,11 +154,16 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             HedgeRate = hedgeRate;
             HedgeType = hedgeType ?? string.Empty;
             CalypsoPortfolio = calypsoPortfolio ?? string.Empty;
+            SettlementCurrency = settlementCurrency ?? string.Empty;
+            IsNonDeliverable = isNonDeliverable;
+            FixingDate = fixingDate;
 
             Mic = mic ?? string.Empty;
             Tvtic = tvtic ?? string.Empty;
             Isin = isin ?? string.Empty;
             InvDecisionId = invDecisionId ?? string.Empty;
+            ReportingEntityId = reportingEntityId ?? string.Empty;
+            Margin = margin;
 
             _isNew = isNew;
             _isUpdated = isUpdated;

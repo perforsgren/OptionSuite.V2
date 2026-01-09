@@ -13,6 +13,7 @@
         <!-- Converters -->
         <BooleanToVisibilityConverter x:Key="BoolToVisConverter"/>
         <converters:NullToCollapsedConverter x:Key="NullToCollapsed"/>
+        <converters:NullToVisibleConverter x:Key="NullToVisible"/>
         <converters:DetailsToLinesConverter x:Key="DetailsToLines"/>
         <converters:EventTypeToIconConverter x:Key="EventTypeToIcon"/>
         <converters:EventTypeToColorConverter x:Key="EventTypeToColor"/>
@@ -517,7 +518,7 @@
 
                                     <DataGrid.Columns>
                                         <DataGridTextColumn Header="TradeID" Binding="{Binding TradeId}" Width="120"/>
-                                        <DataGridTextColumn Header="Counterpart" Binding="{Binding Counterparty}" Width="100"/>
+                                        <DataGridTextColumn Header="Counterpart" Binding="{Binding Counterparty}" Width="110"/>
                                         <DataGridTextColumn Header="Ccy Pair" Binding="{Binding CcyPair}" Width="80"/>
                                         <DataGridTextColumn Header="Buy/Sell" Binding="{Binding BuySell}" Width="70"/>
                                         <DataGridTextColumn Header="Call/Put" Binding="{Binding CallPut}" Width="70"/>
@@ -594,7 +595,7 @@
 
                                     <DataGrid.Columns>
                                         <DataGridTextColumn Header="TradeID" Binding="{Binding TradeId}" Width="120"/>
-                                        <DataGridTextColumn Header="Counterpart" Binding="{Binding Counterparty}" Width="100"/>
+                                        <DataGridTextColumn Header="Counterpart" Binding="{Binding Counterparty}" Width="110"/>
                                         <DataGridTextColumn Header="Ccy Pair" Binding="{Binding CcyPair}" Width="80"/>
                                         <DataGridTextColumn Header="Buy/Sell" Binding="{Binding BuySell}" Width="70"/>
                                         <DataGridTextColumn Header="Notional" 
@@ -870,11 +871,8 @@
                                                                 </TextBlock.Text>
                                                             </TextBlock>
 
-                                                            <TextBlock Grid.Row="4" Grid.Column="0" Text="SettleCcy" Style="{StaticResource Style.BlotterRightKey}"/>
+                                                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Notional Ccy" Style="{StaticResource Style.BlotterRightKey}"/>
                                                             <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding SelectedTrade.NotionalCcy, TargetNullValue=—}" Style="{StaticResource Style.BlotterRightValue}"/>
-
-                                                            <TextBlock Grid.Row="5" Grid.Column="0" Text="Value Date" Style="{StaticResource Style.BlotterRightKey}"/>
-                                                            <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding SelectedTrade.SettlementDate, StringFormat=yyyy-MM-dd, TargetNullValue=—}" Style="{StaticResource Style.BlotterRightValue}"/>
 
                                                             <TextBlock Grid.Row="6" Grid.Column="0" Text="Trade Date" Style="{StaticResource Style.BlotterRightKey}"/>
                                                             <TextBlock Grid.Row="6" Grid.Column="1" Text="{Binding SelectedTrade.Time, StringFormat=yyyy-MM-dd, TargetNullValue=—}" Style="{StaticResource Style.BlotterRightValue}"/>
@@ -901,6 +899,8 @@
                                                                 <RowDefinition Height="Auto"/>
                                                                 <RowDefinition Height="Auto"/>
                                                                 <RowDefinition Height="Auto"/>
+                                                                <RowDefinition Height="Auto"/>
+                                                                <RowDefinition Height="Auto"/>
                                                             </Grid.RowDefinitions>
 
                                                             <TextBlock Grid.Row="0" Grid.Column="0" Text="Call/Put" Style="{StaticResource Style.BlotterRightKey}"/>
@@ -912,8 +912,11 @@
                                                             <TextBlock Grid.Row="2" Grid.Column="0" Text="Expiry Date" Style="{StaticResource Style.BlotterRightKey}"/>
                                                             <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding SelectedTrade.ExpiryDate, StringFormat=yyyy-MM-dd, TargetNullValue=—}" Style="{StaticResource Style.BlotterRightValue}"/>
 
-                                                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Premium" Style="{StaticResource Style.BlotterRightKey}"/>
-                                                            <TextBlock Grid.Row="3" Grid.Column="1" Style="{StaticResource Style.BlotterRightValue}">
+                                                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Value Date" Style="{StaticResource Style.BlotterRightKey}"/>
+                                                            <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding SelectedTrade.SettlementDate, StringFormat=yyyy-MM-dd, TargetNullValue=—}" Style="{StaticResource Style.BlotterRightValue}"/>
+
+                                                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Premium" Style="{StaticResource Style.BlotterRightKey}"/>
+                                                            <TextBlock Grid.Row="4" Grid.Column="1" Style="{StaticResource Style.BlotterRightValue}">
                                                                 <TextBlock.Text>
                                                                     <MultiBinding StringFormat="{}{0:N2} {1}">
                                                                         <Binding Path="SelectedTrade.Premium"/>
@@ -922,31 +925,21 @@
                                                                 </TextBlock.Text>
                                                             </TextBlock>
 
-                                                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Premium %" Style="{StaticResource Style.BlotterRightKey}"/>
-                                                            <TextBlock Grid.Row="4" Grid.Column="1" Text="—" Style="{StaticResource Style.BlotterRightValue}" Foreground="{StaticResource Brush.TextMuted2}"/>
+                                                            <TextBlock Grid.Row="5" Grid.Column="0" Text="Premium %" Style="{StaticResource Style.BlotterRightKey}"/>
+                                                            <TextBlock Grid.Row="5" Grid.Column="1" Text="—" Style="{StaticResource Style.BlotterRightValue}" Foreground="{StaticResource Brush.TextMuted2}"/>
+
+                                                            <TextBlock Grid.Row="6" Grid.Column="0" Text="Premium Date" Style="{StaticResource Style.BlotterRightKey}"/>
+                                                            <TextBlock Grid.Row="6" Grid.Column="1" Text="{Binding SelectedTrade.PremiumDate, StringFormat=yyyy-MM-dd, TargetNullValue=—}" Style="{StaticResource Style.BlotterRightValue}"/>
 
                                                         </Grid>
                                                     </StackPanel>
                                                 </Border>
 
                                                 <!-- ============ LINEAR PRICING (endast för linear) ============ -->
-                                                <Border>
-                                                    <Border.Style>
-                                                        <Style TargetType="Border" BasedOn="{StaticResource Style.BlotterRightCard}">
-                                                            <Setter Property="Visibility" Value="Collapsed"/>
-                                                            <Style.Triggers>
-                                                                <!-- Visa när CallPut är null (converter returnerar False när null) -->
-                                                                <DataTrigger Binding="{Binding SelectedTrade.CallPut, Converter={StaticResource NullToBoolConverter}}" Value="False">
-                                                                    <Setter Property="Visibility" Value="Visible"/>
-                                                                </DataTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </Border.Style>
-
+                                                <Border Style="{StaticResource Style.BlotterRightCard}" Visibility="{Binding SelectedTrade.CallPut, Converter={StaticResource NullToVisible}}">
                                                     <StackPanel>
                                                         <Border Style="{StaticResource Style.BlotterSectionHeaderBorder}">
-                                                            <TextBlock Text="LINEAR PRICING" 
-                       Style="{StaticResource Style.BlotterRightSectionTitle}"/>
+                                                            <TextBlock Text="LINEAR PRICING" Style="{StaticResource Style.BlotterRightSectionTitle}"/>
                                                         </Border>
 
                                                         <Grid>
@@ -957,6 +950,10 @@
                                                             <Grid.RowDefinitions>
                                                                 <RowDefinition Height="Auto"/>
                                                                 <RowDefinition Height="Auto"/>
+                                                                <RowDefinition Height="Auto"/>
+                                                                <RowDefinition Height="Auto"/>
+                                                                <RowDefinition Height="Auto"/>                                                                
+                                                                <!-- NDF-specifika fält -->
                                                                 <RowDefinition Height="Auto"/>
                                                                 <RowDefinition Height="Auto"/>
                                                             </Grid.RowDefinitions>
@@ -971,7 +968,33 @@
                                                             <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding SelectedTrade.SpotRate, StringFormat=F6, TargetNullValue=—}" Style="{StaticResource Style.BlotterRightValue}"/>
 
                                                             <TextBlock Grid.Row="3" Grid.Column="0" Text="Swap Points" Style="{StaticResource Style.BlotterRightKey}"/>
-                                                            <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding SelectedTrade.SwapPoints, StringFormat=F4, TargetNullValue=—}" Style="{StaticResource Style.BlotterRightValue}"/>
+                                                            <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding SelectedTrade.SwapPoints, StringFormat=F2, TargetNullValue=—}" Style="{StaticResource Style.BlotterRightValue}"/>
+
+                                                            <!-- NDF-specifika fält - visas endast om IsNonDeliverable = true -->
+                                                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Fixing Date" Style="{StaticResource Style.BlotterRightKey}">
+                                                                <TextBlock.Visibility>
+                                                                    <Binding Path="SelectedTrade.IsNonDeliverable" Converter="{StaticResource BoolToVisConverter}"/>
+                                                                </TextBlock.Visibility>
+                                                            </TextBlock>
+                                                            <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding SelectedTrade.FixingDate, StringFormat=yyyy-MM-dd, TargetNullValue=—}" Style="{StaticResource Style.BlotterRightValue}">
+                                                                <TextBlock.Visibility>
+                                                                    <Binding Path="SelectedTrade.IsNonDeliverable" Converter="{StaticResource BoolToVisConverter}"/>
+                                                                </TextBlock.Visibility>
+                                                            </TextBlock>
+
+                                                            <TextBlock Grid.Row="5" Grid.Column="0" Text="Settlement Date" Style="{StaticResource Style.BlotterRightKey}"/>
+                                                            <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding SelectedTrade.SettlementDate, StringFormat=yyyy-MM-dd, TargetNullValue=—}" Style="{StaticResource Style.BlotterRightValue}"/>
+
+                                                            <TextBlock Grid.Row="6" Grid.Column="0" Text="Settlement Ccy" Style="{StaticResource Style.BlotterRightKey}">
+                                                                <TextBlock.Visibility>
+                                                                    <Binding Path="SelectedTrade.IsNonDeliverable" Converter="{StaticResource BoolToVisConverter}"/>
+                                                                </TextBlock.Visibility>
+                                                            </TextBlock>
+                                                            <TextBlock Grid.Row="6" Grid.Column="1" Text="{Binding SelectedTrade.SettlementCurrency, TargetNullValue=—}" Style="{StaticResource Style.BlotterRightValue}">
+                                                                <TextBlock.Visibility>
+                                                                    <Binding Path="SelectedTrade.IsNonDeliverable" Converter="{StaticResource BoolToVisConverter}"/>
+                                                                </TextBlock.Visibility>
+                                                            </TextBlock>
 
                                                         </Grid>
                                                     </StackPanel>
@@ -981,8 +1004,7 @@
                                                 <Border Style="{StaticResource Style.BlotterRightCard}">
                                                     <StackPanel>
                                                         <Border Style="{StaticResource Style.BlotterSectionHeaderBorder}">
-                                                            <TextBlock Text="PORTFOLIOS" 
-                               Style="{StaticResource Style.BlotterRightSectionTitle}"/>
+                                                            <TextBlock Text="PORTFOLIOS" Style="{StaticResource Style.BlotterRightSectionTitle}"/>
                                                         </Border>
 
                                                         <Grid>
@@ -998,22 +1020,66 @@
                                                             <TextBlock Grid.Row="0" Grid.Column="0" Text="MX3 Portfolio" Style="{StaticResource Style.BlotterRightKey}"/>
                                                             <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding SelectedTrade.PortfolioMx3, TargetNullValue=—}" Style="{StaticResource Style.BlotterRightValue}"/>
 
-                                                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Calypso Book" Style="{StaticResource Style.BlotterRightKey}"/>
-                                                            <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding SelectedTrade.CalypsoPortfolio, TargetNullValue=—}" Style="{StaticResource Style.BlotterRightValue}"/>
+                                                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Calypso Book" Style="{StaticResource Style.BlotterRightKey}">
+                                                                <TextBlock.Visibility>
+                                                                    <Binding Path="SelectedTrade.CalypsoPortfolio" Converter="{StaticResource NullToCollapsed}"/>
+                                                                </TextBlock.Visibility>
+                                                            </TextBlock>
+                                                            <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding SelectedTrade.CalypsoPortfolio}" Style="{StaticResource Style.BlotterRightValue}">
+                                                                <TextBlock.Visibility>
+                                                                    <Binding Path="SelectedTrade.CalypsoPortfolio" Converter="{StaticResource NullToCollapsed}"/>
+                                                                </TextBlock.Visibility>
+                                                            </TextBlock>
 
                                                         </Grid>
                                                     </StackPanel>
                                                 </Border>
 
-                                                <!-- SETTLEMENT -->
-                                                <Border Style="{StaticResource Style.BlotterRightCard}">
+                                                <!-- SALES -->
+                                                <Border>
+                                                    <Border.Style>
+                                                        <Style TargetType="Border" BasedOn="{StaticResource Style.BlotterRightCard}">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding SelectedTrade.ReportingEntityId}" Value="FX VOLATILITY">
+                                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Border.Style>
                                                     <StackPanel>
                                                         <Border Style="{StaticResource Style.BlotterSectionHeaderBorder}">
-                                                            <TextBlock Text="SETTLEMENT" 
-                              Style="{StaticResource Style.BlotterRightSectionTitle}"/>
+                                                            <TextBlock Text="SALES" Style="{StaticResource Style.BlotterRightSectionTitle}"/>
                                                         </Border>
                                                         <Grid>
-                                                            <!-- Settlement dates, payment flows -->
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="120"/>
+                                                                <ColumnDefinition Width="*"/>
+                                                            </Grid.ColumnDefinitions>
+                                                            <Grid.RowDefinitions>
+                                                                <RowDefinition Height="Auto"/>
+                                                                <RowDefinition Height="Auto"/>
+                                                                <RowDefinition Height="Auto"/>
+                                                                <RowDefinition Height="Auto"/>
+                                                            </Grid.RowDefinitions>
+
+                                                            <!-- Sales ID -->
+                                                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Sales ID" Style="{StaticResource Style.BlotterRightKey}"/>
+                                                            <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding SelectedTrade.InvDecisionId, TargetNullValue=—}" Style="{StaticResource Style.BlotterRightValue}"/>
+
+                                                            <!-- Sales Name -->
+                                                            <!-- TODO: Fyll från lookup table senare -->
+                                                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Sales Name" Style="{StaticResource Style.BlotterRightKey}"/>
+                                                            <TextBlock Grid.Row="1" Grid.Column="1" Text="—" Style="{StaticResource Style.BlotterRightValue}" Foreground="{StaticResource Brush.TextMuted2}"/>
+
+                                                            <!-- Reporting Entity -->
+                                                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Reporting Entity" Style="{StaticResource Style.BlotterRightKey}"/>
+                                                            <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding SelectedTrade.ReportingEntityId, TargetNullValue=—}" Style="{StaticResource Style.BlotterRightValue}"/>
+
+                                                            <!-- Margin -->
+                                                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Margin" Style="{StaticResource Style.BlotterRightKey}"/>
+                                                            <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding SelectedTrade.Margin, TargetNullValue=—}" Style="{StaticResource Style.BlotterRightValue}"/>
+
                                                         </Grid>
                                                     </StackPanel>
                                                 </Border>
@@ -1402,6 +1468,7 @@
                                                                 <RowDefinition Height="Auto"/>
                                                                 <RowDefinition Height="Auto"/>
                                                                 <RowDefinition Height="Auto"/>
+                                                                <RowDefinition Height="Auto"/>
 
                                                             </Grid.RowDefinitions>
 
@@ -1436,6 +1503,11 @@
                                                             <!-- Inv. Decision Name - från lookup (N/A) -->
                                                             <TextBlock Grid.Row="7" Grid.Column="0" Text="Inv. Decision Name" Style="{StaticResource Style.BlotterRightKey}"/>
                                                             <TextBlock Grid.Row="7" Grid.Column="1" Text="N/A" Style="{StaticResource Style.BlotterRightValue}"/>
+
+                                                            <!-- Reporting Entity. Decision ID - finns nu! -->
+                                                            <TextBlock Grid.Row="8" Grid.Column="0" Text="Reporting Entity" Style="{StaticResource Style.BlotterRightKey}"/>
+                                                            <TextBlock Grid.Row="8" Grid.Column="1" Text="{Binding SelectedTrade.ReportingEntityId, TargetNullValue=—}" Style="{StaticResource Style.BlotterRightValue}"/>
+
 
 
                                                         </Grid>
