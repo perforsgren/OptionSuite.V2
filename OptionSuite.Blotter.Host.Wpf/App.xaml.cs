@@ -50,7 +50,8 @@ namespace OptionSuite.Blotter.Host.Wpf
                 var parsers = new List<IInboundMessageParser>
                 {
                     new VolbrokerFixAeParser(lookupRepo),
-                    new JpmSpotConfirmationParser(lookupRepo)
+                    new JpmSpotConfirmationParser(lookupRepo),
+                    new BarclaysSpotConfirmationParser(lookupRepo)
                 };
 
                 var parserOrchestrator = new MessageInParserOrchestrator(messageInRepo, repositorySync, parsers);

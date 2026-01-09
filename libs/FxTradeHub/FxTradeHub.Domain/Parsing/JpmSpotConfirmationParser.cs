@@ -80,7 +80,7 @@ namespace FxTradeHub.Domain.Parsing
                 }
 
                 // Lookup counterparty (JPM är alltid counterparty för dessa trades)
-                var counterpartyCode = _lookupRepository.ResolveCounterpartyCode("FILE", "JPM", "JPM");
+                var counterpartyCode = _lookupRepository.ResolveCounterpartyCode("EMAIL", "JPM", "JPM");
                 if (string.IsNullOrWhiteSpace(counterpartyCode))
                 {
                     return ParseResult.Failed("Counterparty mapping not found for JPM");
@@ -217,8 +217,8 @@ namespace FxTradeHub.Domain.Parsing
 
             // Parse amounts (BUY: EUR 500,000.00 / SELL: SEK 5,406,034.00)
             // Hanterar både med och utan leading whitespace (DIRECT TRADE vs ORDER format)
-            var buyLine = ExtractField(plainText, @"^\s*BUY:\s+([\w\s,\.]+)", RegexOptions.Multiline);
-            var sellLine = ExtractField(plainText, @"^\s*SELL:\s+([\w\s,\.]+)", RegexOptions.Multiline);
+            var buyLine = ExtractField(plainText, @"^\s*BUY:\s+([^\r\n]+)", RegexOptions.Multiline);
+            var sellLine = ExtractField(plainText, @"^\s*SELL:\s+([^\r\n]+)", RegexOptions.Multiline);
 
             ParseBuySellLine(buyLine, out var buyCcy, out var buyAmount);
             ParseBuySellLine(sellLine, out var sellCcy, out var sellAmount);
@@ -233,6 +233,7 @@ namespace FxTradeHub.Domain.Parsing
             if (!string.IsNullOrWhiteSpace(data.CurrencyPair) && data.CurrencyPair.Length >= 3)
             {
                 var baseCcy = data.CurrencyPair.Substring(0, 3);
+
                 if (string.Equals(baseCcy, buyCcy, StringComparison.OrdinalIgnoreCase))
                 {
                     data.BuySell = "Buy";

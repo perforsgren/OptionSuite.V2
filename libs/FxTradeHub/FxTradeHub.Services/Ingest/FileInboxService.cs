@@ -177,14 +177,22 @@ namespace FxTradeHub.Services.Ingest
             var fromLower = (from ?? string.Empty).ToLowerInvariant();
             var subjectLower = (subject ?? string.Empty).ToLowerInvariant();
 
+            // JPM detection
             if (fromLower.Contains("jpmorgan") || fromLower.Contains("jpm") ||
                 subjectLower.Contains("jpm trade"))
             {
                 return "JPM";
             }
 
+            // Barclays detection
+            if (subjectLower.Contains("barx has booked") || subjectLower.Contains("barclays"))
+            {
+                return "BARX";
+            }
+
             return "UNKNOWN";
         }
+
 
         /// <summary>
         /// Beräknar SHA-256 hash av råpayload för deduplication.

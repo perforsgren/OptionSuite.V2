@@ -600,7 +600,7 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
 
                     var filter = new BlotterFilter
                     {
-                        FromTradeDate = DateTime.UtcNow.Date.AddDays(-30),
+                        FromTradeDate = DateTime.UtcNow.Date.AddDays(-90),
                         ToTradeDate = DateTime.UtcNow.Date.AddDays(1),
                         MaxRows = 500
                     };
