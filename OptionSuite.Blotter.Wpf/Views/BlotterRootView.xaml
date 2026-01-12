@@ -19,6 +19,7 @@
         <converters:EventTypeToColorConverter x:Key="EventTypeToColor"/>
         <converters:SystemStatusToColorConverter x:Key="SystemStatusToColor"/>
         <converters:NullToBoolConverter x:Key="NullToBoolConverter"/>
+        <converters:UtcToLocalTimeConverter x:Key="UtcToLocalTime"/>        
 
         <!-- =========================================================
              SOFT FOG (token-baserad)
@@ -749,7 +750,7 @@
                                                                     <Style TargetType="TextBlock" BasedOn="{StaticResource Style.BlotterRightKey}">
                                                                         <Setter Property="Text" Value="Rate"/>
                                                                         <Style.Triggers>
-                                                                            <DataTrigger Binding="{Binding SelectedTrade.CallPut, Converter={StaticResource NullToBoolConverter}}" Value="False">
+                                                                            <DataTrigger Binding="{Binding SelectedTrade.CallPut, Converter={StaticResource NullToBoolConverter}}" Value="True">
                                                                                 <Setter Property="Text" Value="Strike"/>
                                                                             </DataTrigger>
                                                                         </Style.Triggers>
@@ -761,13 +762,14 @@
                                                                     <Style TargetType="TextBlock" BasedOn="{StaticResource Style.BlotterRightValue}">
                                                                         <Setter Property="Text" Value="{Binding SelectedTrade.HedgeRate, StringFormat=F6, TargetNullValue=—}"/>
                                                                         <Style.Triggers>
-                                                                            <DataTrigger Binding="{Binding SelectedTrade.CallPut, Converter={StaticResource NullToBoolConverter}}" Value="False">
+                                                                            <DataTrigger Binding="{Binding SelectedTrade.CallPut, Converter={StaticResource NullToBoolConverter}}" Value="True">
                                                                                 <Setter Property="Text" Value="{Binding SelectedTrade.Strike, StringFormat=F4, TargetNullValue=—}"/>
                                                                             </DataTrigger>
                                                                         </Style.Triggers>
                                                                     </Style>
                                                                 </TextBlock.Style>
                                                             </TextBlock>
+
 
                                                             <TextBlock Grid.Row="7" Grid.Column="0" Text="TradeTime" Style="{StaticResource Style.BlotterRightKey}"/>
                                                             <TextBlock Grid.Row="7" Grid.Column="1" Text="{Binding SelectedTrade.Time, StringFormat='yyyy-MM-dd HH:mm:ss'}" Style="{StaticResource Style.BlotterRightValue}"/>
@@ -1104,7 +1106,7 @@
 
                                             <StackPanel>
 
-                                                <!-- D2.2D: Error Message -->
+                                                <!-- Error Message -->
                                                 <Border Background="#1AEF4444"
             BorderBrush="#EF4444"
             BorderThickness="1"
@@ -1118,14 +1120,14 @@
                    FontSize="11"/>
                                                 </Border>
 
-                                                <!-- D2.2D: System Links Card -->
+                                                <!-- System Links Card -->
                                                 <Border Style="{StaticResource Style.BlotterRightCard}">
                                                     <StackPanel>
                                                         <Border Style="{StaticResource Style.BlotterSectionHeaderBorder}">
                                                             <TextBlock Text="ROUTING / SYSTEM LINKS" Style="{StaticResource Style.BlotterRightSectionTitle}"/>
                                                         </Border>
 
-                                                        <!-- D2.2D: Bind till SelectedTradeSystemLinks med utökade fält -->
+                                                        <!-- Bind till SelectedTradeSystemLinks med utökade fält -->
                                                         <ItemsControl ItemsSource="{Binding SelectedTradeSystemLinks}">
                                                             <ItemsControl.ItemTemplate>
                                                                 <DataTemplate>
