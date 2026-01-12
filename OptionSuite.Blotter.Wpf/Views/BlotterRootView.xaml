@@ -256,12 +256,12 @@
 
                                 <!-- Left actions -->
                                 <StackPanel Orientation="Horizontal"
-                                            Margin="12"
-                                            VerticalAlignment="Center">
+            Margin="12"
+            VerticalAlignment="Center">
 
                                     <Button Command="{Binding BulkBookCommand}" 
-        Margin="0,0,0,0"
-        Cursor="Hand">
+            Margin="0,0,0,0"
+            Cursor="Hand">
                                         <Button.Style>
                                             <Style TargetType="Button" BasedOn="{StaticResource Style.BlotterToolbarButton}">
                                                 <Setter Property="Background" Value="#1A2DD4BF"/>
@@ -276,50 +276,83 @@
                                         </Button.Style>
                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                             <TextBlock Text="▶"
-                   Margin="0,0,8,0"
-                   FontSize="11"
-                   Foreground="#2DD4BF"
-                   VerticalAlignment="Center"/>
-                                            <TextBlock Text="Book"
-                   VerticalAlignment="Center"/>
-
-                                            <Border Style="{StaticResource Style.BlotterShortcutPill}"
-                Margin="10,0,0,0">
-                                                <TextBlock Style="{StaticResource Style.BlotterShortcutPillText}"
-                       Text="Ctrl+B"/>
+                       Margin="0,1,8,0"
+                       FontSize="11"
+                       Foreground="#2DD4BF"
+                       VerticalAlignment="Center"/>
+                                            <TextBlock Text="Book" VerticalAlignment="Center"/>
+                                            <Border Style="{StaticResource Style.BlotterShortcutPill}" Margin="10,0,0,0">
+                                                <TextBlock Style="{StaticResource Style.BlotterShortcutPillText}" Text="Ctrl+B"/>
                                             </Border>
                                         </StackPanel>
                                     </Button>
 
+                                    <Button Style="{StaticResource Style.BlotterToolbarButton}"
+            Command="{Binding RefreshCommand}"
+            Margin="10,0,0,0">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="6"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <!-- Pulserande grön prick -->
+                                            <Ellipse Grid.Column="0"
+                     Width="6" 
+                     Height="6" 
+                     Fill="#2DD4BF"
+                     VerticalAlignment="Center"
+                     Margin="0,1,0,0">
+                                                <Ellipse.Style>
+                                                    <Style TargetType="Ellipse">
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsBusy}" Value="False">
+                                                                <DataTrigger.EnterActions>
+                                                                    <BeginStoryboard>
+                                                                        <Storyboard RepeatBehavior="Forever">
+                                                                            <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                             From="1.0" To="0.3" Duration="0:0:1.2"
+                                                             AutoReverse="True"/>
+                                                                        </Storyboard>
+                                                                    </BeginStoryboard>
+                                                                </DataTrigger.EnterActions>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Ellipse.Style>
+                                            </Ellipse>
+
+                                            <!-- Text -->
+                                            <TextBlock Grid.Column="2" 
+                       Text="Refresh"
+                       VerticalAlignment="Center"/>
+                                        </Grid>
+                                    </Button>
+
+                                    <!-- NY: Separator mellan actions och input -->
+                                    <Border Style="{StaticResource Style.BlotterToolbarSeparator}"/>
 
                                     <Button Style="{StaticResource Style.BlotterToolbarButton}"
-                                            Content="Refresh"
-                                            Command="{Binding RefreshCommand}"
-                                            Margin="10,0,0,0"/>
+            Content="Manual Input"
+            Margin="0,0,0,0"/>
+                                    <!-- Ändrat margin från 10,0,0,0 -->
 
-
-                                    <Button Style="{StaticResource Style.BlotterToolbarButton}"
-                                            Content="Export"
-                                            Margin="10,0,0,0"/>
-
-                                    <Button Style="{StaticResource Style.BlotterToolbarButton}"
-                                            Content="Clear filters"
-                                            Margin="10,0,0,0"/>
                                 </StackPanel>
 
                                 <!-- Right tools -->
                                 <StackPanel Grid.Column="1"
-                                            Orientation="Horizontal"
-                                            Margin="12"
-                                            VerticalAlignment="Center">
+            Orientation="Horizontal"
+            Margin="12"
+            VerticalAlignment="Center">
 
                                     <!-- Search -->
                                     <Border CornerRadius="{StaticResource Radius.Button}"
-                                            BorderBrush="{StaticResource Brush.Border}"
-                                            BorderThickness="1"
-                                            Background="{StaticResource Brush.PanelChromeTitle}"
-                                            Padding="10,7"
-                                            MinWidth="300">
+            BorderBrush="{StaticResource Brush.Border}"
+            BorderThickness="1"
+            Background="{StaticResource Brush.PanelChromeTitle}"
+            Padding="10,7"
+            MinWidth="300">
                                         <Grid>
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="Auto"/>
@@ -328,40 +361,105 @@
                                             </Grid.ColumnDefinitions>
 
                                             <TextBlock Text="Search"
-                                                       Foreground="{StaticResource Brush.TextMuted}"
-                                                       VerticalAlignment="Center"/>
+                       Foreground="{StaticResource Brush.TextMuted}"
+                       VerticalAlignment="Center"/>
 
                                             <TextBox Grid.Column="1"
-                                                     Margin="10,0"
-                                                     Background="Transparent"
-                                                     BorderThickness="0"
-                                                     Foreground="{StaticResource Brush.Text}"
-                                                     FontSize="12"
-                                                     VerticalContentAlignment="Center"/>
+                     Margin="10,0"
+                     Background="Transparent"
+                     BorderThickness="0"
+                     Foreground="{StaticResource Brush.Text}"
+                     FontSize="12"
+                     VerticalContentAlignment="Center"/>
 
                                             <Border Grid.Column="2"
-                                                    CornerRadius="7"
-                                                    BorderBrush="{StaticResource Brush.BorderSoft}"
-                                                    BorderThickness="1"
-                                                    Background="{StaticResource Brush.PanelChromeTitle}"
-                                                    Padding="6,2"
-                                                    VerticalAlignment="Center">
+                    CornerRadius="7"
+                    BorderBrush="{StaticResource Brush.BorderSoft}"
+                    BorderThickness="1"
+                    Background="{StaticResource Brush.PanelChromeTitle}"
+                    Padding="6,2"
+                    VerticalAlignment="Center">
                                                 <TextBlock Text="Ctrl+F"
-                                                           FontFamily="{StaticResource Font.Mono}"
-                                                           FontSize="11"
-                                                           Foreground="{StaticResource Brush.TextMuted}"/>
+                           FontFamily="{StaticResource Font.Mono}"
+                           FontSize="11"
+                           Foreground="{StaticResource Brush.TextMuted}"/>
                                             </Border>
                                         </Grid>
                                     </Border>
 
-                                    <Button Style="{StaticResource Style.BlotterToolbarButton}"
-                                            Content="Columns"
-                                            Margin="10,0,0,0"/>
+                                    <!-- NY: Separator mellan search och settings -->
+                                    <Border Style="{StaticResource Style.BlotterToolbarSeparator}"/>
 
                                     <Button Style="{StaticResource Style.BlotterToolbarButton}"
-                                            Content="Settings"
-                                            Margin="10,0,0,0"/>
+            Content="Columns"
+            Margin="0,0,10,0"/>
+                                    <!-- Ändrat margin från 10,0,0,0 -->
+
+                                    <Button Style="{StaticResource Style.BlotterToolbarButton}"
+            Content="Settings"
+            Margin="0,0,0,0"/>
+                                    <!-- Ändrat margin från 10,0,0,0 -->
                                 </StackPanel>
+
+                                <!-- Right tools -->
+                                <StackPanel Grid.Column="1"
+            Orientation="Horizontal"
+            Margin="12"
+            VerticalAlignment="Center">
+
+                                    <!-- Search -->
+                                    <Border CornerRadius="{StaticResource Radius.Button}"
+            BorderBrush="{StaticResource Brush.Border}"
+            BorderThickness="1"
+            Background="{StaticResource Brush.PanelChromeTitle}"
+            Padding="10,7"
+            MinWidth="300">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <TextBlock Text="Search"
+                       Foreground="{StaticResource Brush.TextMuted}"
+                       VerticalAlignment="Center"/>
+
+                                            <TextBox Grid.Column="1"
+                     Margin="10,0"
+                     Background="Transparent"
+                     BorderThickness="0"
+                     Foreground="{StaticResource Brush.Text}"
+                     FontSize="12"
+                     VerticalContentAlignment="Center"/>
+
+                                            <Border Grid.Column="2"
+                    CornerRadius="7"
+                    BorderBrush="{StaticResource Brush.BorderSoft}"
+                    BorderThickness="1"
+                    Background="{StaticResource Brush.PanelChromeTitle}"
+                    Padding="6,2"
+                    VerticalAlignment="Center">
+                                                <TextBlock Text="Ctrl+F"
+                           FontFamily="{StaticResource Font.Mono}"
+                           FontSize="11"
+                           Foreground="{StaticResource Brush.TextMuted}"/>
+                                            </Border>
+                                        </Grid>
+                                    </Border>
+
+                                    <!-- NY: Separator mellan search och settings -->
+                                    <Border Style="{StaticResource Style.BlotterToolbarSeparator}"/>
+
+                                    <Button Style="{StaticResource Style.BlotterToolbarButton}"
+            Content="Columns"
+            Margin="0,0,10,0"/>
+
+                                    <Button Style="{StaticResource Style.BlotterToolbarButton}"
+            Content="Settings"
+            Margin="0,0,0,0"/>
+                                </StackPanel>
+
                             </Grid>
 
                             <!-- Separator toolbar -> filter -->
@@ -369,75 +467,267 @@
 
                             <!-- Filter strip -->
                             <Border Grid.Row="2" Background="Transparent">
-                                <StackPanel Orientation="Horizontal" Margin="12,10">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
 
-                                    <RadioButton GroupName="BlotterStatusFilter"
-                                                 Style="{StaticResource Style.BlotterStripToggle}"
-                                                 IsChecked="True"
-                                                 Command="{Binding SetFilterAllCommand}"
-                                                 CommandParameter="ALL">
-                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                            <TextBlock Text="All" Style="{StaticResource Style.BlotterStripLabel}" VerticalAlignment="Center"/>
-                                            <Border Style="{StaticResource Style.BlotterCountPill}" Margin="8,0,0,0">
-                                                <TextBlock Text="{Binding TotalTrades}" Style="{StaticResource Style.BlotterCountPillText}"/>
-                                            </Border>
-                                        </StackPanel>
-                                    </RadioButton>
+                                    <!-- Status filters (vänster) -->
+                                    <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="12,10">
 
-                                    <RadioButton GroupName="BlotterStatusFilter"
-                                                 Style="{StaticResource Style.BlotterStripToggle}"
-                                                 Margin="6,0,0,0"
-                                                 Command="{Binding SetFilterNewCommand}"
-                                                 CommandParameter="NEW">
-                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                            <TextBlock Text="New" Style="{StaticResource Style.BlotterStripLabel}" VerticalAlignment="Center"/>
-                                            <Border Style="{StaticResource Style.BlotterCountPill}" Margin="8,0,0,0">
-                                                <TextBlock Text="{Binding NewCount}" Style="{StaticResource Style.BlotterCountPillText}"/>
-                                            </Border>
-                                        </StackPanel>
-                                    </RadioButton>
+                                        <RadioButton GroupName="BlotterStatusFilter"
+             Style="{StaticResource Style.BlotterStripToggle}"
+             IsChecked="True"
+             Command="{Binding SetFilterAllCommand}">
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                <TextBlock Text="All" Style="{StaticResource Style.BlotterStripLabel}" VerticalAlignment="Center"/>
+                                                <Border Margin="8,0,0,0">
+                                                    <Border.Style>
+                                                        <Style TargetType="Border" BasedOn="{StaticResource Style.BlotterCountPill}">
+                                                            <Setter Property="Background" Value="#0AFFFFFF"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=RadioButton}, Path=IsChecked}" Value="True">
+                                                                    <!-- ✅ Grå/vit istället för blå -->
+                                                                    <Setter Property="Background" Value="#1AFFFFFF"/>
+                                                                    <Setter Property="BorderBrush" Value="#64748B"/>
+                                                                    <!-- Slate gray -->
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Border.Style>
+                                                    <TextBlock Text="{Binding TotalTrades}" VerticalAlignment="Center">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock" BasedOn="{StaticResource Style.BlotterCountPillText}">
+                                                                <Setter Property="FontWeight" Value="SemiBold"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=RadioButton}, Path=IsChecked}" Value="True">
+                                                                        <!-- ✅ Ljusare grå text -->
+                                                                        <Setter Property="Foreground" Value="#94A3B8"/>
+                                                                        <!-- Slate 400 -->
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
+                                                </Border>
+                                            </StackPanel>
+                                        </RadioButton>
 
-                                    <RadioButton GroupName="BlotterStatusFilter"
-                                                 Style="{StaticResource Style.BlotterStripToggle}"
-                                                 Margin="6,0,0,0"
-                                                 Command="{Binding SetFilterPendingCommand}"
-                                                 CommandParameter="PENDING">
-                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                            <TextBlock Text="Pending" Style="{StaticResource Style.BlotterStripLabel}" VerticalAlignment="Center"/>
-                                            <Border Style="{StaticResource Style.BlotterCountPill}" Margin="8,0,0,0">
-                                                <TextBlock Text="{Binding PendingCount}" Style="{StaticResource Style.BlotterCountPillText}"/>
-                                            </Border>
-                                        </StackPanel>
-                                    </RadioButton>
+                                        <!-- 4. Sök-fältet - mer framträdande (subtle border + luftigare padding) -->
+                                        <RadioButton GroupName="BlotterStatusFilter"
+                         Style="{StaticResource Style.BlotterStripToggle}"
+                         Margin="6,0,0,0"
+                         Command="{Binding SetFilterNewCommand}">
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                <TextBlock Text="New" Style="{StaticResource Style.BlotterStripLabel}" VerticalAlignment="Center"/>
+                                                <Border Margin="8,0,0,0">
+                                                    <Border.Style>
+                                                        <Style TargetType="Border" BasedOn="{StaticResource Style.BlotterCountPill}">
+                                                            <Setter Property="Background" Value="#0AFFFFFF"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=RadioButton}, Path=IsChecked}" Value="True">
+                                                                    <Setter Property="Background" Value="#1A3B82F6"/>
+                                                                    <Setter Property="BorderBrush" Value="#3B82F6"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Border.Style>
+                                                    <TextBlock Text="{Binding NewCount}">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock" BasedOn="{StaticResource Style.BlotterCountPillText}">
+                                                                <Setter Property="FontWeight" Value="SemiBold"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=RadioButton}, Path=IsChecked}" Value="True">
+                                                                        <Setter Property="Foreground" Value="#3B82F6"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
+                                                </Border>
+                                            </StackPanel>
+                                        </RadioButton>
 
-                                    <RadioButton GroupName="BlotterStatusFilter"
-                                                 Style="{StaticResource Style.BlotterStripToggle}"
-                                                 Margin="6,0,0,0"
-                                                 Command="{Binding SetFilterBookedCommand}"
-                                                 CommandParameter="BOOKED">
-                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                            <TextBlock Text="Booked" Style="{StaticResource Style.BlotterStripLabel}" VerticalAlignment="Center"/>
-                                            <Border Style="{StaticResource Style.BlotterCountPill}" Margin="8,0,0,0">
-                                                <TextBlock Text="{Binding BookedCount}" Style="{StaticResource Style.BlotterCountPillText}"/>
-                                            </Border>
-                                        </StackPanel>
-                                    </RadioButton>
+                                        <RadioButton GroupName="BlotterStatusFilter"
+                         Style="{StaticResource Style.BlotterStripToggle}"
+                         Margin="6,0,0,0"
+                         Command="{Binding SetFilterPendingCommand}">
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                <TextBlock Text="Pending" Style="{StaticResource Style.BlotterStripLabel}" VerticalAlignment="Center"/>
+                                                <Border Margin="8,0,0,0">
+                                                    <Border.Style>
+                                                        <Style TargetType="Border" BasedOn="{StaticResource Style.BlotterCountPill}">
+                                                            <Setter Property="Background" Value="#0AFFFFFF"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=RadioButton}, Path=IsChecked}" Value="True">
+                                                                    <Setter Property="Background" Value="#1AFBBF24"/>
+                                                                    <Setter Property="BorderBrush" Value="#FBBF24"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Border.Style>
+                                                    <TextBlock Text="{Binding PendingCount}">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock" BasedOn="{StaticResource Style.BlotterCountPillText}">
+                                                                <Setter Property="FontWeight" Value="SemiBold"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=RadioButton}, Path=IsChecked}" Value="True">
+                                                                        <Setter Property="Foreground" Value="#FBBF24"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
+                                                </Border>
+                                            </StackPanel>
+                                        </RadioButton>
 
-                                    <RadioButton GroupName="BlotterStatusFilter"
-                                                 Style="{StaticResource Style.BlotterStripToggle}"
-                                                 Margin="6,0,0,0"
-                                                 Command="{Binding SetFilterErrorsCommand}"
-                                                 CommandParameter="ERRORS">
-                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                            <TextBlock Text="Errors" Style="{StaticResource Style.BlotterStripLabel}" VerticalAlignment="Center"/>
-                                            <Border Style="{StaticResource Style.BlotterCountPill}" Margin="8,0,0,0">
-                                                <TextBlock Text="{Binding ErrorCount}" Style="{StaticResource Style.BlotterCountPillText}"/>
-                                            </Border>
-                                        </StackPanel>
-                                    </RadioButton>
+                                        <RadioButton GroupName="BlotterStatusFilter"
+                         Style="{StaticResource Style.BlotterStripToggle}"
+                         Margin="6,0,0,0"
+                         Command="{Binding SetFilterBookedCommand}">
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                <TextBlock Text="Booked" Style="{StaticResource Style.BlotterStripLabel}" VerticalAlignment="Center"/>
+                                                <Border Margin="8,0,0,0">
+                                                    <Border.Style>
+                                                        <Style TargetType="Border" BasedOn="{StaticResource Style.BlotterCountPill}">
+                                                            <Setter Property="Background" Value="#0AFFFFFF"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=RadioButton}, Path=IsChecked}" Value="True">
+                                                                    <Setter Property="Background" Value="#1A2DD4BF"/>
+                                                                    <Setter Property="BorderBrush" Value="#2DD4BF"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Border.Style>
+                                                    <TextBlock Text="{Binding BookedCount}">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock" BasedOn="{StaticResource Style.BlotterCountPillText}">
+                                                                <Setter Property="FontWeight" Value="SemiBold"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=RadioButton}, Path=IsChecked}" Value="True">
+                                                                        <Setter Property="Foreground" Value="#2DD4BF"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
+                                                </Border>
+                                            </StackPanel>
+                                        </RadioButton>
 
+                                        <RadioButton GroupName="BlotterStatusFilter"
+                         Style="{StaticResource Style.BlotterStripToggle}"
+                         Margin="6,0,0,0"
+                         Command="{Binding SetFilterErrorsCommand}">
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                <TextBlock Text="Errors" Style="{StaticResource Style.BlotterStripLabel}" VerticalAlignment="Center"/>
+                                                <Border Margin="8,0,0,0">
+                                                    <Border.Style>
+                                                        <Style TargetType="Border" BasedOn="{StaticResource Style.BlotterCountPill}">
+                                                            <Setter Property="Background" Value="#0AFFFFFF"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=RadioButton}, Path=IsChecked}" Value="True">
+                                                                    <Setter Property="Background" Value="#1AEF4444"/>
+                                                                    <Setter Property="BorderBrush" Value="#EF4444"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Border.Style>
+                                                    <TextBlock Text="{Binding ErrorCount}">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock" BasedOn="{StaticResource Style.BlotterCountPillText}">
+                                                                <Setter Property="FontWeight" Value="SemiBold"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=RadioButton}, Path=IsChecked}" Value="True">
+                                                                        <Setter Property="Foreground" Value="#EF4444"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
+                                                </Border>
+                                            </StackPanel>
+                                        </RadioButton>
 
-                                </StackPanel>
+                                    </StackPanel>
+
+                                    <!-- Quick filters (höger) -->
+                                    <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="12,10">
+
+                                        <!-- 6. Quick filters - bättre visuell feedback (subtil glow på IsChecked) -->
+                                        <CheckBox Style="{StaticResource Style.BlotterQuickFilter}"
+                      IsChecked="{Binding FilterMyTradesOnly}"
+                      Content="My trades">
+                                            <CheckBox.Resources>
+                                                <!-- 7. Micro-interaktioner: lägg till smooth transition på hover/checked -->
+                                                <Style TargetType="CheckBox" BasedOn="{StaticResource Style.BlotterQuickFilter}">
+                                                    <Style.Triggers>
+                                                        <Trigger Property="IsChecked" Value="True">
+                                                            <Setter Property="Background" Value="#1A3B82F6"/>
+                                                            <Setter Property="Foreground" Value="#3B82F6"/>
+                                                            <Setter Property="FontWeight" Value="SemiBold"/>
+                                                        </Trigger>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter Property="Background" Value="#0AFFFFFF"/>
+                                                        </Trigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </CheckBox.Resources>
+                                        </CheckBox>
+
+                                        <CheckBox Style="{StaticResource Style.BlotterQuickFilter}"
+                      IsChecked="{Binding FilterTodayOnly}"
+                      Content="Today"
+                      Margin="6,0,0,0">
+                                            <CheckBox.Resources>
+                                                <Style TargetType="CheckBox" BasedOn="{StaticResource Style.BlotterQuickFilter}">
+                                                    <Style.Triggers>
+                                                        <Trigger Property="IsChecked" Value="True">
+                                                            <Setter Property="Background" Value="#1A3B82F6"/>
+                                                            <Setter Property="Foreground" Value="#3B82F6"/>
+                                                            <Setter Property="FontWeight" Value="SemiBold"/>
+                                                        </Trigger>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter Property="Background" Value="#0AFFFFFF"/>
+                                                        </Trigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </CheckBox.Resources>
+                                        </CheckBox>
+
+                                        <!-- Auto-book toggle (special styling med grön accent) -->
+                                        <CheckBox IsChecked="{Binding AutoBookEnabled}"
+                      Margin="6,0,0,0"
+                      Cursor="Hand">
+                                            <CheckBox.Style>
+                                                <Style TargetType="CheckBox" BasedOn="{StaticResource Style.BlotterQuickFilter}">
+                                                    <Style.Triggers>
+                                                        <Trigger Property="IsChecked" Value="True">
+                                                            <Setter Property="Foreground" Value="#10B981"/>
+                                                            <Setter Property="Background" Value="#1A10B981"/>
+                                                            <Setter Property="FontWeight" Value="SemiBold"/>
+                                                        </Trigger>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter Property="Background" Value="#0AFFFFFF"/>
+                                                        </Trigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </CheckBox.Style>
+                                            <StackPanel Orientation="Horizontal">
+                                                <Ellipse Width="6" Height="6" 
+                             Fill="#10B981" 
+                             Margin="0,1,6,0"
+                             VerticalAlignment="Center" 
+                             Visibility="{Binding AutoBookEnabled, Converter={StaticResource BoolToVisConverter}}"/>
+                                                <TextBlock Text="Auto-book"/>
+                                            </StackPanel>
+                                        </CheckBox>
+
+                                    </StackPanel>
+                                </Grid>
                             </Border>
 
 
@@ -456,7 +746,6 @@
                                 <ColumnDefinition Width="360"/>
                             </Grid.ColumnDefinitions>
 
-
                             <Grid>
                                 <Grid.RowDefinitions>
                                     <!-- Section header för options -->
@@ -473,8 +762,7 @@
 
                                 <!-- ==================== OPTIONS SECTION ==================== -->
                                 <Border Grid.Row="0" Style="{StaticResource Style.BlotterSectionHeader.Options}">
-                                    <TextBlock Text="OPTIONS (VANILLA • NDO)" 
-                                               Style="{StaticResource Style.BlotterSectionHeaderText}"/>
+                                    <TextBlock Text="OPTIONS (VANILLA • NDO)" Style="{StaticResource Style.BlotterSectionHeaderText}"/>
                                 </Border>
 
                                 <!-- OPTIONS GRID - bind till SelectedOptionTrade -->
@@ -484,39 +772,31 @@
                                           ItemsSource="{Binding OptionTradesView}"
                                           SelectedItem="{Binding SelectedOptionTrade, Mode=TwoWay}"
                                           ColumnHeaderStyle="{StaticResource Style.BlotterDataGridHeader}"
-                                          CellStyle="{StaticResource Style.BlotterDataGridCell.Booked}"
-
+                                          CellStyle="{StaticResource Style.BlotterDataGridCell.Booked}"      
                                           RowStyle="{StaticResource Style.BlotterDataGridRow.Options}"
                                           AutoGenerateColumns="False">
 
                                     <DataGrid.ContextMenu>
                                         <ContextMenu Style="{StaticResource Style.BlotterContextMenu}">
                                             <MenuItem Header="Book Trade" 
-                  Command="{Binding BookTradeCommand}"
-                  Style="{StaticResource Style.BlotterMenuItem}"/>
+                                                      Command="{Binding BookTradeCommand}"
+                                                      Style="{StaticResource Style.BlotterMenuItem}"/>
                                             <MenuItem Header="Duplicate Trade" 
-                  Command="{Binding DuplicateTradeCommand}"
-                  Style="{StaticResource Style.BlotterMenuItem}"/>
-                                            <MenuItem Header="Copy To Manual Input" 
-                  Command="{Binding CopyToManualInputCommand}"
-                  Style="{StaticResource Style.BlotterMenuItem}"/>
-                                            <MenuItem Header="Book As Live Trade" 
-                  Command="{Binding BookAsLiveTradeCommand}"
-                  Style="{StaticResource Style.BlotterMenuItem}"/>
+                                                      Command="{Binding DuplicateTradeCommand}"
+                                                      Style="{StaticResource Style.BlotterMenuItem}"/>
                                             <Separator Style="{StaticResource Style.BlotterMenuSeparator}"/>
                                             <MenuItem Header="Delete Row" 
-                  Command="{Binding DeleteRowCommand}"
-                  Style="{StaticResource Style.BlotterMenuItem}"/>
+                                                      Command="{Binding DeleteRowCommand}"
+                                                      Style="{StaticResource Style.BlotterMenuItem}"/>
                                             <Separator Style="{StaticResource Style.BlotterMenuSeparator}"/>
                                             <MenuItem Header="Check If Trade Is Booked" 
-                  Command="{Binding CheckIfBookedCommand}"
-                  Style="{StaticResource Style.BlotterMenuItem}"/>
+                                                      Command="{Binding CheckIfBookedCommand}"
+                                                      Style="{StaticResource Style.BlotterMenuItem}"/>
                                             <MenuItem Header="Open Error Log" 
-                  Command="{Binding OpenErrorLogCommand}"
-                  Style="{StaticResource Style.BlotterMenuItem}"/>
+                                                      Command="{Binding OpenErrorLogCommand}"
+                                                      Style="{StaticResource Style.BlotterMenuItem}"/>
                                         </ContextMenu>
                                     </DataGrid.ContextMenu>
-
 
                                     <DataGrid.Columns>
                                         <DataGridTextColumn Header="TradeID" Binding="{Binding TradeId}" Width="120"/>
@@ -544,7 +824,8 @@
                                         <DataGridTextColumn Header="Premium Ccy" Binding="{Binding PremiumCcy}" Width="100"/>
                                         <DataGridTextColumn Header="Portfolio MX3" Binding="{Binding PortfolioMx3}" Width="110"/>
                                         <DataGridTextColumn Header="Trader" Binding="{Binding Trader}" Width="80"/>
-                                        <DataGridTemplateColumn Header="Status" Width="150" CellTemplate="{StaticResource StatusPillTemplate}" />
+                                        <DataGridTemplateColumn Header="Status" Width="150" CellTemplate="{StaticResource StatusPillTemplate}" CellStyle="{StaticResource Style.BlotterDataGridCell.Status}" />
+
                                     </DataGrid.Columns>
                                 </DataGrid>
 
@@ -567,31 +848,28 @@
                                     <DataGrid.ContextMenu>
                                         <ContextMenu Style="{StaticResource Style.BlotterContextMenu}">
                                             <MenuItem Header="Book Trade" 
-                  Command="{Binding BookTradeCommand}"
-                  Style="{StaticResource Style.BlotterMenuItem}"/>
+                                                      Command="{Binding BookTradeCommand}"
+                                                      Style="{StaticResource Style.BlotterMenuItem}"/>
                                             <MenuItem Header="Duplicate Trade" 
-                  Command="{Binding DuplicateTradeCommand}"
-                  Style="{StaticResource Style.BlotterMenuItem}"/>
-                                            <MenuItem Header="Copy To Manual Input" 
-                  Command="{Binding CopyToManualInputCommand}"
-                  Style="{StaticResource Style.BlotterMenuItem}"/>
+                                                      Command="{Binding DuplicateTradeCommand}"
+                                                      Style="{StaticResource Style.BlotterMenuItem}"/>
                                             <MenuItem Header="Book As Live Trade" 
-                  Command="{Binding BookAsLiveTradeCommand}"
-                  Style="{StaticResource Style.BlotterMenuItem}"/>
+                                                      Command="{Binding BookAsLiveTradeCommand}"
+                                                      Style="{StaticResource Style.BlotterMenuItem}"/>
                                             <Separator Style="{StaticResource Style.BlotterMenuSeparator}"/>
                                             <MenuItem Header="Cancel Calypso Trade" 
-                  Command="{Binding CancelCalypsoTradeCommand}"
-                  Style="{StaticResource Style.BlotterMenuItem}"/>
+                                                      Command="{Binding CancelCalypsoTradeCommand}"
+                                                      Style="{StaticResource Style.BlotterMenuItem}"/>
                                             <MenuItem Header="Delete Row" 
-                  Command="{Binding DeleteRowCommand}"
-                  Style="{StaticResource Style.BlotterMenuItem}"/>
+                                                      Command="{Binding DeleteRowCommand}"
+                                                      Style="{StaticResource Style.BlotterMenuItem}"/>
                                             <Separator Style="{StaticResource Style.BlotterMenuSeparator}"/>
                                             <MenuItem Header="Check If Trade Is Booked" 
-                  Command="{Binding CheckIfBookedCommand}"
-                  Style="{StaticResource Style.BlotterMenuItem}"/>
+                                                      Command="{Binding CheckIfBookedCommand}"
+                                                      Style="{StaticResource Style.BlotterMenuItem}"/>
                                             <MenuItem Header="Open Error Log" 
-                  Command="{Binding OpenErrorLogCommand}"
-                  Style="{StaticResource Style.BlotterMenuItem}"/>
+                                                      Command="{Binding OpenErrorLogCommand}"
+                                                      Style="{StaticResource Style.BlotterMenuItem}"/>
                                         </ContextMenu>
                                     </DataGrid.ContextMenu>
 
@@ -616,7 +894,7 @@
                                         <DataGridTextColumn Header="Book Calypso" Binding="{Binding CalypsoPortfolio}" Width="110"/>
                                         <DataGridTextColumn Header="Portfolio MX3" Binding="{Binding PortfolioMx3}" Width="110"/>
                                         <DataGridTextColumn Header="Trader" Binding="{Binding Trader}" Width="80"/>
-                                        <DataGridTemplateColumn Header="Status" Width="150" CellTemplate="{StaticResource StatusPillTemplate}" />
+                                        <DataGridTemplateColumn Header="Status" Width="150" CellTemplate="{StaticResource StatusPillTemplate}" CellStyle="{StaticResource Style.BlotterDataGridCell.Status}" />
                                     </DataGrid.Columns>
 
                                 </DataGrid>
@@ -1546,22 +1824,39 @@
 
         <!-- STATUSRAD - diskret längst ner -->
         <Border Background="{StaticResource Brush.Panel2}"
-                BorderBrush="{StaticResource Brush.BorderSoft}"
-                BorderThickness="0,1,0,0"
-                Padding="8,4"
-                VerticalAlignment="Bottom">
+        BorderBrush="{StaticResource Brush.BorderSoft}"
+        BorderThickness="0,1,0,0"
+        Padding="8,4"
+        Margin="{StaticResource Thickness.WindowPadding}"                
+        VerticalAlignment="Bottom">
 
             <Grid>
-                <!-- Normal state - dold när IsStale=True -->
-                <TextBlock FontSize="10" 
-                           Foreground="{StaticResource Brush.TextMuted2}"
-                           HorizontalAlignment="Right"
-                           x:Name="NormalStatus">
-                    <Run Text="Last refresh: "/>
-                    <Run Text="{Binding LastRefreshUtc, Mode=OneWay, StringFormat='HH:mm:ss', TargetNullValue='—'}"/>
-                    <Run Text=" ("/>
-                    <Run Text="{Binding LastRefreshDuration.TotalMilliseconds, Mode=OneWay, StringFormat='F0', TargetNullValue='—'}"/>
-                    <Run Text="ms)"/>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Calypso countdown (vänster) -->
+                <TextBlock Grid.Column="0"
+                   FontSize="10"
+                   Foreground="{StaticResource Brush.TextMuted2}">
+            <Run Text="Next Calypso import: "/>
+            <Run Text="{Binding CalypsoCountdown, Mode=OneWay}" 
+                 FontFamily="{StaticResource Font.Mono}"/>
+                </TextBlock>
+
+                <!-- Normal state (höger) - dold när IsStale=True -->
+                <TextBlock Grid.Column="2"
+                   FontSize="10" 
+                   Foreground="{StaticResource Brush.TextMuted2}"
+                   HorizontalAlignment="Right"
+                   x:Name="NormalStatus">
+            <Run Text="Last refresh: "/>
+            <Run Text="{Binding LastRefreshUtc, Mode=OneWay, StringFormat='HH:mm:ss', TargetNullValue='—'}"/>
+            <Run Text=" ("/>
+            <Run Text="{Binding LastRefreshDuration.TotalMilliseconds, Mode=OneWay, StringFormat='F0', TargetNullValue='—'}"/>
+            <Run Text="ms)"/>
                     <TextBlock.Style>
                         <Style TargetType="TextBlock">
                             <Setter Property="Visibility" Value="Visible"/>
@@ -1574,16 +1869,17 @@
                     </TextBlock.Style>
                 </TextBlock>
 
-                <!-- Error state - synlig när IsStale=True -->
-                <TextBlock FontSize="10" 
-                           Foreground="#EF4444"
-                           HorizontalAlignment="Right"
-                           x:Name="ErrorStatus">
-                    <Run Text="⚠ "/>
-                    <Run Text="Last refresh: "/>
-                    <Run Text="{Binding LastRefreshUtc, Mode=OneWay, StringFormat='HH:mm:ss', TargetNullValue='—'}"/>
-                    <Run Text=" — "/>
-                    <Run Text="{Binding LastError, Mode=OneWay}"/>
+                <!-- Error state (höger) - synlig när IsStale=True -->
+                <TextBlock Grid.Column="2"
+                   FontSize="10" 
+                   Foreground="#EF4444"
+                   HorizontalAlignment="Right"
+                   x:Name="ErrorStatus">
+            <Run Text="⚠ "/>
+            <Run Text="Last refresh: "/>
+            <Run Text="{Binding LastRefreshUtc, Mode=OneWay, StringFormat='HH:mm:ss', TargetNullValue='—'}"/>
+            <Run Text=" — "/>
+            <Run Text="{Binding LastError, Mode=OneWay}"/>
                     <TextBlock.Style>
                         <Style TargetType="TextBlock">
                             <Setter Property="Visibility" Value="Collapsed"/>

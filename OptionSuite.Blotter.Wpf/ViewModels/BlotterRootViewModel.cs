@@ -63,6 +63,15 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
         private readonly int[] _backoffIntervals = { 2, 4, 8, 16, 30 };  // sekunder
         private readonly TimeSpan _normalPollInterval = TimeSpan.FromSeconds(2);
 
+        private readonly DispatcherTimer _calypsoCountdownTimer;
+        private string _calypsoCountdown = "—";
+
+        // Filter properties
+        private bool _filterMyTradesOnly;
+        private bool _filterTodayOnly = true;  // Default: endast idag
+        private bool _autoBookEnabled;
+        private string _currentUserTraderId;
+
         private bool _isRefreshing; // förhindra detail-clear under refresh
 
         // =========================
@@ -151,6 +160,77 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                 {
                     _lastRefreshDuration = value;
                     OnPropertyChanged(nameof(LastRefreshDuration));
+                }
+            }
+        }
+
+        /// <summary>
+        /// Countdown till nästa Calypso import (var 3:e minut).
+        /// </summary>
+        public string CalypsoCountdown
+        {
+            get => _calypsoCountdown;
+            private set
+            {
+                if (!string.Equals(_calypsoCountdown, value, StringComparison.Ordinal))
+                {
+                    _calypsoCountdown = value;
+                    OnPropertyChanged(nameof(CalypsoCountdown));
+                }
+            }
+        }
+
+        /// <summary>
+        /// Filtrerar endast trades för inloggad användare.
+        /// </summary>
+        public bool FilterMyTradesOnly
+        {
+            get => _filterMyTradesOnly;
+            set
+            {
+                if (_filterMyTradesOnly != value)
+                {
+                    _filterMyTradesOnly = value;
+                    OnPropertyChanged(nameof(FilterMyTradesOnly));
+                    _optionTradesView?.Refresh();
+                    _linearTradesView?.Refresh();
+
+                    // ✅ FIX: Uppdatera Book-knappen efter filter-ändring
+                    RaiseCanExecuteForBookCommands();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Filtrerar endast trades från idag (server-side filter).
+        /// </summary>
+        public bool FilterTodayOnly
+        {
+            get => _filterTodayOnly;
+            set
+            {
+                if (_filterTodayOnly != value)
+                {
+                    _filterTodayOnly = value;
+                    OnPropertyChanged(nameof(FilterTodayOnly));
+                    // Trigga ny refresh med ändrat datum-filter
+                    _ = RefreshAsync();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Auto-bokar nya trades automatiskt när de kommer in.
+        /// </summary>
+        public bool AutoBookEnabled
+        {
+            get => _autoBookEnabled;
+            set
+            {
+                if (_autoBookEnabled != value)
+                {
+                    _autoBookEnabled = value;
+                    OnPropertyChanged(nameof(AutoBookEnabled));
                 }
             }
         }
@@ -263,10 +343,6 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             }
         }
 
-        // =========================
-        // D2.2C – Details properties
-        // =========================
-
         /// <summary>
         /// True när högerpanelen håller på att ladda TradeSystemLink/WorkflowEvent för vald trade.
         /// </summary>
@@ -340,6 +416,9 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
 
                     // load details när selection ändras
                     TriggerDetailsLoadForSelection();
+
+                    // ✅ FIX: Uppdatera Book-knappen när selection ändras
+                    RaiseCanExecuteForBookCommands();
                 }
             }
         }
@@ -362,6 +441,9 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
 
                     // D2.2C: load details när selection ändras
                     TriggerDetailsLoadForSelection();
+
+                    // ✅ FIX: Uppdatera Book-knappen när selection ändras
+                    RaiseCanExecuteForBookCommands();
                 }
             }
         }
@@ -373,13 +455,10 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             _readService = readService ?? throw new ArgumentNullException(nameof(readService));
             _commandService = commandService ?? throw new ArgumentNullException(nameof(commandService));
 
+            // Hämta inloggad användares TraderId (upper-case för konsistent jämförelse)
+            _currentUserTraderId = Environment.UserName.ToUpperInvariant();
+
             RefreshCommand = new RelayCommand(async () => await RefreshAsync().ConfigureAwait(true));
-
-            //BookTradeCommand = new RelayCommand(
-            //    execute: OnBookTrade,
-            //    canExecute: () => SelectedTrade != null && SelectedTrade.Status == "New"
-            //);
-
 
             BookTradeCommand = new RelayCommand(
                 execute: OnBookTrade,
@@ -388,19 +467,10 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
 
             BulkBookCommand = new RelayCommand(
                 execute: OnBulkBook,
-                canExecute: () => {
-                    var currentUser = Environment.UserName.ToUpper();
-                    return OptionTrades.Any(t =>
-                        t.Status == "New" &&
-                        t.Trader == currentUser) ||
-                           LinearTrades.Any(t =>
-                        t.Status == "New" &&
-                        t.Trader == currentUser);
-                }
+                canExecute: CanExecuteBulkBook
             );
 
             DuplicateTradeCommand = new RelayCommand(() => ExecuteDuplicateTrade(), () => CanExecuteDuplicateTrade());
-            CopyToManualInputCommand = new RelayCommand(() => ExecuteCopyToManualInput(), () => CanExecuteCopyToManualInput());
             BookAsLiveTradeCommand = new RelayCommand(() => ExecuteBookAsLiveTrade(), () => CanExecuteBookAsLiveTrade());
             CancelCalypsoTradeCommand = new RelayCommand(() => ExecuteCancelCalypsoTrade(), () => CanExecuteCancelCalypsoTrade());
             DeleteRowCommand = new RelayCommand(() => ExecuteDeleteRow(), () => CanExecuteDeleteRow());
@@ -419,7 +489,7 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             _optionTradesView.Filter = FilterTrade;
             _linearTradesView.Filter = FilterTrade;
 
-            // debounce-timer som släcker IsUserInteracting efter kort “idle”
+            // debounce-timer som släcker IsUserInteracting efter kort "idle"
             _userInteractionDebounceTimer = new DispatcherTimer(DispatcherPriority.Background);
             _userInteractionDebounceTimer.Interval = TimeSpan.FromMilliseconds(800);
             _userInteractionDebounceTimer.Tick += (s, e) =>
@@ -440,6 +510,22 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
 
                 await RefreshAsync().ConfigureAwait(true);
             };
+
+            // Calypso countdown timer (tick varje sekund)
+            _calypsoCountdownTimer = new DispatcherTimer(DispatcherPriority.Background);
+            _calypsoCountdownTimer.Interval = TimeSpan.FromSeconds(1);
+            _calypsoCountdownTimer.Tick += OnCalypsoCountdownTick;
+            _calypsoCountdownTimer.Start();
+        }
+
+        /// <summary>
+        /// ✅ FIX: Helper method för att uppdatera CanExecute på Book-commands.
+        /// Kallas efter data-ändringar (refresh/filter/booking).
+        /// </summary>
+        private void RaiseCanExecuteForBookCommands()
+        {
+            (BookTradeCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            (BulkBookCommand as RelayCommand)?.RaiseCanExecuteChanged();
         }
 
         private void OnBookTrade()
@@ -477,20 +563,9 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                 return;
             }
 
-            //var result = MessageBox.Show(
-            //    $"Book {tradesToBook.Count} trade(s) to MX3?",
-            //    "Bulk Book Confirmation",
-            //    MessageBoxButton.YesNo,
-            //    MessageBoxImage.Question);
-
-            //if (result != MessageBoxResult.Yes)
-            //    return;
-
             // Book alla trades asynkront
             _ = ExecuteBulkBookAsync(tradesToBook);
         }
-
-
 
         private async Task ExecuteBulkBookAsync(List<TradeRowViewModel> trades)
         {
@@ -509,14 +584,7 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                     failCount++;
                 }
             }
-
-            //MessageBox.Show(
-            //    $"Bulk book completed:\n✓ Success: {successCount}\n✗ Failed: {failCount}",
-            //    "Bulk Book Result",
-            //    MessageBoxButton.OK,
-            //    MessageBoxImage.Information);
         }
-
 
         public async Task InitialLoadAsync()
         {
@@ -598,9 +666,12 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
 
                     var sw = Stopwatch.StartNew();
 
+                    // Server-side filter: datum-range baserat på FilterTodayOnly
                     var filter = new BlotterFilter
                     {
-                        FromTradeDate = DateTime.UtcNow.Date.AddDays(-90),
+                        FromTradeDate = _filterTodayOnly
+                            ? DateTime.UtcNow.Date
+                            : DateTime.UtcNow.Date.AddDays(-90),
                         ToTradeDate = DateTime.UtcNow.Date.AddDays(1),
                         MaxRows = 500
                     };
@@ -631,16 +702,13 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                         var signature = BuildSignature(r, time, system, fallbackStatus);
                         nextSignatures[tradeId] = signature;
 
-                        // EFTER (endast första gången):
                         var isNew = !isColdStart && !_seenTradeIds.Contains(tradeId);
 
-                        // Om vi redan visat NEW en gång för denna trade, trigga inte igen
                         if (_isNewFlags.ContainsKey(tradeId))
                         {
                             isNew = false;
                         }
 
-                        // EFTER:
                         var isUpdated = !isNew &&
                                         _lastSignatureByTradeId.TryGetValue(tradeId, out var prevSig) &&
                                         !string.Equals(prevSig, signature, StringComparison.Ordinal);
@@ -689,8 +757,6 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                             isUpdated: isUpdated
                         );
 
-                        // Spara flags för nästa refresh
-                        // Starta timer för clear ENDAST om detta är första gången
                         if (isNew && !_isNewFlags.ContainsKey(tradeId))
                         {
                             _isNewFlags[tradeId] = true;
@@ -732,7 +798,6 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                         }
                     }
 
-                    // D2.2D-fix: Sätt flagga för att förhindra detail-clear från selection bindings
                     _isRefreshing = true;
                     try
                     {
@@ -793,9 +858,10 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                         }
                     }
 
-                    // D2.2C: efter refresh kan SelectedTrade peka på ny VM-instans,
-                    // så vi triggar details-load igen (men den är debounced via cancel/spärr).
                     TriggerDetailsLoadForSelection();
+
+                    // ✅ FIX: Uppdatera Book-knappen efter refresh
+                    RaiseCanExecuteForBookCommands();
                 }
                 catch (Exception ex)
                 {
@@ -814,8 +880,6 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                     IsStale = true;
 
                     Debug.WriteLine($"[BlotterVM] Error #{_consecutiveErrors}, backoff to {backoffSeconds}s: {ex}");
-
-                    // Vi clearar INTE trades vid fel.
                 }
                 finally
                 {
@@ -827,7 +891,6 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                 Interlocked.Exchange(ref _refreshInFlight, 0);
             }
         }
-
 
         private void RestoreSelection(string selectedOptionId, string selectedLinearId)
         {
@@ -851,16 +914,11 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             }
         }
 
-        /// <summary>
-        /// Triggar async load av details för currently selected trade.
-        /// Skippar clear om vi är mitt i refresh (förhindrar race condition).
-        /// </summary>
         private void TriggerDetailsLoadForSelection()
         {
             var selected = SelectedTrade;
             if (selected == null)
             {
-                // Cleara INTE om vi är mitt i refresh (selection blir tillfälligt null när grid clearas)
                 if (!_isRefreshing)
                 {
                     ClearDetailsCollections();
@@ -868,10 +926,8 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                 return;
             }
 
-            // fire-and-forget (cancellation + spärr gör det stabilt)
             _ = LoadDetailsForSelectedTradeAsync(selected);
         }
-
 
         private void ClearDetailsCollections()
         {
@@ -881,23 +937,15 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             IsDetailsBusy = false;
         }
 
-        /// <summary>
-        /// Laddar TradeSystemLinks och TradeWorkflowEvents för vald trade asynkront,
-        /// och bygger workflow-chips för summary-kortet.
-        /// Använder cancellation token och request version pattern för att hantera snabba selection-ändringar.
-        /// </summary>
-
         private async Task LoadDetailsForSelectedTradeAsync(TradeRowViewModel selected)
         {
             if (selected == null) return;
 
-            // Cancellera tidigare fetch
             CancelDetailsLoadInFlight();
 
             _detailsCts = new CancellationTokenSource();
             var token = _detailsCts.Token;
 
-            // Increment version BEFORE fetch - detta är vår ENDA concurrency protection (och det räcker!)
             var thisVersion = Interlocked.Increment(ref _detailsRequestVersion);
 
             var stpTradeId = selected.StpTradeId;
@@ -913,29 +961,23 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                     return;
                 }
 
-                // Hämta båda parallellt för bättre performance
                 var linksTask = _readService.GetTradeSystemLinksAsync(stpTradeId);
                 var eventsTask = _readService.GetTradeWorkflowEventsAsync(stpTradeId, maxRows: 50);
 
                 await Task.WhenAll(linksTask, eventsTask).ConfigureAwait(true);
 
-                // Check både cancellation OCH version för robust concurrency handling
                 if (token.IsCancellationRequested)
                 {
-                    return; // Cancelled, ignore
+                    return;
                 }
                 if (Volatile.Read(ref _detailsRequestVersion) != thisVersion)
                 {
-                    return; // Stale result, ignore
+                    return;
                 }
 
-                // Await istället för .Result (idiomatisk async pattern)
                 var links = await linksTask.ConfigureAwait(true) ?? new List<TradeSystemLinkRow>();
                 var eventsList = await eventsTask.ConfigureAwait(true) ?? new List<TradeWorkflowEventRow>();
 
-                //Debug.WriteLine($"[Details] COMMIT for StpTradeId={stpTradeId}, Version={thisVersion}, Links={links.Count}, Events={eventsList.Count}");
-
-                // Commit (clear + repopulate) - version check garanterar att endast latest results committas
                 _selectedTradeSystemLinks.Clear();
                 foreach (var l in links)
                 {
@@ -951,7 +993,6 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             }
             catch (OperationCanceledException)
             {
-                // no-op: ny selection vann, expected behavior
                 Debug.WriteLine($"[Details] CANCELLED for Version={thisVersion}");
             }
             catch (Exception ex)
@@ -989,7 +1030,7 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
         private void CancelDetailsLoadInFlight()
         {
             var oldCts = _detailsCts;
-            _detailsCts = null;  // ← Atomic write FÖRST
+            _detailsCts = null;
 
             if (oldCts == null)
                 return;
@@ -1003,7 +1044,6 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                 // no-op
             }
 
-            // Vänta lite innan dispose (ger async tasks tid att checka token)
             Task.Delay(100).ContinueWith(_ =>
             {
                 try
@@ -1017,14 +1057,12 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             }, TaskScheduler.Default);
         }
 
-
         private async Task ClearFlagLaterAsync(TradeRowViewModel trade, bool clearNew, int delayMs)
         {
             try
             {
                 await Task.Delay(delayMs).ConfigureAwait(true);
 
-                // Kolla om trade fortfarande är valid
                 if (trade == null)
                     return;
 
@@ -1041,11 +1079,9 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             }
             catch (Exception ex)
             {
-                // Logga istället för att swallowa
                 Debug.WriteLine($"[BlotterVM] ClearFlagLaterAsync failed for trade {trade?.TradeId}: {ex.Message}");
             }
         }
-
 
         private static string BuildSignature(dynamic r, DateTime time, string system, string fallbackStatus)
         {
@@ -1084,9 +1120,6 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
-        /// <summary>
-        /// Fire-and-forget wrapper som loggar exceptions istället för att swallowa dem.
-        /// </summary>
         private void FireAndForget(Task task, [System.Runtime.CompilerServices.CallerMemberName] string caller = "")
         {
             _ = task.ContinueWith(t =>
@@ -1098,14 +1131,12 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             }, TaskScheduler.Default);
         }
 
-
         /// <summary>
         /// D4.2c: Bokar vald trade till MX3.
         /// Skriver till DB, refreshar sedan trade från DB för att uppdatera UI.
         /// </summary>
         public async Task ExecuteBookTradeAsync(long stpTradeId, string systemCode)
         {
-            // UI-SKYDD: Blocka dubbelklick
             if (_inFlightBookings.Contains(stpTradeId))
                 return;
 
@@ -1113,7 +1144,6 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
 
             try
             {
-                // 1. Anropa command service (skriver till DB)
                 BookTradeResult result = null;
 
                 if (systemCode == "MX3")
@@ -1126,15 +1156,16 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                     return;
                 }
 
-                // 2. Check result
                 if (!result.Success)
                 {
                     MessageBox.Show($"Book failed: {result.ErrorMessage}", "Book Error", MessageBoxButton.OK, MessageBoxImage.Error);
                     return;
                 }
 
-                // 3. Targeted refresh: Hämta updated trade från DB och uppdatera UI
                 await RefreshSingleTradeAsync(stpTradeId).ConfigureAwait(true);
+
+                // ✅ FIX: Uppdatera Book-knappen efter booking
+                RaiseCanExecuteForBookCommands();
             }
             catch (Exception ex)
             {
@@ -1142,29 +1173,21 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             }
             finally
             {
-                // UI-SKYDD: Frigör
                 _inFlightBookings.Remove(stpTradeId);
             }
         }
 
-        /// <summary>
-        /// D4.2c: Refreshar en enskild trade från DB och uppdaterar UI.
-        /// Recreate TradeRowViewModel från DB-data och ersätt i collection.
-        /// </summary>
         private async Task RefreshSingleTradeAsync(long stpTradeId)
         {
             try
             {
-                // Hämta updated trade från DB
                 var updatedTrade = await _readService.GetTradeByIdAsync(stpTradeId).ConfigureAwait(true);
 
                 if (updatedTrade == null)
                     return;
 
-                // Kolla om detta är selected trade (spara innan vi ersätter)
                 bool wasSelected = SelectedTrade?.StpTradeId == stpTradeId;
 
-                // Hitta trade i rätt collection
                 var optionIndex = -1;
                 var linearIndex = -1;
 
@@ -1189,15 +1212,12 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                     }
                 }
 
-                // Recreate ViewModel från DB-data
                 var newVm = MapToTradeRowViewModel(updatedTrade);
 
-                // Ersätt i collection
                 if (optionIndex >= 0)
                 {
                     OptionTrades[optionIndex] = newVm;
 
-                    // Återställ selection om den var selected
                     if (wasSelected)
                     {
                         SelectedOptionTrade = newVm;
@@ -1207,14 +1227,12 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                 {
                     LinearTrades[linearIndex] = newVm;
 
-                    // Återställ selection om den var selected
                     if (wasSelected)
                     {
                         SelectedLinearTrade = newVm;
                     }
                 }
 
-                // Om traden var selected, ladda details direkt (för Routing/WorkflowEvents update)
                 if (wasSelected)
                 {
                     _ = LoadDetailsForSelectedTradeAsync(newVm);
@@ -1226,14 +1244,8 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             }
         }
 
-
-        /// <summary>
-        /// D4.2c: Mappar BlotterTradeRow (från DB) till TradeRowViewModel.
-        /// Återanvänd samma logik som i RefreshAsync.
-        /// </summary>
         private TradeRowViewModel MapToTradeRowViewModel(FxTradeHub.Contracts.Dtos.BlotterTradeRow trade)
         {
-            // Använd samma mapping som i RefreshAsync
             return new TradeRowViewModel(
                 stpTradeId: trade.StpTradeId,
                 tradeId: trade.TradeId,
@@ -1276,8 +1288,6 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             );
         }
 
-
-
         // === CONTEXT MENU COMMAND HANDLERS ===
 
         private bool CanExecuteBookTrade()
@@ -1285,15 +1295,29 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             if (SelectedTrade == null)
                 return false;
 
-            // Blocka om Status inte är New eller Error
             if (SelectedTrade.Status != "New" && SelectedTrade.Status != "Error")
                 return false;
 
-            // Blocka om booking pågår
             if (_inFlightBookings.Contains(SelectedTrade.StpTradeId))
                 return false;
 
             return true;
+        }
+
+        /// <summary>
+        /// ✅ FIX: CanExecuteBulkBook kollar nu BÅDA grids OCH filtrerar på current user.
+        /// </summary>
+        private bool CanExecuteBulkBook()
+        {
+            var currentUser = Environment.UserName.ToUpper();
+
+            return OptionTrades.Any(t =>
+                t.Status == "New" &&
+                t.Trader == currentUser &&
+                !string.IsNullOrEmpty(t.CallPut)) ||
+                   LinearTrades.Any(t =>
+                t.Status == "New" &&
+                t.Trader == currentUser);
         }
 
         private bool CanExecuteDuplicateTrade()
@@ -1309,20 +1333,6 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             Debug.WriteLine($"Duplicating trade: {trade.TradeId}");
         }
 
-        private bool CanExecuteCopyToManualInput()
-        {
-            return GetSelectedTrade() != null;
-        }
-
-        private void ExecuteCopyToManualInput()
-        {
-            var trade = GetSelectedTrade();
-            if (trade == null) return;
-
-            // TODO: Implementera copy to manual input
-            Debug.WriteLine($"Copy to manual input: {trade.TradeId}");
-        }
-
         private bool CanExecuteBookAsLiveTrade()
         {
             return GetSelectedTrade() != null;
@@ -1333,7 +1343,6 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             var trade = GetSelectedTrade();
             if (trade == null) return;
 
-            // TODO
             Debug.WriteLine($"Book as live trade: {trade.TradeId}");
         }
 
@@ -1350,7 +1359,6 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             var trade = GetSelectedTrade();
             if (trade == null) return;
 
-            // TODO
             Debug.WriteLine($"Cancelling Calypso trade: {trade.TradeId}");
         }
 
@@ -1372,6 +1380,9 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             {
                 LinearTrades.Remove(trade);
             }
+
+            // ✅ FIX: Uppdatera Book-knappen efter delete
+            RaiseCanExecuteForBookCommands();
         }
 
         private bool CanExecuteCheckIfBooked()
@@ -1384,7 +1395,6 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             var trade = GetSelectedTrade();
             if (trade == null) return;
 
-            // TODO
             Debug.WriteLine($"Checking if booked: {trade.TradeId}");
         }
 
@@ -1399,7 +1409,6 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             var trade = GetSelectedTrade();
             if (trade == null) return;
 
-            // TODO
             Debug.WriteLine($"Opening error log for: {trade.TradeId}");
         }
 
@@ -1411,6 +1420,13 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
         private bool FilterTrade(object obj)
         {
             if (obj is not TradeRowViewModel trade) return false;
+
+            if (_filterMyTradesOnly)
+            {
+                if (!string.Equals(trade.Trader, _currentUserTraderId, StringComparison.OrdinalIgnoreCase))
+                    return false;
+            }
+
             if (_currentStatusFilter == "ALL") return true;
 
             var status = trade.Status?.ToUpperInvariant() ?? "";
@@ -1430,6 +1446,37 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             _currentStatusFilter = filter?.ToUpperInvariant() ?? "ALL";
             _optionTradesView?.Refresh();
             _linearTradesView?.Refresh();
+
+            // ✅ FIX: Uppdatera Book-knappen efter status-filter ändring
+            RaiseCanExecuteForBookCommands();
+        }
+
+        private void OnCalypsoCountdownTick(object sender, EventArgs e)
+        {
+            var now = DateTime.Now;
+            var currentMinute = now.Minute;
+
+            int minutesToNext = 0;
+            do
+            {
+                minutesToNext++;
+            } while ((currentMinute + minutesToNext) % 3 != 0);
+
+            DateTime targetTime;
+            int targetMinute = currentMinute + minutesToNext;
+
+            if (targetMinute >= 60)
+            {
+                targetMinute = 0;
+                targetTime = now.Date.AddHours(now.Hour + 1);
+            }
+            else
+            {
+                targetTime = now.Date.AddHours(now.Hour).AddMinutes(targetMinute);
+            }
+
+            var remaining = targetTime - now;
+            CalypsoCountdown = remaining.ToString(@"mm\:ss");
         }
 
         public void Dispose()
@@ -1439,7 +1486,6 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
 
             _disposed = true;
 
-            // Stop polling
             try
             {
                 if (_pollTimer != null && _pollTimer.IsEnabled)
@@ -1449,7 +1495,6 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             }
             catch { /* no-op */ }
 
-            // Stop debounce timer
             try
             {
                 if (_userInteractionDebounceTimer != null && _userInteractionDebounceTimer.IsEnabled)
@@ -1459,17 +1504,22 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             }
             catch { /* no-op */ }
 
-            // Clear collections (frigör ViewModels och deras memory)
+            try
+            {
+                if (_calypsoCountdownTimer != null && _calypsoCountdownTimer.IsEnabled)
+                {
+                    _calypsoCountdownTimer.Stop();
+                }
+            }
+            catch { /* no-op */ }
+
             OptionTrades.Clear();
             LinearTrades.Clear();
 
-            // Clear dictionaries
             _seenTradeIds.Clear();
             _lastSignatureByTradeId.Clear();
             _isNewFlags.Clear();
             _isUpdatedFlags.Clear();
         }
-
-
     }
 }

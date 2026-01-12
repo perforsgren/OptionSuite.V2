@@ -30,6 +30,13 @@ namespace OptionSuite.Blotter.Wpf.Infrastructure
             remove { CommandManager.RequerySuggested -= value; }
         }
 
-
+        /// <summary>
+        /// Manuellt trigga CanExecuteChanged för att uppdatera UI.
+        /// Använd när CanExecute-logiken ändras utan user input (t.ex. data refresh).
+        /// </summary>
+        public void RaiseCanExecuteChanged()
+        {
+            CommandManager.InvalidateRequerySuggested();
+        }
     }
 }
