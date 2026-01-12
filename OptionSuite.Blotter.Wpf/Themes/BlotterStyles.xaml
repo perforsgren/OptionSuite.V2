@@ -1100,19 +1100,16 @@
                         <Border x:Name="RowFill" Background="Transparent" Panel.ZIndex="0"/>
 
                         <!-- NEW flash -->
-                        <Border x:Name="FlashOverlay" Background="#592DD4BF" BorderBrush="#402DD4BF" 
-            BorderThickness="1" Opacity="0" Panel.ZIndex="1"/>
+                        <Border x:Name="FlashOverlay" Background="#592DD4BF" BorderBrush="#402DD4BF" BorderThickness="1" Opacity="0" Panel.ZIndex="1"/>
 
                         <!-- UPDATED flash (NY!) -->
                         <Border x:Name="UpdatedOverlay" Background="#332DD4BF" Opacity="0" Panel.ZIndex="1"/>
 
                         <DataGridCellsPresenter Panel.ZIndex="2"/>
-                        <Border x:Name="LeftAccent" Width="3" HorizontalAlignment="Left" 
-            Background="Transparent" Panel.ZIndex="3"/>
-                        <Border x:Name="TopLine" Height="1" VerticalAlignment="Top" 
-            Background="{StaticResource Blotter.Brush.RowLine}" Opacity="0" Panel.ZIndex="4"/>
-                        <Border x:Name="BottomLine" Height="1" VerticalAlignment="Bottom" 
-            Background="{StaticResource Blotter.Brush.RowLine}" Opacity="0" Panel.ZIndex="4"/>
+                        <Border x:Name="LeftAccent" Width="3" HorizontalAlignment="Left" Background="Transparent" Panel.ZIndex="3"/>
+                        <Border x:Name="TopLine" Height="1" VerticalAlignment="Top" Background="{StaticResource Blotter.Brush.RowLine}" Opacity="0" Panel.ZIndex="4"/>
+                        <Border x:Name="BottomLine" Height="1" VerticalAlignment="Bottom" Background="{StaticResource Blotter.Brush.RowLine}" Opacity="0" Panel.ZIndex="4"/>
+                    
                     </Grid>
 
                     <ControlTemplate.Triggers>
@@ -1123,17 +1120,17 @@
                                 <BeginStoryboard>
                                     <Storyboard>
                                         <DoubleAnimation Storyboard.TargetName="UpdatedOverlay" 
-                                 Storyboard.TargetProperty="Opacity" 
-                                 From="0.5" To="0.0" Duration="0:0:2.0"
-                                 EasingFunction="{StaticResource EaseOutQuad}"/>
+                                                         Storyboard.TargetProperty="Opacity" 
+                                                         From="0.5" To="0.0" Duration="0:0:2.0"
+                                                         EasingFunction="{StaticResource EaseOutQuad}"/>
                                         <DoubleAnimation Storyboard.TargetName="TopLine" 
-                                 Storyboard.TargetProperty="Opacity" 
-                                 From="1.0" To="0.0" Duration="0:0:2.0"
-                                 EasingFunction="{StaticResource EaseOutQuad}"/>
+                                                         Storyboard.TargetProperty="Opacity" 
+                                                         From="1.0" To="0.0" Duration="0:0:2.0"
+                                                         EasingFunction="{StaticResource EaseOutQuad}"/>
                                         <DoubleAnimation Storyboard.TargetName="BottomLine" 
-                                 Storyboard.TargetProperty="Opacity" 
-                                 From="1.0" To="0.0" Duration="0:0:2.0"
-                                 EasingFunction="{StaticResource EaseOutQuad}"/>
+                                                         Storyboard.TargetProperty="Opacity" 
+                                                         From="1.0" To="0.0" Duration="0:0:2.0"
+                                                         EasingFunction="{StaticResource EaseOutQuad}"/>
                                     </Storyboard>
                                 </BeginStoryboard>
                             </DataTrigger.EnterActions>
@@ -1163,11 +1160,6 @@
                                     </Storyboard>
                                 </BeginStoryboard>
                             </DataTrigger.EnterActions>
-                        </DataTrigger>
-
-                        <!-- BOOKED trades - 70% opacity (LÄGG TILL DESSA!) -->
-                        <DataTrigger Binding="{Binding Status}" Value="Booked">
-                            <Setter Property="Opacity" Value="0.70"/>
                         </DataTrigger>
 
                         <!-- IsMouseOver - Hover effect -->
@@ -1291,11 +1283,6 @@
                             </DataTrigger.EnterActions>
                         </DataTrigger>
 
-                        <!-- BOOKED trades - 60% opacity (LÄGG TILL DESSA!) -->
-                        <DataTrigger Binding="{Binding Status}" Value="Booked">
-                            <Setter Property="Opacity" Value="0.6"/>
-                        </DataTrigger>
-                        
                         <!-- IsMouseOver - Hover effect (purple) -->
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="RowFill" Property="Background">
@@ -1432,6 +1419,16 @@
         <Setter Property="HorizontalContentAlignment" Value="Right"/>
         <Setter Property="Padding" Value="10,6,12,6"/>
     </Style>
+
+    <!-- Cell style för Booked trades -->
+    <Style x:Key="Style.BlotterDataGridCell.Booked" TargetType="{x:Type DataGridCell}" BasedOn="{StaticResource Style.BlotterDataGridCell}">
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding Status}" Value="Booked">
+                <Setter Property="Opacity" Value="0.70"/>
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
 
 
 
