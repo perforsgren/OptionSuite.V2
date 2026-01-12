@@ -841,7 +841,7 @@
                                           ItemsSource="{Binding LinearTradesView}"
                                           SelectedItem="{Binding SelectedLinearTrade, Mode=TwoWay}"
                                           ColumnHeaderStyle="{StaticResource Style.BlotterDataGridHeader}"
-                                          CellStyle="{StaticResource Style.BlotterDataGridCell}"
+                                          CellStyle="{StaticResource Style.BlotterDataGridCell.Booked}"                                          
                                           RowStyle="{StaticResource Style.BlotterDataGridRow.Linear}"
                                           AutoGenerateColumns="False">
 

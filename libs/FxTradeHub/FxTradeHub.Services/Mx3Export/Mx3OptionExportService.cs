@@ -23,7 +23,7 @@ namespace FxTradeHub.Services.Mx3Export
         {
             try
             {
-                var exportFolder = AppPaths.Mx3ExportFolder;
+                var exportFolder = AppPaths.Mx3ImportFolder;
 
                 // NYTT FORMAT: {StpTradeId}_{TradeId}.xml
                 var fileName = $"{request.StpTradeId}_{request.TradeId}.xml";
