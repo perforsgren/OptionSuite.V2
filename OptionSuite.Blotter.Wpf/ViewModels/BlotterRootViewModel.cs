@@ -753,6 +753,7 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                             invDecisionId: r.InvId,
                             reportingEntityId: r.ReportingEntityId,
                             margin: r.Margin,
+                            stpFlag: r.StpFlag ?? false,
                             isNew: isNew,
                             isUpdated: isUpdated
                         );
@@ -1283,6 +1284,7 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                 invDecisionId: trade.InvId,
                 reportingEntityId: trade.ReportingEntityId,
                 margin: trade.Margin,
+                stpFlag: trade.StpFlag ?? false,
                 isNew: false,
                 isUpdated: false
             );

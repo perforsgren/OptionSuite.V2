@@ -16,6 +16,7 @@ namespace OptionSuite.Blotter.Host.Wpf
         private BlotterPresenceService _presenceService;
         private MasterElectionService _electionService;
         private Mx3ResponseWatcherService _responseWatcher;
+        private CalypsoResponseWatcherService _calypsoResponseWatcher;
         private EmailInboxWatcherService _emailWatcher;
 
         protected override void OnStartup(StartupEventArgs e)
@@ -41,7 +42,11 @@ namespace OptionSuite.Blotter.Host.Wpf
                 var responseFolder = AppPaths.Mx3ResponseFolder;
                 _responseWatcher = new Mx3ResponseWatcherService(repositoryAsync, responseFolder);
 
-                // 5. Skapa Email FileWatcher (startas ALLTID - varje user har sitt eget OneDrive)
+                // 5. Skapa Calypso FileWatcher (startas endast när vi blir master)
+                var calypsoResponseFolder = AppPaths.CalypsoResponseFolder;
+                _calypsoResponseWatcher = new CalypsoResponseWatcherService(repositoryAsync, calypsoResponseFolder);
+
+                // 6. Skapa Email FileWatcher (startas ALLTID - varje user har sitt eget OneDrive)
                 var emailInboxFolder = AppPaths.EmailInboxFolder.Replace("{USERNAME}", Environment.UserName);
                 var messageInService = new MessageInService(messageInRepo);
                 var fileInboxService = new FileInboxService(messageInService);
@@ -60,7 +65,7 @@ namespace OptionSuite.Blotter.Host.Wpf
                 _emailWatcher = new EmailInboxWatcherService(fileInboxService, parserOrchestrator, emailInboxFolder);
                 _emailWatcher.Start();  // Starta ALLTID
 
-                // 6. Lyssna på master-status ändringar (för Mx3 watcher)
+                // 7. Lyssna på master-status ändringar (för Mx3 watcher)
                 _electionService.MasterStatusChanged += OnMasterStatusChanged;
 
                 System.Diagnostics.Debug.WriteLine("[App] All services initialized successfully");
@@ -83,12 +88,12 @@ namespace OptionSuite.Blotter.Host.Wpf
         {
             if (isMaster)
             {
-                System.Diagnostics.Debug.WriteLine("[App] ✅ I AM MASTER - Starting Mx3 FileWatcher");
+                System.Diagnostics.Debug.WriteLine("[App] ✅ I AM MASTER - Starting Mx3 & Calyso FileWatcher");
                 _responseWatcher?.Start();
             }
             else
             {
-                System.Diagnostics.Debug.WriteLine("[App] ❌ NOT MASTER - Stopping Mx3 FileWatcher");
+                System.Diagnostics.Debug.WriteLine("[App] ❌ NOT MASTER - Stopping Mx3 & Calypso  FileWatcher");
                 _responseWatcher?.Stop();
             }
         }
@@ -103,6 +108,9 @@ namespace OptionSuite.Blotter.Host.Wpf
 
             _responseWatcher?.Stop();
             _responseWatcher?.Dispose();
+
+            _calypsoResponseWatcher?.Stop();
+            _calypsoResponseWatcher?.Dispose();
 
             _electionService?.Dispose();
             _presenceService?.Dispose();

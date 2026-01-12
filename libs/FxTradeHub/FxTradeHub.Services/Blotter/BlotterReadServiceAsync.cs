@@ -102,6 +102,14 @@ namespace FxTradeHub.Services
                 }
 
                 // ----------------------------------------------------
+                // StpFlag: plocka upp från första systemlänken (MX3 eller Calypso)
+                // ----------------------------------------------------
+                if (!row.StpFlag.HasValue && summary.StpFlag.HasValue)
+                {
+                    row.StpFlag = summary.StpFlag.Value;
+                }
+
+                // ----------------------------------------------------
                 // "Generella systemfält" i BlotterTradeRow blir nu mindre meningsfulla
                 // när vi pivotar. Vi lämnar dem tomma, alternativt kan vi senare välja
                 // att de speglar "primärt system" (t.ex. MX3).
@@ -121,7 +129,7 @@ namespace FxTradeHub.Services
                 row.BookedBy = string.Empty;
                 row.FirstBookedUtc = null;
                 row.LastBookedUtc = null;
-                row.StpFlag = null;
+                //row.StpFlag = null;
                 row.SystemCreatedUtc = null;
                 row.SystemLinkIsDeleted = false;
 
@@ -270,7 +278,7 @@ namespace FxTradeHub.Services
             row.BookedBy = string.Empty;
             row.FirstBookedUtc = null;
             row.LastBookedUtc = null;
-            row.StpFlag = null;
+            row.StpFlag = s.StpFlag;
             row.SystemCreatedUtc = null;
             row.SystemLinkIsDeleted = false;
 
