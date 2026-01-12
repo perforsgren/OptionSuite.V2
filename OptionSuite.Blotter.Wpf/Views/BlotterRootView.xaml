@@ -13,10 +13,13 @@
         <!-- Converters -->
         <BooleanToVisibilityConverter x:Key="BoolToVisConverter"/>
         <converters:NullToCollapsedConverter x:Key="NullToCollapsed"/>
+        <converters:NullToVisibleConverter x:Key="NullToVisible"/>
         <converters:DetailsToLinesConverter x:Key="DetailsToLines"/>
         <converters:EventTypeToIconConverter x:Key="EventTypeToIcon"/>
         <converters:EventTypeToColorConverter x:Key="EventTypeToColor"/>
         <converters:SystemStatusToColorConverter x:Key="SystemStatusToColor"/>
+        <converters:NullToBoolConverter x:Key="NullToBoolConverter"/>
+        <converters:UtcToLocalTimeConverter x:Key="UtcToLocalTime"/>        
 
         <!-- =========================================================
              SOFT FOG (token-baserad)
@@ -85,7 +88,7 @@
 
         <!-- Combined Status + New badge - med Grid för alignment -->
         <DataTemplate x:Key="StatusPillTemplate">
-            <Grid HorizontalAlignment="Left">
+            <Grid HorizontalAlignment="Left" Opacity="1.0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
                     <!-- Status pill -->
@@ -253,12 +256,12 @@
 
                                 <!-- Left actions -->
                                 <StackPanel Orientation="Horizontal"
-                                            Margin="12"
-                                            VerticalAlignment="Center">
+            Margin="12"
+            VerticalAlignment="Center">
 
                                     <Button Command="{Binding BulkBookCommand}" 
-        Margin="0,0,0,0"
-        Cursor="Hand">
+            Margin="0,0,0,0"
+            Cursor="Hand">
                                         <Button.Style>
                                             <Style TargetType="Button" BasedOn="{StaticResource Style.BlotterToolbarButton}">
                                                 <Setter Property="Background" Value="#1A2DD4BF"/>
@@ -273,50 +276,83 @@
                                         </Button.Style>
                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                             <TextBlock Text="▶"
-                   Margin="0,0,8,0"
-                   FontSize="11"
-                   Foreground="#2DD4BF"
-                   VerticalAlignment="Center"/>
-                                            <TextBlock Text="Book"
-                   VerticalAlignment="Center"/>
-
-                                            <Border Style="{StaticResource Style.BlotterShortcutPill}"
-                Margin="10,0,0,0">
-                                                <TextBlock Style="{StaticResource Style.BlotterShortcutPillText}"
-                       Text="Ctrl+B"/>
+                       Margin="0,1,8,0"
+                       FontSize="11"
+                       Foreground="#2DD4BF"
+                       VerticalAlignment="Center"/>
+                                            <TextBlock Text="Book" VerticalAlignment="Center"/>
+                                            <Border Style="{StaticResource Style.BlotterShortcutPill}" Margin="10,0,0,0">
+                                                <TextBlock Style="{StaticResource Style.BlotterShortcutPillText}" Text="Ctrl+B"/>
                                             </Border>
                                         </StackPanel>
                                     </Button>
 
+                                    <Button Style="{StaticResource Style.BlotterToolbarButton}"
+            Command="{Binding RefreshCommand}"
+            Margin="10,0,0,0">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="6"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <!-- Pulserande grön prick -->
+                                            <Ellipse Grid.Column="0"
+                     Width="6" 
+                     Height="6" 
+                     Fill="#2DD4BF"
+                     VerticalAlignment="Center"
+                     Margin="0,1,0,0">
+                                                <Ellipse.Style>
+                                                    <Style TargetType="Ellipse">
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsBusy}" Value="False">
+                                                                <DataTrigger.EnterActions>
+                                                                    <BeginStoryboard>
+                                                                        <Storyboard RepeatBehavior="Forever">
+                                                                            <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                             From="1.0" To="0.3" Duration="0:0:1.2"
+                                                             AutoReverse="True"/>
+                                                                        </Storyboard>
+                                                                    </BeginStoryboard>
+                                                                </DataTrigger.EnterActions>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Ellipse.Style>
+                                            </Ellipse>
+
+                                            <!-- Text -->
+                                            <TextBlock Grid.Column="2" 
+                       Text="Refresh"
+                       VerticalAlignment="Center"/>
+                                        </Grid>
+                                    </Button>
+
+                                    <!-- NY: Separator mellan actions och input -->
+                                    <Border Style="{StaticResource Style.BlotterToolbarSeparator}"/>
 
                                     <Button Style="{StaticResource Style.BlotterToolbarButton}"
-                                            Content="Refresh"
-                                            Command="{Binding RefreshCommand}"
-                                            Margin="10,0,0,0"/>
+            Content="Manual Input"
+            Margin="0,0,0,0"/>
+                                    <!-- Ändrat margin från 10,0,0,0 -->
 
-
-                                    <Button Style="{StaticResource Style.BlotterToolbarButton}"
-                                            Content="Export"
-                                            Margin="10,0,0,0"/>
-
-                                    <Button Style="{StaticResource Style.BlotterToolbarButton}"
-                                            Content="Clear filters"
-                                            Margin="10,0,0,0"/>
                                 </StackPanel>
 
                                 <!-- Right tools -->
                                 <StackPanel Grid.Column="1"
-                                            Orientation="Horizontal"
-                                            Margin="12"
-                                            VerticalAlignment="Center">
+            Orientation="Horizontal"
+            Margin="12"
+            VerticalAlignment="Center">
 
                                     <!-- Search -->
                                     <Border CornerRadius="{StaticResource Radius.Button}"
-                                            BorderBrush="{StaticResource Brush.Border}"
-                                            BorderThickness="1"
-                                            Background="{StaticResource Brush.PanelChromeTitle}"
-                                            Padding="10,7"
-                                            MinWidth="300">
+            BorderBrush="{StaticResource Brush.Border}"
+            BorderThickness="1"
+            Background="{StaticResource Brush.PanelChromeTitle}"
+            Padding="10,7"
+            MinWidth="300">
                                         <Grid>
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="Auto"/>
@@ -325,40 +361,105 @@
                                             </Grid.ColumnDefinitions>
 
                                             <TextBlock Text="Search"
-                                                       Foreground="{StaticResource Brush.TextMuted}"
-                                                       VerticalAlignment="Center"/>
+                       Foreground="{StaticResource Brush.TextMuted}"
+                       VerticalAlignment="Center"/>
 
                                             <TextBox Grid.Column="1"
-                                                     Margin="10,0"
-                                                     Background="Transparent"
-                                                     BorderThickness="0"
-                                                     Foreground="{StaticResource Brush.Text}"
-                                                     FontSize="12"
-                                                     VerticalContentAlignment="Center"/>
+                     Margin="10,0"
+                     Background="Transparent"
+                     BorderThickness="0"
+                     Foreground="{StaticResource Brush.Text}"
+                     FontSize="12"
+                     VerticalContentAlignment="Center"/>
 
                                             <Border Grid.Column="2"
-                                                    CornerRadius="7"
-                                                    BorderBrush="{StaticResource Brush.BorderSoft}"
-                                                    BorderThickness="1"
-                                                    Background="{StaticResource Brush.PanelChromeTitle}"
-                                                    Padding="6,2"
-                                                    VerticalAlignment="Center">
+                    CornerRadius="7"
+                    BorderBrush="{StaticResource Brush.BorderSoft}"
+                    BorderThickness="1"
+                    Background="{StaticResource Brush.PanelChromeTitle}"
+                    Padding="6,2"
+                    VerticalAlignment="Center">
                                                 <TextBlock Text="Ctrl+F"
-                                                           FontFamily="{StaticResource Font.Mono}"
-                                                           FontSize="11"
-                                                           Foreground="{StaticResource Brush.TextMuted}"/>
+                           FontFamily="{StaticResource Font.Mono}"
+                           FontSize="11"
+                           Foreground="{StaticResource Brush.TextMuted}"/>
                                             </Border>
                                         </Grid>
                                     </Border>
 
-                                    <Button Style="{StaticResource Style.BlotterToolbarButton}"
-                                            Content="Columns"
-                                            Margin="10,0,0,0"/>
+                                    <!-- NY: Separator mellan search och settings -->
+                                    <Border Style="{StaticResource Style.BlotterToolbarSeparator}"/>
 
                                     <Button Style="{StaticResource Style.BlotterToolbarButton}"
-                                            Content="Settings"
-                                            Margin="10,0,0,0"/>
+            Content="Columns"
+            Margin="0,0,10,0"/>
+                                    <!-- Ändrat margin från 10,0,0,0 -->
+
+                                    <Button Style="{StaticResource Style.BlotterToolbarButton}"
+            Content="Settings"
+            Margin="0,0,0,0"/>
+                                    <!-- Ändrat margin från 10,0,0,0 -->
                                 </StackPanel>
+
+                                <!-- Right tools -->
+                                <StackPanel Grid.Column="1"
+            Orientation="Horizontal"
+            Margin="12"
+            VerticalAlignment="Center">
+
+                                    <!-- Search -->
+                                    <Border CornerRadius="{StaticResource Radius.Button}"
+            BorderBrush="{StaticResource Brush.Border}"
+            BorderThickness="1"
+            Background="{StaticResource Brush.PanelChromeTitle}"
+            Padding="10,7"
+            MinWidth="300">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <TextBlock Text="Search"
+                       Foreground="{StaticResource Brush.TextMuted}"
+                       VerticalAlignment="Center"/>
+
+                                            <TextBox Grid.Column="1"
+                     Margin="10,0"
+                     Background="Transparent"
+                     BorderThickness="0"
+                     Foreground="{StaticResource Brush.Text}"
+                     FontSize="12"
+                     VerticalContentAlignment="Center"/>
+
+                                            <Border Grid.Column="2"
+                    CornerRadius="7"
+                    BorderBrush="{StaticResource Brush.BorderSoft}"
+                    BorderThickness="1"
+                    Background="{StaticResource Brush.PanelChromeTitle}"
+                    Padding="6,2"
+                    VerticalAlignment="Center">
+                                                <TextBlock Text="Ctrl+F"
+                           FontFamily="{StaticResource Font.Mono}"
+                           FontSize="11"
+                           Foreground="{StaticResource Brush.TextMuted}"/>
+                                            </Border>
+                                        </Grid>
+                                    </Border>
+
+                                    <!-- NY: Separator mellan search och settings -->
+                                    <Border Style="{StaticResource Style.BlotterToolbarSeparator}"/>
+
+                                    <Button Style="{StaticResource Style.BlotterToolbarButton}"
+            Content="Columns"
+            Margin="0,0,10,0"/>
+
+                                    <Button Style="{StaticResource Style.BlotterToolbarButton}"
+            Content="Settings"
+            Margin="0,0,0,0"/>
+                                </StackPanel>
+
                             </Grid>
 
                             <!-- Separator toolbar -> filter -->
@@ -366,75 +467,267 @@
 
                             <!-- Filter strip -->
                             <Border Grid.Row="2" Background="Transparent">
-                                <StackPanel Orientation="Horizontal" Margin="12,10">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
 
-                                    <RadioButton GroupName="BlotterStatusFilter"
-                                                 Style="{StaticResource Style.BlotterStripToggle}"
-                                                 IsChecked="True"
-                                                 Command="{Binding SetFilterAllCommand}"
-                                                 CommandParameter="ALL">
-                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                            <TextBlock Text="All" Style="{StaticResource Style.BlotterStripLabel}" VerticalAlignment="Center"/>
-                                            <Border Style="{StaticResource Style.BlotterCountPill}" Margin="8,0,0,0">
-                                                <TextBlock Text="{Binding TotalTrades}" Style="{StaticResource Style.BlotterCountPillText}"/>
-                                            </Border>
-                                        </StackPanel>
-                                    </RadioButton>
+                                    <!-- Status filters (vänster) -->
+                                    <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="12,10">
 
-                                    <RadioButton GroupName="BlotterStatusFilter"
-                                                 Style="{StaticResource Style.BlotterStripToggle}"
-                                                 Margin="6,0,0,0"
-                                                 Command="{Binding SetFilterNewCommand}"
-                                                 CommandParameter="NEW">
-                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                            <TextBlock Text="New" Style="{StaticResource Style.BlotterStripLabel}" VerticalAlignment="Center"/>
-                                            <Border Style="{StaticResource Style.BlotterCountPill}" Margin="8,0,0,0">
-                                                <TextBlock Text="{Binding NewCount}" Style="{StaticResource Style.BlotterCountPillText}"/>
-                                            </Border>
-                                        </StackPanel>
-                                    </RadioButton>
+                                        <RadioButton GroupName="BlotterStatusFilter"
+             Style="{StaticResource Style.BlotterStripToggle}"
+             IsChecked="True"
+             Command="{Binding SetFilterAllCommand}">
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                <TextBlock Text="All" Style="{StaticResource Style.BlotterStripLabel}" VerticalAlignment="Center"/>
+                                                <Border Margin="8,0,0,0">
+                                                    <Border.Style>
+                                                        <Style TargetType="Border" BasedOn="{StaticResource Style.BlotterCountPill}">
+                                                            <Setter Property="Background" Value="#0AFFFFFF"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=RadioButton}, Path=IsChecked}" Value="True">
+                                                                    <!-- ✅ Grå/vit istället för blå -->
+                                                                    <Setter Property="Background" Value="#1AFFFFFF"/>
+                                                                    <Setter Property="BorderBrush" Value="#64748B"/>
+                                                                    <!-- Slate gray -->
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Border.Style>
+                                                    <TextBlock Text="{Binding TotalTrades}" VerticalAlignment="Center">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock" BasedOn="{StaticResource Style.BlotterCountPillText}">
+                                                                <Setter Property="FontWeight" Value="SemiBold"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=RadioButton}, Path=IsChecked}" Value="True">
+                                                                        <!-- ✅ Ljusare grå text -->
+                                                                        <Setter Property="Foreground" Value="#94A3B8"/>
+                                                                        <!-- Slate 400 -->
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
+                                                </Border>
+                                            </StackPanel>
+                                        </RadioButton>
 
-                                    <RadioButton GroupName="BlotterStatusFilter"
-                                                 Style="{StaticResource Style.BlotterStripToggle}"
-                                                 Margin="6,0,0,0"
-                                                 Command="{Binding SetFilterPendingCommand}"
-                                                 CommandParameter="PENDING">
-                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                            <TextBlock Text="Pending" Style="{StaticResource Style.BlotterStripLabel}" VerticalAlignment="Center"/>
-                                            <Border Style="{StaticResource Style.BlotterCountPill}" Margin="8,0,0,0">
-                                                <TextBlock Text="{Binding PendingCount}" Style="{StaticResource Style.BlotterCountPillText}"/>
-                                            </Border>
-                                        </StackPanel>
-                                    </RadioButton>
+                                        <!-- 4. Sök-fältet - mer framträdande (subtle border + luftigare padding) -->
+                                        <RadioButton GroupName="BlotterStatusFilter"
+                         Style="{StaticResource Style.BlotterStripToggle}"
+                         Margin="6,0,0,0"
+                         Command="{Binding SetFilterNewCommand}">
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                <TextBlock Text="New" Style="{StaticResource Style.BlotterStripLabel}" VerticalAlignment="Center"/>
+                                                <Border Margin="8,0,0,0">
+                                                    <Border.Style>
+                                                        <Style TargetType="Border" BasedOn="{StaticResource Style.BlotterCountPill}">
+                                                            <Setter Property="Background" Value="#0AFFFFFF"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=RadioButton}, Path=IsChecked}" Value="True">
+                                                                    <Setter Property="Background" Value="#1A3B82F6"/>
+                                                                    <Setter Property="BorderBrush" Value="#3B82F6"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Border.Style>
+                                                    <TextBlock Text="{Binding NewCount}">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock" BasedOn="{StaticResource Style.BlotterCountPillText}">
+                                                                <Setter Property="FontWeight" Value="SemiBold"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=RadioButton}, Path=IsChecked}" Value="True">
+                                                                        <Setter Property="Foreground" Value="#3B82F6"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
+                                                </Border>
+                                            </StackPanel>
+                                        </RadioButton>
 
-                                    <RadioButton GroupName="BlotterStatusFilter"
-                                                 Style="{StaticResource Style.BlotterStripToggle}"
-                                                 Margin="6,0,0,0"
-                                                 Command="{Binding SetFilterBookedCommand}"
-                                                 CommandParameter="BOOKED">
-                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                            <TextBlock Text="Booked" Style="{StaticResource Style.BlotterStripLabel}" VerticalAlignment="Center"/>
-                                            <Border Style="{StaticResource Style.BlotterCountPill}" Margin="8,0,0,0">
-                                                <TextBlock Text="{Binding BookedCount}" Style="{StaticResource Style.BlotterCountPillText}"/>
-                                            </Border>
-                                        </StackPanel>
-                                    </RadioButton>
+                                        <RadioButton GroupName="BlotterStatusFilter"
+                         Style="{StaticResource Style.BlotterStripToggle}"
+                         Margin="6,0,0,0"
+                         Command="{Binding SetFilterPendingCommand}">
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                <TextBlock Text="Pending" Style="{StaticResource Style.BlotterStripLabel}" VerticalAlignment="Center"/>
+                                                <Border Margin="8,0,0,0">
+                                                    <Border.Style>
+                                                        <Style TargetType="Border" BasedOn="{StaticResource Style.BlotterCountPill}">
+                                                            <Setter Property="Background" Value="#0AFFFFFF"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=RadioButton}, Path=IsChecked}" Value="True">
+                                                                    <Setter Property="Background" Value="#1AFBBF24"/>
+                                                                    <Setter Property="BorderBrush" Value="#FBBF24"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Border.Style>
+                                                    <TextBlock Text="{Binding PendingCount}">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock" BasedOn="{StaticResource Style.BlotterCountPillText}">
+                                                                <Setter Property="FontWeight" Value="SemiBold"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=RadioButton}, Path=IsChecked}" Value="True">
+                                                                        <Setter Property="Foreground" Value="#FBBF24"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
+                                                </Border>
+                                            </StackPanel>
+                                        </RadioButton>
 
-                                    <RadioButton GroupName="BlotterStatusFilter"
-                                                 Style="{StaticResource Style.BlotterStripToggle}"
-                                                 Margin="6,0,0,0"
-                                                 Command="{Binding SetFilterErrorsCommand}"
-                                                 CommandParameter="ERRORS">
-                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                            <TextBlock Text="Errors" Style="{StaticResource Style.BlotterStripLabel}" VerticalAlignment="Center"/>
-                                            <Border Style="{StaticResource Style.BlotterCountPill}" Margin="8,0,0,0">
-                                                <TextBlock Text="{Binding ErrorCount}" Style="{StaticResource Style.BlotterCountPillText}"/>
-                                            </Border>
-                                        </StackPanel>
-                                    </RadioButton>
+                                        <RadioButton GroupName="BlotterStatusFilter"
+                         Style="{StaticResource Style.BlotterStripToggle}"
+                         Margin="6,0,0,0"
+                         Command="{Binding SetFilterBookedCommand}">
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                <TextBlock Text="Booked" Style="{StaticResource Style.BlotterStripLabel}" VerticalAlignment="Center"/>
+                                                <Border Margin="8,0,0,0">
+                                                    <Border.Style>
+                                                        <Style TargetType="Border" BasedOn="{StaticResource Style.BlotterCountPill}">
+                                                            <Setter Property="Background" Value="#0AFFFFFF"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=RadioButton}, Path=IsChecked}" Value="True">
+                                                                    <Setter Property="Background" Value="#1A2DD4BF"/>
+                                                                    <Setter Property="BorderBrush" Value="#2DD4BF"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Border.Style>
+                                                    <TextBlock Text="{Binding BookedCount}">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock" BasedOn="{StaticResource Style.BlotterCountPillText}">
+                                                                <Setter Property="FontWeight" Value="SemiBold"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=RadioButton}, Path=IsChecked}" Value="True">
+                                                                        <Setter Property="Foreground" Value="#2DD4BF"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
+                                                </Border>
+                                            </StackPanel>
+                                        </RadioButton>
 
+                                        <RadioButton GroupName="BlotterStatusFilter"
+                         Style="{StaticResource Style.BlotterStripToggle}"
+                         Margin="6,0,0,0"
+                         Command="{Binding SetFilterErrorsCommand}">
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                <TextBlock Text="Errors" Style="{StaticResource Style.BlotterStripLabel}" VerticalAlignment="Center"/>
+                                                <Border Margin="8,0,0,0">
+                                                    <Border.Style>
+                                                        <Style TargetType="Border" BasedOn="{StaticResource Style.BlotterCountPill}">
+                                                            <Setter Property="Background" Value="#0AFFFFFF"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=RadioButton}, Path=IsChecked}" Value="True">
+                                                                    <Setter Property="Background" Value="#1AEF4444"/>
+                                                                    <Setter Property="BorderBrush" Value="#EF4444"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Border.Style>
+                                                    <TextBlock Text="{Binding ErrorCount}">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock" BasedOn="{StaticResource Style.BlotterCountPillText}">
+                                                                <Setter Property="FontWeight" Value="SemiBold"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=RadioButton}, Path=IsChecked}" Value="True">
+                                                                        <Setter Property="Foreground" Value="#EF4444"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
+                                                </Border>
+                                            </StackPanel>
+                                        </RadioButton>
 
-                                </StackPanel>
+                                    </StackPanel>
+
+                                    <!-- Quick filters (höger) -->
+                                    <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="12,10">
+
+                                        <!-- 6. Quick filters - bättre visuell feedback (subtil glow på IsChecked) -->
+                                        <CheckBox Style="{StaticResource Style.BlotterQuickFilter}"
+                      IsChecked="{Binding FilterMyTradesOnly}"
+                      Content="My trades">
+                                            <CheckBox.Resources>
+                                                <!-- 7. Micro-interaktioner: lägg till smooth transition på hover/checked -->
+                                                <Style TargetType="CheckBox" BasedOn="{StaticResource Style.BlotterQuickFilter}">
+                                                    <Style.Triggers>
+                                                        <Trigger Property="IsChecked" Value="True">
+                                                            <Setter Property="Background" Value="#1A3B82F6"/>
+                                                            <Setter Property="Foreground" Value="#3B82F6"/>
+                                                            <Setter Property="FontWeight" Value="SemiBold"/>
+                                                        </Trigger>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter Property="Background" Value="#0AFFFFFF"/>
+                                                        </Trigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </CheckBox.Resources>
+                                        </CheckBox>
+
+                                        <CheckBox Style="{StaticResource Style.BlotterQuickFilter}"
+                      IsChecked="{Binding FilterTodayOnly}"
+                      Content="Today"
+                      Margin="6,0,0,0">
+                                            <CheckBox.Resources>
+                                                <Style TargetType="CheckBox" BasedOn="{StaticResource Style.BlotterQuickFilter}">
+                                                    <Style.Triggers>
+                                                        <Trigger Property="IsChecked" Value="True">
+                                                            <Setter Property="Background" Value="#1A3B82F6"/>
+                                                            <Setter Property="Foreground" Value="#3B82F6"/>
+                                                            <Setter Property="FontWeight" Value="SemiBold"/>
+                                                        </Trigger>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter Property="Background" Value="#0AFFFFFF"/>
+                                                        </Trigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </CheckBox.Resources>
+                                        </CheckBox>
+
+                                        <!-- Auto-book toggle (special styling med grön accent) -->
+                                        <CheckBox IsChecked="{Binding AutoBookEnabled}"
+                      Margin="6,0,0,0"
+                      Cursor="Hand">
+                                            <CheckBox.Style>
+                                                <Style TargetType="CheckBox" BasedOn="{StaticResource Style.BlotterQuickFilter}">
+                                                    <Style.Triggers>
+                                                        <Trigger Property="IsChecked" Value="True">
+                                                            <Setter Property="Foreground" Value="#10B981"/>
+                                                            <Setter Property="Background" Value="#1A10B981"/>
+                                                            <Setter Property="FontWeight" Value="SemiBold"/>
+                                                        </Trigger>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter Property="Background" Value="#0AFFFFFF"/>
+                                                        </Trigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </CheckBox.Style>
+                                            <StackPanel Orientation="Horizontal">
+                                                <Ellipse Width="6" Height="6" 
+                             Fill="#10B981" 
+                             Margin="0,1,6,0"
+                             VerticalAlignment="Center" 
+                             Visibility="{Binding AutoBookEnabled, Converter={StaticResource BoolToVisConverter}}"/>
+                                                <TextBlock Text="Auto-book"/>
+                                            </StackPanel>
+                                        </CheckBox>
+
+                                    </StackPanel>
+                                </Grid>
                             </Border>
 
 
@@ -453,7 +746,6 @@
                                 <ColumnDefinition Width="360"/>
                             </Grid.ColumnDefinitions>
 
-
                             <Grid>
                                 <Grid.RowDefinitions>
                                     <!-- Section header för options -->
@@ -470,8 +762,7 @@
 
                                 <!-- ==================== OPTIONS SECTION ==================== -->
                                 <Border Grid.Row="0" Style="{StaticResource Style.BlotterSectionHeader.Options}">
-                                    <TextBlock Text="OPTIONS (VANILLA • NDO)" 
-                                               Style="{StaticResource Style.BlotterSectionHeaderText}"/>
+                                    <TextBlock Text="OPTIONS (VANILLA • NDO)" Style="{StaticResource Style.BlotterSectionHeaderText}"/>
                                 </Border>
 
                                 <!-- OPTIONS GRID - bind till SelectedOptionTrade -->
@@ -481,42 +772,35 @@
                                           ItemsSource="{Binding OptionTradesView}"
                                           SelectedItem="{Binding SelectedOptionTrade, Mode=TwoWay}"
                                           ColumnHeaderStyle="{StaticResource Style.BlotterDataGridHeader}"
-                                          CellStyle="{StaticResource Style.BlotterDataGridCell}"
+                                          CellStyle="{StaticResource Style.BlotterDataGridCell.Booked}"      
                                           RowStyle="{StaticResource Style.BlotterDataGridRow.Options}"
                                           AutoGenerateColumns="False">
 
                                     <DataGrid.ContextMenu>
                                         <ContextMenu Style="{StaticResource Style.BlotterContextMenu}">
                                             <MenuItem Header="Book Trade" 
-                  Command="{Binding BookTradeCommand}"
-                  Style="{StaticResource Style.BlotterMenuItem}"/>
+                                                      Command="{Binding BookTradeCommand}"
+                                                      Style="{StaticResource Style.BlotterMenuItem}"/>
                                             <MenuItem Header="Duplicate Trade" 
-                  Command="{Binding DuplicateTradeCommand}"
-                  Style="{StaticResource Style.BlotterMenuItem}"/>
-                                            <MenuItem Header="Copy To Manual Input" 
-                  Command="{Binding CopyToManualInputCommand}"
-                  Style="{StaticResource Style.BlotterMenuItem}"/>
-                                            <MenuItem Header="Book As Live Trade" 
-                  Command="{Binding BookAsLiveTradeCommand}"
-                  Style="{StaticResource Style.BlotterMenuItem}"/>
+                                                      Command="{Binding DuplicateTradeCommand}"
+                                                      Style="{StaticResource Style.BlotterMenuItem}"/>
                                             <Separator Style="{StaticResource Style.BlotterMenuSeparator}"/>
                                             <MenuItem Header="Delete Row" 
-                  Command="{Binding DeleteRowCommand}"
-                  Style="{StaticResource Style.BlotterMenuItem}"/>
+                                                      Command="{Binding DeleteRowCommand}"
+                                                      Style="{StaticResource Style.BlotterMenuItem}"/>
                                             <Separator Style="{StaticResource Style.BlotterMenuSeparator}"/>
                                             <MenuItem Header="Check If Trade Is Booked" 
-                  Command="{Binding CheckIfBookedCommand}"
-                  Style="{StaticResource Style.BlotterMenuItem}"/>
+                                                      Command="{Binding CheckIfBookedCommand}"
+                                                      Style="{StaticResource Style.BlotterMenuItem}"/>
                                             <MenuItem Header="Open Error Log" 
-                  Command="{Binding OpenErrorLogCommand}"
-                  Style="{StaticResource Style.BlotterMenuItem}"/>
+                                                      Command="{Binding OpenErrorLogCommand}"
+                                                      Style="{StaticResource Style.BlotterMenuItem}"/>
                                         </ContextMenu>
                                     </DataGrid.ContextMenu>
 
-
                                     <DataGrid.Columns>
                                         <DataGridTextColumn Header="TradeID" Binding="{Binding TradeId}" Width="120"/>
-                                        <DataGridTextColumn Header="Counterpart" Binding="{Binding Counterparty}" Width="100"/>
+                                        <DataGridTextColumn Header="Counterpart" Binding="{Binding Counterparty}" Width="110"/>
                                         <DataGridTextColumn Header="Ccy Pair" Binding="{Binding CcyPair}" Width="80"/>
                                         <DataGridTextColumn Header="Buy/Sell" Binding="{Binding BuySell}" Width="70"/>
                                         <DataGridTextColumn Header="Call/Put" Binding="{Binding CallPut}" Width="70"/>
@@ -540,7 +824,8 @@
                                         <DataGridTextColumn Header="Premium Ccy" Binding="{Binding PremiumCcy}" Width="100"/>
                                         <DataGridTextColumn Header="Portfolio MX3" Binding="{Binding PortfolioMx3}" Width="110"/>
                                         <DataGridTextColumn Header="Trader" Binding="{Binding Trader}" Width="80"/>
-                                        <DataGridTemplateColumn Header="Status" Width="150" CellTemplate="{StaticResource StatusPillTemplate}" />
+                                        <DataGridTemplateColumn Header="Status" Width="150" CellTemplate="{StaticResource StatusPillTemplate}" CellStyle="{StaticResource Style.BlotterDataGridCell.Status}" />
+
                                     </DataGrid.Columns>
                                 </DataGrid>
 
@@ -563,37 +848,34 @@
                                     <DataGrid.ContextMenu>
                                         <ContextMenu Style="{StaticResource Style.BlotterContextMenu}">
                                             <MenuItem Header="Book Trade" 
-                  Command="{Binding BookTradeCommand}"
-                  Style="{StaticResource Style.BlotterMenuItem}"/>
+                                                      Command="{Binding BookTradeCommand}"
+                                                      Style="{StaticResource Style.BlotterMenuItem}"/>
                                             <MenuItem Header="Duplicate Trade" 
-                  Command="{Binding DuplicateTradeCommand}"
-                  Style="{StaticResource Style.BlotterMenuItem}"/>
-                                            <MenuItem Header="Copy To Manual Input" 
-                  Command="{Binding CopyToManualInputCommand}"
-                  Style="{StaticResource Style.BlotterMenuItem}"/>
+                                                      Command="{Binding DuplicateTradeCommand}"
+                                                      Style="{StaticResource Style.BlotterMenuItem}"/>
                                             <MenuItem Header="Book As Live Trade" 
-                  Command="{Binding BookAsLiveTradeCommand}"
-                  Style="{StaticResource Style.BlotterMenuItem}"/>
+                                                      Command="{Binding BookAsLiveTradeCommand}"
+                                                      Style="{StaticResource Style.BlotterMenuItem}"/>
                                             <Separator Style="{StaticResource Style.BlotterMenuSeparator}"/>
                                             <MenuItem Header="Cancel Calypso Trade" 
-                  Command="{Binding CancelCalypsoTradeCommand}"
-                  Style="{StaticResource Style.BlotterMenuItem}"/>
+                                                      Command="{Binding CancelCalypsoTradeCommand}"
+                                                      Style="{StaticResource Style.BlotterMenuItem}"/>
                                             <MenuItem Header="Delete Row" 
-                  Command="{Binding DeleteRowCommand}"
-                  Style="{StaticResource Style.BlotterMenuItem}"/>
+                                                      Command="{Binding DeleteRowCommand}"
+                                                      Style="{StaticResource Style.BlotterMenuItem}"/>
                                             <Separator Style="{StaticResource Style.BlotterMenuSeparator}"/>
                                             <MenuItem Header="Check If Trade Is Booked" 
-                  Command="{Binding CheckIfBookedCommand}"
-                  Style="{StaticResource Style.BlotterMenuItem}"/>
+                                                      Command="{Binding CheckIfBookedCommand}"
+                                                      Style="{StaticResource Style.BlotterMenuItem}"/>
                                             <MenuItem Header="Open Error Log" 
-                  Command="{Binding OpenErrorLogCommand}"
-                  Style="{StaticResource Style.BlotterMenuItem}"/>
+                                                      Command="{Binding OpenErrorLogCommand}"
+                                                      Style="{StaticResource Style.BlotterMenuItem}"/>
                                         </ContextMenu>
                                     </DataGrid.ContextMenu>
 
                                     <DataGrid.Columns>
                                         <DataGridTextColumn Header="TradeID" Binding="{Binding TradeId}" Width="120"/>
-                                        <DataGridTextColumn Header="Counterpart" Binding="{Binding Counterparty}" Width="100"/>
+                                        <DataGridTextColumn Header="Counterpart" Binding="{Binding Counterparty}" Width="110"/>
                                         <DataGridTextColumn Header="Ccy Pair" Binding="{Binding CcyPair}" Width="80"/>
                                         <DataGridTextColumn Header="Buy/Sell" Binding="{Binding BuySell}" Width="70"/>
                                         <DataGridTextColumn Header="Notional" 
@@ -603,16 +885,16 @@
                                                             Width="90"/>
                                         <DataGridTextColumn Header="Notional Ccy" Binding="{Binding NotionalCcy}" Width="100"/>
                                         <DataGridTextColumn Header="Hedge Rate" 
-                                                            Binding="{Binding HedgeRate, StringFormat=F4}" 
+                                                            Binding="{Binding HedgeRate, StringFormat=F6}" 
                                                             CellStyle="{StaticResource Style.BlotterDataGridCell.Numeric}"
                                                             HeaderStyle="{StaticResource Style.BlotterDataGridHeader.Numeric}"
-                                                            Width="95"/>
+                                                            Width="100"/>
                                         <DataGridTextColumn Header="Hedge Type" Binding="{Binding HedgeType}" Width="95"/>
                                         <DataGridTextColumn Header="Settlement Date" Binding="{Binding SettlementDate, StringFormat=yyyy-MM-dd}" Width="120"/>
                                         <DataGridTextColumn Header="Book Calypso" Binding="{Binding CalypsoPortfolio}" Width="110"/>
                                         <DataGridTextColumn Header="Portfolio MX3" Binding="{Binding PortfolioMx3}" Width="110"/>
                                         <DataGridTextColumn Header="Trader" Binding="{Binding Trader}" Width="80"/>
-                                        <DataGridTemplateColumn Header="Status" Width="150" CellTemplate="{StaticResource StatusPillTemplate}" />
+                                        <DataGridTemplateColumn Header="Status" Width="150" CellTemplate="{StaticResource StatusPillTemplate}" CellStyle="{StaticResource Style.BlotterDataGridCell.Status}" />
                                     </DataGrid.Columns>
 
                                 </DataGrid>
@@ -687,6 +969,11 @@
                                             </ScrollViewer.Style>
 
                                             <StackPanel>
+                                                
+                                                
+                                                
+                                                
+                                                
 
                                                 <!-- TRADE SUMMARY card -->
                                                 <Border Style="{StaticResource Style.BlotterRightCard}">
@@ -709,37 +996,65 @@
                                                                 <RowDefinition Height="Auto"/>
                                                                 <RowDefinition Height="Auto"/>
                                                                 <RowDefinition Height="Auto"/>
-                                                                <RowDefinition Height="Auto"/>
                                                             </Grid.RowDefinitions>
 
                                                             <TextBlock Grid.Row="0" Grid.Column="0" Text="TradeID" Style="{StaticResource Style.BlotterRightKey}"/>
                                                             <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding SelectedTrade.TradeId}" Style="{StaticResource Style.BlotterRightValue}"/>
 
-                                                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Source" Style="{StaticResource Style.BlotterRightKey}"/>
+                                                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Counterpart" Style="{StaticResource Style.BlotterRightKey}"/>
                                                             <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding SelectedTrade.Counterparty}" Style="{StaticResource Style.BlotterRightValue}"/>
 
-                                                            <TextBlock Grid.Row="2" Grid.Column="0" Text="MessageKey" Style="{StaticResource Style.BlotterRightKey}"/>
-                                                            <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding SelectedTrade.TradeId}" Style="{StaticResource Style.BlotterRightValue}"/>
+                                                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Instrument" Style="{StaticResource Style.BlotterRightKey}"/>
+                                                            <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding SelectedTrade.CcyPair}" Style="{StaticResource Style.BlotterRightValue}"/>
 
-                                                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Instrument" Style="{StaticResource Style.BlotterRightKey}"/>
-                                                            <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding SelectedTrade.CcyPair}" Style="{StaticResource Style.BlotterRightValue}"/>
+                                                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Product" Style="{StaticResource Style.BlotterRightKey}"/>
+                                                            <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding SelectedTrade.Product}" Style="{StaticResource Style.BlotterRightValue}"/>
 
-                                                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Product" Style="{StaticResource Style.BlotterRightKey}"/>
-                                                            <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding SelectedTrade.Product}" Style="{StaticResource Style.BlotterRightValue}"/>
+                                                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Side" Style="{StaticResource Style.BlotterRightKey}"/>
+                                                            <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding SelectedTrade.BuySell}" Style="{StaticResource Style.BlotterRightValue}"/>
 
-                                                            <TextBlock Grid.Row="5" Grid.Column="0" Text="Side" Style="{StaticResource Style.BlotterRightKey}"/>
-                                                            <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding SelectedTrade.BuySell}" Style="{StaticResource Style.BlotterRightValue}"/>
+                                                            <TextBlock Grid.Row="5" Grid.Column="0" Text="Notional" Style="{StaticResource Style.BlotterRightKey}"/>
+                                                            <TextBlock Grid.Row="5" Grid.Column="1" Style="{StaticResource Style.BlotterRightValue}">
+                                                                <TextBlock.Text>
+                                                                    <MultiBinding StringFormat="{}{0:N0} {1}">
+                                                                        <Binding Path="SelectedTrade.Notional"/>
+                                                                        <Binding Path="SelectedTrade.NotionalCcy"/>
+                                                                    </MultiBinding>
+                                                                </TextBlock.Text>
+                                                            </TextBlock>
 
-                                                            <TextBlock Grid.Row="6" Grid.Column="0" Text="Notional" Style="{StaticResource Style.BlotterRightKey}"/>
-                                                            <TextBlock Grid.Row="6" Grid.Column="1" Text="{Binding SelectedTrade.Notional, StringFormat=N0}" Style="{StaticResource Style.BlotterRightValue}"/>
+                                                            <!-- Price (Strike för options, Rate för linjära) -->
+                                                            <TextBlock Grid.Row="6" Grid.Column="0">
+                                                                <TextBlock.Style>
+                                                                    <Style TargetType="TextBlock" BasedOn="{StaticResource Style.BlotterRightKey}">
+                                                                        <Setter Property="Text" Value="Rate"/>
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding SelectedTrade.CallPut, Converter={StaticResource NullToBoolConverter}}" Value="True">
+                                                                                <Setter Property="Text" Value="Strike"/>
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </TextBlock.Style>
+                                                            </TextBlock>
+                                                            <TextBlock Grid.Row="6" Grid.Column="1">
+                                                                <TextBlock.Style>
+                                                                    <Style TargetType="TextBlock" BasedOn="{StaticResource Style.BlotterRightValue}">
+                                                                        <Setter Property="Text" Value="{Binding SelectedTrade.HedgeRate, StringFormat=F6, TargetNullValue=—}"/>
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding SelectedTrade.CallPut, Converter={StaticResource NullToBoolConverter}}" Value="True">
+                                                                                <Setter Property="Text" Value="{Binding SelectedTrade.Strike, StringFormat=F4, TargetNullValue=—}"/>
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </TextBlock.Style>
+                                                            </TextBlock>
 
-                                                            <TextBlock Grid.Row="7" Grid.Column="0" Text="Price" Style="{StaticResource Style.BlotterRightKey}"/>
-                                                            <TextBlock Grid.Row="7" Grid.Column="1" Text="{Binding SelectedTrade.Premium, StringFormat=N2}" Style="{StaticResource Style.BlotterRightValue}"/>
 
-                                                            <TextBlock Grid.Row="8" Grid.Column="0" Text="TradeTime" Style="{StaticResource Style.BlotterRightKey}"/>
-                                                            <TextBlock Grid.Row="8" Grid.Column="1" Text="{Binding SelectedTrade.Time, StringFormat='yyyy-MM-dd HH:mm:ss'}" Style="{StaticResource Style.BlotterRightValue}"/>
+                                                            <TextBlock Grid.Row="7" Grid.Column="0" Text="TradeTime" Style="{StaticResource Style.BlotterRightKey}"/>
+                                                            <TextBlock Grid.Row="7" Grid.Column="1" Text="{Binding SelectedTrade.Time, StringFormat='yyyy-MM-dd HH:mm:ss'}" Style="{StaticResource Style.BlotterRightValue}"/>
 
                                                         </Grid>
+
                                                     </StackPanel>
                                                 </Border>
 
@@ -792,20 +1107,63 @@
                                                 </Style>
                                             </ScrollViewer.Style>
 
+
+
                                             <StackPanel>
 
-                                                <!-- OPTION PRICING - Visible when CallPut is NOT null -->
+                                                <!-- ============ PRODUCT STRUCTURE ============ -->
                                                 <Border Style="{StaticResource Style.BlotterRightCard}">
-                                                    <Border.Style>
-                                                        <Style TargetType="Border" BasedOn="{StaticResource Style.BlotterRightCard}">
-                                                            <Setter Property="Visibility" Value="Collapsed"/>
-                                                            <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding SelectedTrade.CallPut, Converter={StaticResource NullToBoolConverter}}" Value="True">
-                                                                    <Setter Property="Visibility" Value="Visible"/>
-                                                                </DataTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </Border.Style>
+                                                    <StackPanel>
+                                                        <Border Style="{StaticResource Style.BlotterSectionHeaderBorder}">
+                                                            <TextBlock Text="PRODUCT STRUCTURE" Style="{StaticResource Style.BlotterRightSectionTitle}"/>
+                                                        </Border>
+
+                                                        <Grid>
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="120"/>
+                                                                <ColumnDefinition Width="*"/>
+                                                            </Grid.ColumnDefinitions>
+                                                            <Grid.RowDefinitions>
+                                                                <RowDefinition Height="Auto"/>
+                                                                <RowDefinition Height="Auto"/>
+                                                                <RowDefinition Height="Auto"/>
+                                                                <RowDefinition Height="Auto"/>
+                                                                <RowDefinition Height="Auto"/>
+                                                                <RowDefinition Height="Auto"/>
+                                                                <RowDefinition Height="Auto"/>
+                                                            </Grid.RowDefinitions>
+
+                                                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Product" Style="{StaticResource Style.BlotterRightKey}"/>
+                                                            <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding SelectedTrade.Product, TargetNullValue=—}" Style="{StaticResource Style.BlotterRightValue}"/>
+
+                                                            <TextBlock Grid.Row="1" Grid.Column="0" Text="CcyPair" Style="{StaticResource Style.BlotterRightKey}"/>
+                                                            <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding SelectedTrade.CcyPair, TargetNullValue=—}" Style="{StaticResource Style.BlotterRightValue}"/>
+
+                                                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Side" Style="{StaticResource Style.BlotterRightKey}"/>
+                                                            <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding SelectedTrade.BuySell, TargetNullValue=—}" Style="{StaticResource Style.BlotterRightValue}"/>
+
+                                                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Notional" Style="{StaticResource Style.BlotterRightKey}"/>
+                                                            <TextBlock Grid.Row="3" Grid.Column="1" Style="{StaticResource Style.BlotterRightValue}">
+                                                                <TextBlock.Text>
+                                                                    <MultiBinding StringFormat="{}{0:N0} {1}">
+                                                                        <Binding Path="SelectedTrade.Notional"/>
+                                                                        <Binding Path="SelectedTrade.NotionalCcy"/>
+                                                                    </MultiBinding>
+                                                                </TextBlock.Text>
+                                                            </TextBlock>
+
+                                                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Notional Ccy" Style="{StaticResource Style.BlotterRightKey}"/>
+                                                            <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding SelectedTrade.NotionalCcy, TargetNullValue=—}" Style="{StaticResource Style.BlotterRightValue}"/>
+
+                                                            <TextBlock Grid.Row="6" Grid.Column="0" Text="Trade Date" Style="{StaticResource Style.BlotterRightKey}"/>
+                                                            <TextBlock Grid.Row="6" Grid.Column="1" Text="{Binding SelectedTrade.Time, StringFormat=yyyy-MM-dd, TargetNullValue=—}" Style="{StaticResource Style.BlotterRightValue}"/>
+
+                                                        </Grid>
+                                                    </StackPanel>
+                                                </Border>
+
+                                                <!-- ============ OPTION PRICING (endast för options) ============ -->
+                                                <Border Style="{StaticResource Style.BlotterRightCard}" Visibility="{Binding SelectedTrade.CallPut, Converter={StaticResource NullToCollapsed}}">
                                                     <StackPanel>
                                                         <Border Style="{StaticResource Style.BlotterSectionHeaderBorder}">
                                                             <TextBlock Text="OPTION PRICING" Style="{StaticResource Style.BlotterRightSectionTitle}"/>
@@ -824,33 +1182,22 @@
                                                                 <RowDefinition Height="Auto"/>
                                                                 <RowDefinition Height="Auto"/>
                                                                 <RowDefinition Height="Auto"/>
-                                                                <RowDefinition Height="Auto"/>
                                                             </Grid.RowDefinitions>
 
-                                                            <TextBlock Grid.Row="0" Grid.Column="0" Text="CcyPair" Style="{StaticResource Style.BlotterRightKey}"/>
-                                                            <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding SelectedTrade.CcyPair}" Style="{StaticResource Style.BlotterRightValue}"/>
+                                                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Call/Put" Style="{StaticResource Style.BlotterRightKey}"/>
+                                                            <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding SelectedTrade.CallPut, TargetNullValue=—}" Style="{StaticResource Style.BlotterRightValue}"/>
 
-                                                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Call/Put" Style="{StaticResource Style.BlotterRightKey}"/>
-                                                            <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding SelectedTrade.CallPut}" Style="{StaticResource Style.BlotterRightValue}"/>
+                                                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Strike" Style="{StaticResource Style.BlotterRightKey}"/>
+                                                            <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding SelectedTrade.Strike, StringFormat=F4, TargetNullValue=—}" Style="{StaticResource Style.BlotterRightValue}"/>
 
-                                                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Strike" Style="{StaticResource Style.BlotterRightKey}"/>
-                                                            <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding SelectedTrade.Strike, StringFormat=F4, TargetNullValue=—}" Style="{StaticResource Style.BlotterRightValue}"/>
+                                                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Expiry Date" Style="{StaticResource Style.BlotterRightKey}"/>
+                                                            <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding SelectedTrade.ExpiryDate, StringFormat=yyyy-MM-dd, TargetNullValue=—}" Style="{StaticResource Style.BlotterRightValue}"/>
 
-                                                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Expiry" Style="{StaticResource Style.BlotterRightKey}"/>
-                                                            <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding SelectedTrade.ExpiryDate, StringFormat=yyyy-MM-dd, TargetNullValue=—}" Style="{StaticResource Style.BlotterRightValue}"/>
+                                                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Value Date" Style="{StaticResource Style.BlotterRightKey}"/>
+                                                            <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding SelectedTrade.SettlementDate, StringFormat=yyyy-MM-dd, TargetNullValue=—}" Style="{StaticResource Style.BlotterRightValue}"/>
 
-                                                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Notional" Style="{StaticResource Style.BlotterRightKey}"/>
+                                                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Premium" Style="{StaticResource Style.BlotterRightKey}"/>
                                                             <TextBlock Grid.Row="4" Grid.Column="1" Style="{StaticResource Style.BlotterRightValue}">
-                                                                <TextBlock.Text>
-                                                                    <MultiBinding StringFormat="{}{0:N0} {1}">
-                                                                        <Binding Path="SelectedTrade.Notional"/>
-                                                                        <Binding Path="SelectedTrade.NotionalCcy"/>
-                                                                    </MultiBinding>
-                                                                </TextBlock.Text>
-                                                            </TextBlock>
-
-                                                            <TextBlock Grid.Row="5" Grid.Column="0" Text="Premium" Style="{StaticResource Style.BlotterRightKey}"/>
-                                                            <TextBlock Grid.Row="5" Grid.Column="1" Style="{StaticResource Style.BlotterRightValue}">
                                                                 <TextBlock.Text>
                                                                     <MultiBinding StringFormat="{}{0:N2} {1}">
                                                                         <Binding Path="SelectedTrade.Premium"/>
@@ -859,28 +1206,18 @@
                                                                 </TextBlock.Text>
                                                             </TextBlock>
 
+                                                            <TextBlock Grid.Row="5" Grid.Column="0" Text="Premium %" Style="{StaticResource Style.BlotterRightKey}"/>
+                                                            <TextBlock Grid.Row="5" Grid.Column="1" Text="—" Style="{StaticResource Style.BlotterRightValue}" Foreground="{StaticResource Brush.TextMuted2}"/>
+
                                                             <TextBlock Grid.Row="6" Grid.Column="0" Text="Premium Date" Style="{StaticResource Style.BlotterRightKey}"/>
                                                             <TextBlock Grid.Row="6" Grid.Column="1" Text="{Binding SelectedTrade.PremiumDate, StringFormat=yyyy-MM-dd, TargetNullValue=—}" Style="{StaticResource Style.BlotterRightValue}"/>
-
-                                                            <TextBlock Grid.Row="7" Grid.Column="0" Text="Settlement" Style="{StaticResource Style.BlotterRightKey}"/>
-                                                            <TextBlock Grid.Row="7" Grid.Column="1" Text="{Binding SelectedTrade.SettlementDate, StringFormat=yyyy-MM-dd, TargetNullValue=—}" Style="{StaticResource Style.BlotterRightValue}"/>
 
                                                         </Grid>
                                                     </StackPanel>
                                                 </Border>
 
-                                                <!-- LINEAR PRICING - Visible when CallPut IS null -->
-                                                <Border Style="{StaticResource Style.BlotterRightCard}">
-                                                    <Border.Style>
-                                                        <Style TargetType="Border" BasedOn="{StaticResource Style.BlotterRightCard}">
-                                                            <Setter Property="Visibility" Value="Collapsed"/>
-                                                            <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding SelectedTrade.CallPut, Converter={StaticResource NullToBoolConverter}}" Value="False">
-                                                                    <Setter Property="Visibility" Value="Visible"/>
-                                                                </DataTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </Border.Style>
+                                                <!-- ============ LINEAR PRICING (endast för linear) ============ -->
+                                                <Border Style="{StaticResource Style.BlotterRightCard}" Visibility="{Binding SelectedTrade.CallPut, Converter={StaticResource NullToVisible}}">
                                                     <StackPanel>
                                                         <Border Style="{StaticResource Style.BlotterSectionHeaderBorder}">
                                                             <TextBlock Text="LINEAR PRICING" Style="{StaticResource Style.BlotterRightSectionTitle}"/>
@@ -896,40 +1233,141 @@
                                                                 <RowDefinition Height="Auto"/>
                                                                 <RowDefinition Height="Auto"/>
                                                                 <RowDefinition Height="Auto"/>
+                                                                <RowDefinition Height="Auto"/>                                                                
+                                                                <!-- NDF-specifika fält -->
                                                                 <RowDefinition Height="Auto"/>
                                                                 <RowDefinition Height="Auto"/>
                                                             </Grid.RowDefinitions>
 
-                                                            <TextBlock Grid.Row="0" Grid.Column="0" Text="CcyPair" Style="{StaticResource Style.BlotterRightKey}"/>
-                                                            <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding SelectedTrade.CcyPair}" Style="{StaticResource Style.BlotterRightValue}"/>
+                                                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Hedge Type" Style="{StaticResource Style.BlotterRightKey}"/>
+                                                            <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding SelectedTrade.HedgeType, TargetNullValue=—}" Style="{StaticResource Style.BlotterRightValue}"/>
 
-                                                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Hedge Type" Style="{StaticResource Style.BlotterRightKey}"/>
-                                                            <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding SelectedTrade.HedgeType, TargetNullValue=—}" Style="{StaticResource Style.BlotterRightValue}"/>
+                                                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Hedge Rate" Style="{StaticResource Style.BlotterRightKey}"/>
+                                                            <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding SelectedTrade.HedgeRate, StringFormat=F6, TargetNullValue=—}" Style="{StaticResource Style.BlotterRightValue}"/>
 
-                                                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Hedge Rate" Style="{StaticResource Style.BlotterRightKey}"/>
-                                                            <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding SelectedTrade.HedgeRate, StringFormat=F6, TargetNullValue=—}" Style="{StaticResource Style.BlotterRightValue}"/>
+                                                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Spot Rate" Style="{StaticResource Style.BlotterRightKey}"/>
+                                                            <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding SelectedTrade.SpotRate, StringFormat=F6, TargetNullValue=—}" Style="{StaticResource Style.BlotterRightValue}"/>
 
-                                                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Notional" Style="{StaticResource Style.BlotterRightKey}"/>
-                                                            <TextBlock Grid.Row="3" Grid.Column="1" Style="{StaticResource Style.BlotterRightValue}">
-                                                                <TextBlock.Text>
-                                                                    <MultiBinding StringFormat="{}{0:N0} {1}">
-                                                                        <Binding Path="SelectedTrade.Notional"/>
-                                                                        <Binding Path="SelectedTrade.NotionalCcy"/>
-                                                                    </MultiBinding>
-                                                                </TextBlock.Text>
+                                                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Swap Points" Style="{StaticResource Style.BlotterRightKey}"/>
+                                                            <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding SelectedTrade.SwapPoints, StringFormat=F2, TargetNullValue=—}" Style="{StaticResource Style.BlotterRightValue}"/>
+
+                                                            <!-- NDF-specifika fält - visas endast om IsNonDeliverable = true -->
+                                                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Fixing Date" Style="{StaticResource Style.BlotterRightKey}">
+                                                                <TextBlock.Visibility>
+                                                                    <Binding Path="SelectedTrade.IsNonDeliverable" Converter="{StaticResource BoolToVisConverter}"/>
+                                                                </TextBlock.Visibility>
+                                                            </TextBlock>
+                                                            <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding SelectedTrade.FixingDate, StringFormat=yyyy-MM-dd, TargetNullValue=—}" Style="{StaticResource Style.BlotterRightValue}">
+                                                                <TextBlock.Visibility>
+                                                                    <Binding Path="SelectedTrade.IsNonDeliverable" Converter="{StaticResource BoolToVisConverter}"/>
+                                                                </TextBlock.Visibility>
                                                             </TextBlock>
 
-                                                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Settlement Date" Style="{StaticResource Style.BlotterRightKey}"/>
-                                                            <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding SelectedTrade.SettlementDate, StringFormat=yyyy-MM-dd, TargetNullValue=—}" Style="{StaticResource Style.BlotterRightValue}"/>
+                                                            <TextBlock Grid.Row="5" Grid.Column="0" Text="Settlement Date" Style="{StaticResource Style.BlotterRightKey}"/>
+                                                            <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding SelectedTrade.SettlementDate, StringFormat=yyyy-MM-dd, TargetNullValue=—}" Style="{StaticResource Style.BlotterRightValue}"/>
 
-                                                            <TextBlock Grid.Row="5" Grid.Column="0" Text="Settlement Ccy" Style="{StaticResource Style.BlotterRightKey}"/>
-                                                            <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding SelectedTrade.SettlementCurrency, TargetNullValue=—}" Style="{StaticResource Style.BlotterRightValue}"/>
+                                                            <TextBlock Grid.Row="6" Grid.Column="0" Text="Settlement Ccy" Style="{StaticResource Style.BlotterRightKey}">
+                                                                <TextBlock.Visibility>
+                                                                    <Binding Path="SelectedTrade.IsNonDeliverable" Converter="{StaticResource BoolToVisConverter}"/>
+                                                                </TextBlock.Visibility>
+                                                            </TextBlock>
+                                                            <TextBlock Grid.Row="6" Grid.Column="1" Text="{Binding SelectedTrade.SettlementCurrency, TargetNullValue=—}" Style="{StaticResource Style.BlotterRightValue}">
+                                                                <TextBlock.Visibility>
+                                                                    <Binding Path="SelectedTrade.IsNonDeliverable" Converter="{StaticResource BoolToVisConverter}"/>
+                                                                </TextBlock.Visibility>
+                                                            </TextBlock>
+
+                                                        </Grid>
+                                                    </StackPanel>
+                                                </Border>
+
+                                                <!-- ============ PORTFOLIOS ============ -->
+                                                <Border Style="{StaticResource Style.BlotterRightCard}">
+                                                    <StackPanel>
+                                                        <Border Style="{StaticResource Style.BlotterSectionHeaderBorder}">
+                                                            <TextBlock Text="PORTFOLIOS" Style="{StaticResource Style.BlotterRightSectionTitle}"/>
+                                                        </Border>
+
+                                                        <Grid>
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="120"/>
+                                                                <ColumnDefinition Width="*"/>
+                                                            </Grid.ColumnDefinitions>
+                                                            <Grid.RowDefinitions>
+                                                                <RowDefinition Height="Auto"/>
+                                                                <RowDefinition Height="Auto"/>
+                                                            </Grid.RowDefinitions>
+
+                                                            <TextBlock Grid.Row="0" Grid.Column="0" Text="MX3 Portfolio" Style="{StaticResource Style.BlotterRightKey}"/>
+                                                            <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding SelectedTrade.PortfolioMx3, TargetNullValue=—}" Style="{StaticResource Style.BlotterRightValue}"/>
+
+                                                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Calypso Book" Style="{StaticResource Style.BlotterRightKey}">
+                                                                <TextBlock.Visibility>
+                                                                    <Binding Path="SelectedTrade.CalypsoPortfolio" Converter="{StaticResource NullToCollapsed}"/>
+                                                                </TextBlock.Visibility>
+                                                            </TextBlock>
+                                                            <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding SelectedTrade.CalypsoPortfolio}" Style="{StaticResource Style.BlotterRightValue}">
+                                                                <TextBlock.Visibility>
+                                                                    <Binding Path="SelectedTrade.CalypsoPortfolio" Converter="{StaticResource NullToCollapsed}"/>
+                                                                </TextBlock.Visibility>
+                                                            </TextBlock>
+
+                                                        </Grid>
+                                                    </StackPanel>
+                                                </Border>
+
+                                                <!-- SALES -->
+                                                <Border>
+                                                    <Border.Style>
+                                                        <Style TargetType="Border" BasedOn="{StaticResource Style.BlotterRightCard}">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding SelectedTrade.ReportingEntityId}" Value="FX VOLATILITY">
+                                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Border.Style>
+                                                    <StackPanel>
+                                                        <Border Style="{StaticResource Style.BlotterSectionHeaderBorder}">
+                                                            <TextBlock Text="SALES" Style="{StaticResource Style.BlotterRightSectionTitle}"/>
+                                                        </Border>
+                                                        <Grid>
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="120"/>
+                                                                <ColumnDefinition Width="*"/>
+                                                            </Grid.ColumnDefinitions>
+                                                            <Grid.RowDefinitions>
+                                                                <RowDefinition Height="Auto"/>
+                                                                <RowDefinition Height="Auto"/>
+                                                                <RowDefinition Height="Auto"/>
+                                                                <RowDefinition Height="Auto"/>
+                                                            </Grid.RowDefinitions>
+
+                                                            <!-- Sales ID -->
+                                                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Sales ID" Style="{StaticResource Style.BlotterRightKey}"/>
+                                                            <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding SelectedTrade.InvDecisionId, TargetNullValue=—}" Style="{StaticResource Style.BlotterRightValue}"/>
+
+                                                            <!-- Sales Name -->
+                                                            <!-- TODO: Fyll från lookup table senare -->
+                                                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Sales Name" Style="{StaticResource Style.BlotterRightKey}"/>
+                                                            <TextBlock Grid.Row="1" Grid.Column="1" Text="—" Style="{StaticResource Style.BlotterRightValue}" Foreground="{StaticResource Brush.TextMuted2}"/>
+
+                                                            <!-- Reporting Entity -->
+                                                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Reporting Entity" Style="{StaticResource Style.BlotterRightKey}"/>
+                                                            <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding SelectedTrade.ReportingEntityId, TargetNullValue=—}" Style="{StaticResource Style.BlotterRightValue}"/>
+
+                                                            <!-- Margin -->
+                                                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Margin" Style="{StaticResource Style.BlotterRightKey}"/>
+                                                            <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding SelectedTrade.Margin, TargetNullValue=—}" Style="{StaticResource Style.BlotterRightValue}"/>
 
                                                         </Grid>
                                                     </StackPanel>
                                                 </Border>
 
                                             </StackPanel>
+
+
                                         </ScrollViewer>
 
                                         <!-- ROUTING PAGE -->
@@ -947,7 +1385,7 @@
 
                                             <StackPanel>
 
-                                                <!-- D2.2D: Error Message -->
+                                                <!-- Error Message -->
                                                 <Border Background="#1AEF4444"
             BorderBrush="#EF4444"
             BorderThickness="1"
@@ -961,14 +1399,14 @@
                    FontSize="11"/>
                                                 </Border>
 
-                                                <!-- D2.2D: System Links Card -->
+                                                <!-- System Links Card -->
                                                 <Border Style="{StaticResource Style.BlotterRightCard}">
                                                     <StackPanel>
                                                         <Border Style="{StaticResource Style.BlotterSectionHeaderBorder}">
                                                             <TextBlock Text="ROUTING / SYSTEM LINKS" Style="{StaticResource Style.BlotterRightSectionTitle}"/>
                                                         </Border>
 
-                                                        <!-- D2.2D: Bind till SelectedTradeSystemLinks med utökade fält -->
+                                                        <!-- Bind till SelectedTradeSystemLinks med utökade fält -->
                                                         <ItemsControl ItemsSource="{Binding SelectedTradeSystemLinks}">
                                                             <ItemsControl.ItemTemplate>
                                                                 <DataTemplate>
@@ -1031,9 +1469,9 @@
 
                                                                             <!-- SystemLinkId -->
                                                                             <TextBlock Grid.Row="1" Grid.Column="0"
-                                           Style="{StaticResource Style.BlotterSystemCode}">
-                                    <Run Text="SystemLinkId="/>
-                                    <Run Text="{Binding SystemLinkId, Mode=OneWay}"/>
+                                                                                       Style="{StaticResource Style.BlotterSystemCode}">
+                                                                                <Run Text="SystemLinkId="/>
+                                                                                <Run Text="{Binding SystemLinkId, Mode=OneWay}"/>
                                                                             </TextBlock>
 
                                                                             <!-- External TradeID -->
@@ -1044,19 +1482,19 @@
                                                                                 </Grid.ColumnDefinitions>
 
                                                                                 <TextBlock Grid.Column="0"
-                                               Text="External TradeID:" 
-                                               Foreground="{StaticResource Brush.TextMuted2}"
-                                               FontSize="11"
-                                               Margin="0,0,8,0"
-                                               VerticalAlignment="Center"/>
+                                                                                           Text="External TradeID:" 
+                                                                                           Foreground="{StaticResource Brush.TextMuted2}"
+                                                                                           FontSize="11"
+                                                                                           Margin="0,0,8,0"
+                                                                                           VerticalAlignment="Center"/>
 
                                                                                 <TextBlock Grid.Column="1"
-                                               Text="{Binding SystemTradeId, TargetNullValue=—}" 
-                                               Foreground="{StaticResource Brush.TextMuted}"
-                                               FontSize="11"
-                                               FontFamily="{StaticResource Font.Mono}"
-                                               VerticalAlignment="Center"
-                                               TextWrapping="Wrap"/>
+                                                                                           Text="{Binding SystemTradeId, TargetNullValue=—}" 
+                                                                                           Foreground="{StaticResource Brush.TextMuted}"
+                                                                                           FontSize="11"
+                                                                                           FontFamily="{StaticResource Font.Mono}"
+                                                                                           VerticalAlignment="Center"
+                                                                                           TextWrapping="Wrap"/>
                                                                             </Grid>
 
                                                                             <!-- Portfolio -->
@@ -1067,18 +1505,18 @@
                                                                                 </Grid.ColumnDefinitions>
 
                                                                                 <TextBlock Grid.Column="0"
-                                               Text="Portfolio:" 
-                                               Foreground="{StaticResource Brush.TextMuted2}"
-                                               FontSize="11"
-                                               Margin="0,0,8,0"
-                                               VerticalAlignment="Center"/>
+                                                                                           Text="Portfolio:" 
+                                                                                           Foreground="{StaticResource Brush.TextMuted2}"
+                                                                                           FontSize="11"
+                                                                                           Margin="0,0,8,0"
+                                                                                           VerticalAlignment="Center"/>
 
                                                                                 <TextBlock Grid.Column="1"
-                                               Text="{Binding PortfolioCode, TargetNullValue=—}" 
-                                               Foreground="{StaticResource Brush.Text}"
-                                               FontSize="11"
-                                               FontWeight="SemiBold"
-                                               VerticalAlignment="Center"/>
+                                                                                           Text="{Binding PortfolioCode, TargetNullValue=—}" 
+                                                                                           Foreground="{StaticResource Brush.Text}"
+                                                                                           FontSize="11"
+                                                                                           FontWeight="SemiBold"
+                                                                                           VerticalAlignment="Center"/>
                                                                             </Grid>
 
                                                                             <!-- Last Status timestamp -->
@@ -1089,40 +1527,41 @@
                                                                                 </Grid.ColumnDefinitions>
 
                                                                                 <TextBlock Grid.Column="0"
-                                               Text="Last Status:" 
-                                               Foreground="{StaticResource Brush.TextMuted2}"
-                                               FontSize="11"
-                                               Margin="0,0,8,0"
-                                               VerticalAlignment="Center"/>
+                                                                                           Text="Last Status:" 
+                                                                                           Foreground="{StaticResource Brush.TextMuted2}"
+                                                                                           FontSize="11"
+                                                                                           Margin="0,0,8,0"
+                                                                                           VerticalAlignment="Center"/>
 
                                                                                 <TextBlock Grid.Column="1"
-                                               Text="{Binding LastStatusUtc, StringFormat='yyyy-MM-dd HH:mm:ss', TargetNullValue=—}" 
-                                               Foreground="{StaticResource Brush.TextMuted}"
-                                               FontSize="11"
-                                               FontFamily="{StaticResource Font.Mono}"
-                                               VerticalAlignment="Center"/>
+                                                                                           Text="{Binding LastStatusUtc, Converter={StaticResource UtcToLocalTime}, StringFormat='yyyy-MM-dd HH:mm:ss', TargetNullValue=—}" 
+                                                                                           Foreground="{StaticResource Brush.TextMuted}"
+                                                                                           FontSize="11"
+                                                                                           FontFamily="{StaticResource Font.Mono}"
+                                                                                           VerticalAlignment="Center"/>
+
                                                                             </Grid>
 
                                                                             <!-- Error message (conditional) -->
                                                                             <Border Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="2" 
-                                        Margin="0,8,0,0"
-                                        Background="#1AEF4444"
-                                        BorderBrush="#EF4444"
-                                        BorderThickness="1"
-                                        CornerRadius="{StaticResource Radius.Button}"
-                                        Padding="8,6"
-                                        Visibility="{Binding LastError, Converter={StaticResource NullToCollapsed}}">
+                                                                                    Margin="0,8,0,0"
+                                                                                    Background="#1AEF4444"
+                                                                                    BorderBrush="#EF4444"
+                                                                                    BorderThickness="1"
+                                                                                    CornerRadius="{StaticResource Radius.Button}"
+                                                                                    Padding="8,6"
+                                                                                    Visibility="{Binding LastError, Converter={StaticResource NullToCollapsed}}">
                                                                                 <StackPanel Orientation="Horizontal">
                                                                                     <TextBlock Text="⚠ " 
-                                                   Foreground="#EF4444"
-                                                   FontSize="11"
-                                                   Margin="0,0,4,0"
-                                                   VerticalAlignment="Top"/>
+                                                                                               Foreground="#EF4444"
+                                                                                               FontSize="11"
+                                                                                               Margin="0,0,4,0"
+                                                                                               VerticalAlignment="Top"/>
                                                                                     <TextBlock Text="{Binding LastError}" 
-                                                   Foreground="#EF4444"
-                                                   FontSize="11"
-                                                   TextWrapping="Wrap"
-                                                   VerticalAlignment="Center"/>
+                                                                                               Foreground="#EF4444"
+                                                                                               FontSize="11"
+                                                                                               TextWrapping="Wrap"
+                                                                                               VerticalAlignment="Center"/>
                                                                                 </StackPanel>
                                                                             </Border>
 
@@ -1184,63 +1623,65 @@
                                                                                 <!-- Content -->
                                                                             </Grid.ColumnDefinitions>
 
-                                                                            <!-- Timestamp - TA BORT Style, sätt properties direkt -->
+                                                                            <!-- Timestamp -->
                                                                             <TextBlock Grid.Row="0" Grid.Column="0"
-                               Text="{Binding TimestampUtc, StringFormat='HH:mm:ss'}"
-                               FontFamily="{StaticResource Font.Mono}"
-                               FontSize="11"
-                               Foreground="{StaticResource Brush.TextMuted2}"
-                               VerticalAlignment="Center"
-                               Margin="0"/>
+                                                                                       Text="{Binding TimestampUtc, Converter={StaticResource UtcToLocalTime}, StringFormat='HH:mm:ss'}"
+                                                                                       FontFamily="{StaticResource Font.Mono}"
+                                                                                       FontSize="11"
+                                                                                       Foreground="{StaticResource Brush.TextMuted2}"
+                                                                                       VerticalAlignment="Center"
+                                                                                       Margin="0"/>
 
                                                                             <!-- Event Type Icon -->
                                                                             <TextBlock Grid.Row="0" Grid.Column="2"
-                               Text="{Binding EventType, Converter={StaticResource EventTypeToIcon}}"
-                               FontSize="14"
-                               Foreground="{Binding EventType, Converter={StaticResource EventTypeToColor}}"
-                               VerticalAlignment="Center"
-                               Margin="0"/>
+                                                                                       Text="{Binding EventType, Converter={StaticResource EventTypeToIcon}}"
+                                                                                       FontSize="14"
+                                                                                       Foreground="{Binding EventType, Converter={StaticResource EventTypeToColor}}"
+                                                                                       VerticalAlignment="Center"
+                                                                                       Margin="0"/>
 
                                                                             <!-- Event Type + System Code Badge -->
                                                                             <StackPanel Grid.Row="0" Grid.Column="4" 
-                                Orientation="Horizontal" 
-                                VerticalAlignment="Center">
+                                                                                        Orientation="Horizontal" 
+                                                                                        VerticalAlignment="Center">
 
                                                                                 <TextBlock Text="{Binding EventType}" 
-                                   FontSize="13"
-                                   FontWeight="SemiBold"
-                                   Foreground="{StaticResource Brush.Text}"
-                                   VerticalAlignment="Center"
-                                   Margin="0"/>
+                                                                                           FontSize="13"
+                                                                                           FontWeight="SemiBold"
+                                                                                           Foreground="{StaticResource Brush.Text}"
+                                                                                           VerticalAlignment="Center"
+                                                                                           Margin="0"/>
 
                                                                                 <!-- System Code badge -->
                                                                                 <Border Background="#1A64748B"
-                                BorderBrush="#64748B"
-                                BorderThickness="1"
-                                CornerRadius="4"
-                                Padding="6,2"
-                                Margin="8,0,0,0"
-                                VerticalAlignment="Center">
+                                                                                        BorderBrush="#64748B"
+                                                                                        BorderThickness="1"
+                                                                                        CornerRadius="4"
+                                                                                        Padding="6,2"
+                                                                                        Margin="8,0,0,0"
+                                                                                        VerticalAlignment="Center">
+                                                                                    
                                                                                     <TextBlock Text="{Binding SystemCode}" 
-                                       FontSize="10"
-                                       FontFamily="{StaticResource Font.Mono}"
-                                       Foreground="{StaticResource Brush.TextMuted}"
-                                       FontWeight="SemiBold"
-                                       VerticalAlignment="Center"/>
+                                                                                               FontSize="10"
+                                                                                               FontFamily="{StaticResource Font.Mono}"
+                                                                                               Foreground="{StaticResource Brush.TextMuted}"
+                                                                                               FontWeight="SemiBold"
+                                                                                               VerticalAlignment="Center"/>
                                                                                 </Border>
                                                                             </StackPanel>
 
                                                                             <!-- Details (bullet list) -->
                                                                             <ItemsControl Grid.Row="1" Grid.Column="4"
-                                  ItemsSource="{Binding Details, Converter={StaticResource DetailsToLines}}"
-                                  Margin="0,6,0,0">
+                                                                                          ItemsSource="{Binding Details, Converter={StaticResource DetailsToLines}}"
+                                                                                          Margin="0,6,0,0">
+                                                                                
                                                                                 <ItemsControl.ItemTemplate>
                                                                                     <DataTemplate>
                                                                                         <TextBlock Text="{Binding}"
-                                           FontSize="11"
-                                           Foreground="{StaticResource Brush.TextMuted}"
-                                           Margin="0,0,0,2"
-                                           TextWrapping="Wrap"/>
+                                                                                                   FontSize="11"
+                                                                                                   Foreground="{StaticResource Brush.TextMuted}"
+                                                                                                   Margin="0,0,0,2"
+                                                                                                   TextWrapping="Wrap"/>
                                                                                     </DataTemplate>
                                                                                 </ItemsControl.ItemTemplate>
                                                                             </ItemsControl>
@@ -1253,10 +1694,10 @@
 
                                                         <!-- Empty state -->
                                                         <TextBlock Text="No workflow events found"
-                       Foreground="{StaticResource Brush.TextMuted2}"
-                       FontStyle="Italic"
-                       Margin="10"
-                       HorizontalAlignment="Center">
+                                                                   Foreground="{StaticResource Brush.TextMuted2}"
+                                                                   FontStyle="Italic"
+                                                                   Margin="10"
+                                                                   HorizontalAlignment="Center">
                                                             <TextBlock.Style>
                                                                 <Style TargetType="TextBlock">
                                                                     <Setter Property="Visibility" Value="Collapsed"/>
@@ -1311,6 +1752,7 @@
                                                                 <RowDefinition Height="Auto"/>
                                                                 <RowDefinition Height="Auto"/>
                                                                 <RowDefinition Height="Auto"/>
+                                                                <RowDefinition Height="Auto"/>
 
                                                             </Grid.RowDefinitions>
 
@@ -1346,6 +1788,11 @@
                                                             <TextBlock Grid.Row="7" Grid.Column="0" Text="Inv. Decision Name" Style="{StaticResource Style.BlotterRightKey}"/>
                                                             <TextBlock Grid.Row="7" Grid.Column="1" Text="N/A" Style="{StaticResource Style.BlotterRightValue}"/>
 
+                                                            <!-- Reporting Entity. Decision ID - finns nu! -->
+                                                            <TextBlock Grid.Row="8" Grid.Column="0" Text="Reporting Entity" Style="{StaticResource Style.BlotterRightKey}"/>
+                                                            <TextBlock Grid.Row="8" Grid.Column="1" Text="{Binding SelectedTrade.ReportingEntityId, TargetNullValue=—}" Style="{StaticResource Style.BlotterRightValue}"/>
+
+
 
                                                         </Grid>
                                                     </StackPanel>
@@ -1377,22 +1824,39 @@
 
         <!-- STATUSRAD - diskret längst ner -->
         <Border Background="{StaticResource Brush.Panel2}"
-                BorderBrush="{StaticResource Brush.BorderSoft}"
-                BorderThickness="0,1,0,0"
-                Padding="8,4"
-                VerticalAlignment="Bottom">
+        BorderBrush="{StaticResource Brush.BorderSoft}"
+        BorderThickness="0,1,0,0"
+        Padding="8,4"
+        Margin="{StaticResource Thickness.WindowPadding}"                
+        VerticalAlignment="Bottom">
 
             <Grid>
-                <!-- Normal state - dold när IsStale=True -->
-                <TextBlock FontSize="10" 
-                           Foreground="{StaticResource Brush.TextMuted2}"
-                           HorizontalAlignment="Right"
-                           x:Name="NormalStatus">
-                    <Run Text="Last refresh: "/>
-                    <Run Text="{Binding LastRefreshUtc, Mode=OneWay, StringFormat='HH:mm:ss', TargetNullValue='—'}"/>
-                    <Run Text=" ("/>
-                    <Run Text="{Binding LastRefreshDuration.TotalMilliseconds, Mode=OneWay, StringFormat='F0', TargetNullValue='—'}"/>
-                    <Run Text="ms)"/>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Calypso countdown (vänster) -->
+                <TextBlock Grid.Column="0"
+                   FontSize="10"
+                   Foreground="{StaticResource Brush.TextMuted2}">
+            <Run Text="Next Calypso import: "/>
+            <Run Text="{Binding CalypsoCountdown, Mode=OneWay}" 
+                 FontFamily="{StaticResource Font.Mono}"/>
+                </TextBlock>
+
+                <!-- Normal state (höger) - dold när IsStale=True -->
+                <TextBlock Grid.Column="2"
+                   FontSize="10" 
+                   Foreground="{StaticResource Brush.TextMuted2}"
+                   HorizontalAlignment="Right"
+                   x:Name="NormalStatus">
+            <Run Text="Last refresh: "/>
+            <Run Text="{Binding LastRefreshUtc, Mode=OneWay, StringFormat='HH:mm:ss', TargetNullValue='—'}"/>
+            <Run Text=" ("/>
+            <Run Text="{Binding LastRefreshDuration.TotalMilliseconds, Mode=OneWay, StringFormat='F0', TargetNullValue='—'}"/>
+            <Run Text="ms)"/>
                     <TextBlock.Style>
                         <Style TargetType="TextBlock">
                             <Setter Property="Visibility" Value="Visible"/>
@@ -1405,16 +1869,17 @@
                     </TextBlock.Style>
                 </TextBlock>
 
-                <!-- Error state - synlig när IsStale=True -->
-                <TextBlock FontSize="10" 
-                           Foreground="#EF4444"
-                           HorizontalAlignment="Right"
-                           x:Name="ErrorStatus">
-                    <Run Text="⚠ "/>
-                    <Run Text="Last refresh: "/>
-                    <Run Text="{Binding LastRefreshUtc, Mode=OneWay, StringFormat='HH:mm:ss', TargetNullValue='—'}"/>
-                    <Run Text=" — "/>
-                    <Run Text="{Binding LastError, Mode=OneWay}"/>
+                <!-- Error state (höger) - synlig när IsStale=True -->
+                <TextBlock Grid.Column="2"
+                   FontSize="10" 
+                   Foreground="#EF4444"
+                   HorizontalAlignment="Right"
+                   x:Name="ErrorStatus">
+            <Run Text="⚠ "/>
+            <Run Text="Last refresh: "/>
+            <Run Text="{Binding LastRefreshUtc, Mode=OneWay, StringFormat='HH:mm:ss', TargetNullValue='—'}"/>
+            <Run Text=" — "/>
+            <Run Text="{Binding LastError, Mode=OneWay}"/>
                     <TextBlock.Style>
                         <Style TargetType="TextBlock">
                             <Setter Property="Visibility" Value="Collapsed"/>

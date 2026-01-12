@@ -89,18 +89,15 @@
         <GradientStop Color="#1A000000" Offset="1.0"/>
     </RadialGradientBrush>
 
-
-
-
     <!-- =========================
          BLOTTER: TOOLBAR BUTTONS
-         (matchar "chip/button" från preview)
          ========================= -->
 
     <Style x:Key="Style.BlotterToolbarButton" TargetType="{x:Type Button}">
-        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="FontWeight" Value="Medium"/>
         <Setter Property="Foreground" Value="{StaticResource Brush.Text}"/>
-        <Setter Property="Padding" Value="12,8"/>
+        <Setter Property="Padding" Value="14,8"/>
         <Setter Property="Background" Value="{StaticResource Brush.PanelChromeTitle}"/>
         <Setter Property="BorderBrush" Value="{StaticResource Brush.Border}"/>
         <Setter Property="BorderThickness" Value="1"/>
@@ -110,27 +107,50 @@
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type Button}">
                     <Border x:Name="Bd"
-                            Background="{TemplateBinding Background}"
-                            BorderBrush="{TemplateBinding BorderBrush}"
-                            BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="{StaticResource Radius.Button}">
+                    Background="{TemplateBinding Background}"
+                    BorderBrush="{TemplateBinding BorderBrush}"
+                    BorderThickness="{TemplateBinding BorderThickness}"
+                    CornerRadius="{StaticResource Radius.Button}">
                         <ContentPresenter Margin="{TemplateBinding Padding}"
-                                          HorizontalAlignment="Center"
-                                          VerticalAlignment="Center"/>
+                                  HorizontalAlignment="Center"
+                                  VerticalAlignment="Center"/>
                     </Border>
 
                     <ControlTemplate.Triggers>
+                        <!-- SUBTIL hover: endast lätt glass-effekt + scale -->
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource Brush.Surface.Hover}"/>
+                            <!-- Endast ändra Background, INTE BorderBrush -->
+                            <Setter TargetName="Bd" Property="Background">
+                                <Setter.Value>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                        <GradientStop Color="#08FFFFFF" Offset="0.0"/>
+                                        <GradientStop Color="#04FFFFFF" Offset="1.0"/>
+                                    </LinearGradientBrush>
+                                </Setter.Value>
+                            </Setter>
+                            <!-- TA BORT denna rad som ändrar BorderBrush -->
+                            <!-- <Setter TargetName="Bd" Property="BorderBrush">... -->
+
+                            <!-- Subtil scale på hover -->
+                            <Setter TargetName="Bd" Property="RenderTransform">
+                                <Setter.Value>
+                                    <ScaleTransform ScaleX="1.02" ScaleY="1.02"/>
+                                </Setter.Value>
+                            </Setter>
+                            <Setter TargetName="Bd" Property="RenderTransformOrigin" Value="0.5,0.5"/>
                         </Trigger>
+
+                        <!-- Press-effekt -->
                         <Trigger Property="IsPressed" Value="True">
                             <Setter TargetName="Bd" Property="Background" Value="{StaticResource Brush.Surface.Pressed}"/>
                             <Setter TargetName="Bd" Property="RenderTransform">
                                 <Setter.Value>
-                                    <TranslateTransform Y="1"/>
+                                    <ScaleTransform ScaleX="0.98" ScaleY="0.98"/>
                                 </Setter.Value>
                             </Setter>
+                            <Setter TargetName="Bd" Property="RenderTransformOrigin" Value="0.5,0.5"/>
                         </Trigger>
+
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.55"/>
                         </Trigger>
@@ -261,6 +281,63 @@
                 <Setter Property="Foreground" Value="{StaticResource Brush.Text}"/>
             </DataTrigger>
         </Style.Triggers>
+    </Style>
+
+    <!-- Quick filter checkbox style (My trades, Today, Auto-book) -->
+    <Style x:Key="Style.BlotterQuickFilter" TargetType="{x:Type CheckBox}">
+        <Setter Property="Foreground" Value="{StaticResource Brush.TextMuted2}"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Padding" Value="10,7"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type CheckBox}">
+                    <Border x:Name="Bd"
+                        Background="Transparent"
+                        BorderBrush="Transparent"
+                        BorderThickness="1"
+                        CornerRadius="{StaticResource Radius.Button}"
+                        Padding="{TemplateBinding Padding}">
+                        <ContentPresenter VerticalAlignment="Center"/>
+                    </Border>
+
+                    <ControlTemplate.Triggers>
+                        <!-- Hover -->
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bd" Property="Background">
+                                <Setter.Value>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                        <GradientStop Color="#08FFFFFF" Offset="0.0"/>
+                                        <GradientStop Color="#04FFFFFF" Offset="1.0"/>
+                                    </LinearGradientBrush>
+                                </Setter.Value>
+                            </Setter>
+                            <Setter TargetName="Bd" Property="BorderBrush">
+                                <Setter.Value>
+                                    <SolidColorBrush Color="#20FFFFFF"/>
+                                </Setter.Value>
+                            </Setter>
+                        </Trigger>
+
+                        <!-- Checked -->
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="#1A2DD4BF"/>
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="#2DD4BF"/>
+                            <Setter Property="Foreground" Value="#2DD4BF"/>
+                        </Trigger>
+
+                        <!-- Checked + Hover -->
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsChecked" Value="True"/>
+                                <Condition Property="IsMouseOver" Value="True"/>
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="Bd" Property="Background" Value="#262DD4BF"/>
+                        </MultiTrigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
     </Style>
 
     <!-- =========================
@@ -1100,19 +1177,16 @@
                         <Border x:Name="RowFill" Background="Transparent" Panel.ZIndex="0"/>
 
                         <!-- NEW flash -->
-                        <Border x:Name="FlashOverlay" Background="#592DD4BF" BorderBrush="#402DD4BF" 
-            BorderThickness="1" Opacity="0" Panel.ZIndex="1"/>
+                        <Border x:Name="FlashOverlay" Background="#592DD4BF" BorderBrush="#402DD4BF" BorderThickness="1" Opacity="0" Panel.ZIndex="1"/>
 
                         <!-- UPDATED flash (NY!) -->
                         <Border x:Name="UpdatedOverlay" Background="#332DD4BF" Opacity="0" Panel.ZIndex="1"/>
 
                         <DataGridCellsPresenter Panel.ZIndex="2"/>
-                        <Border x:Name="LeftAccent" Width="3" HorizontalAlignment="Left" 
-            Background="Transparent" Panel.ZIndex="3"/>
-                        <Border x:Name="TopLine" Height="1" VerticalAlignment="Top" 
-            Background="{StaticResource Blotter.Brush.RowLine}" Opacity="0" Panel.ZIndex="4"/>
-                        <Border x:Name="BottomLine" Height="1" VerticalAlignment="Bottom" 
-            Background="{StaticResource Blotter.Brush.RowLine}" Opacity="0" Panel.ZIndex="4"/>
+                        <Border x:Name="LeftAccent" Width="3" HorizontalAlignment="Left" Background="Transparent" Panel.ZIndex="3"/>
+                        <Border x:Name="TopLine" Height="1" VerticalAlignment="Top" Background="{StaticResource Blotter.Brush.RowLine}" Opacity="0" Panel.ZIndex="4"/>
+                        <Border x:Name="BottomLine" Height="1" VerticalAlignment="Bottom" Background="{StaticResource Blotter.Brush.RowLine}" Opacity="0" Panel.ZIndex="4"/>
+                    
                     </Grid>
 
                     <ControlTemplate.Triggers>
@@ -1123,17 +1197,17 @@
                                 <BeginStoryboard>
                                     <Storyboard>
                                         <DoubleAnimation Storyboard.TargetName="UpdatedOverlay" 
-                                 Storyboard.TargetProperty="Opacity" 
-                                 From="0.5" To="0.0" Duration="0:0:2.0"
-                                 EasingFunction="{StaticResource EaseOutQuad}"/>
+                                                         Storyboard.TargetProperty="Opacity" 
+                                                         From="0.5" To="0.0" Duration="0:0:2.0"
+                                                         EasingFunction="{StaticResource EaseOutQuad}"/>
                                         <DoubleAnimation Storyboard.TargetName="TopLine" 
-                                 Storyboard.TargetProperty="Opacity" 
-                                 From="1.0" To="0.0" Duration="0:0:2.0"
-                                 EasingFunction="{StaticResource EaseOutQuad}"/>
+                                                         Storyboard.TargetProperty="Opacity" 
+                                                         From="1.0" To="0.0" Duration="0:0:2.0"
+                                                         EasingFunction="{StaticResource EaseOutQuad}"/>
                                         <DoubleAnimation Storyboard.TargetName="BottomLine" 
-                                 Storyboard.TargetProperty="Opacity" 
-                                 From="1.0" To="0.0" Duration="0:0:2.0"
-                                 EasingFunction="{StaticResource EaseOutQuad}"/>
+                                                         Storyboard.TargetProperty="Opacity" 
+                                                         From="1.0" To="0.0" Duration="0:0:2.0"
+                                                         EasingFunction="{StaticResource EaseOutQuad}"/>
                                     </Storyboard>
                                 </BeginStoryboard>
                             </DataTrigger.EnterActions>
@@ -1163,11 +1237,6 @@
                                     </Storyboard>
                                 </BeginStoryboard>
                             </DataTrigger.EnterActions>
-                        </DataTrigger>
-
-                        <!-- BOOKED trades - 70% opacity (LÄGG TILL DESSA!) -->
-                        <DataTrigger Binding="{Binding Status}" Value="Booked">
-                            <Setter Property="Opacity" Value="0.70"/>
                         </DataTrigger>
 
                         <!-- IsMouseOver - Hover effect -->
@@ -1291,11 +1360,6 @@
                             </DataTrigger.EnterActions>
                         </DataTrigger>
 
-                        <!-- BOOKED trades - 60% opacity (LÄGG TILL DESSA!) -->
-                        <DataTrigger Binding="{Binding Status}" Value="Booked">
-                            <Setter Property="Opacity" Value="0.6"/>
-                        </DataTrigger>
-                        
                         <!-- IsMouseOver - Hover effect (purple) -->
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="RowFill" Property="Background">
@@ -1422,17 +1486,43 @@
         <Setter Property="VerticalAlignment" Value="Center"/>
     </Style>
 
-    <!-- Numeric cell style - overrider HorizontalContentAlignment -->
-    <Style x:Key="Style.BlotterDataGridCell.Numeric" TargetType="{x:Type DataGridCell}" BasedOn="{StaticResource Style.BlotterDataGridCell}">
-        <Setter Property="HorizontalContentAlignment" Value="Right"/>
-    </Style>
-
     <!-- Numeric header style - höger-alignerad text -->
     <Style x:Key="Style.BlotterDataGridHeader.Numeric" TargetType="{x:Type DataGridColumnHeader}" BasedOn="{StaticResource Style.BlotterDataGridHeader}">
         <Setter Property="HorizontalContentAlignment" Value="Right"/>
         <Setter Property="Padding" Value="10,6,12,6"/>
     </Style>
 
+    <!-- Cell style för Booked trades -->
+    <Style x:Key="Style.BlotterDataGridCell.Booked" TargetType="{x:Type DataGridCell}" BasedOn="{StaticResource Style.BlotterDataGridCell}">
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding Status}" Value="Booked">
+                <Setter Property="Opacity" Value="0.70"/>
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
 
+    <!-- Cell style för Status column - full opacity alltid -->
+    <Style x:Key="Style.BlotterDataGridCell.Status" TargetType="{x:Type DataGridCell}" BasedOn="{StaticResource Style.BlotterDataGridCell}">
+        <Setter Property="Opacity" Value="1.0"/>
+    </Style>
+
+    <!-- Numeric cell style - högerställd + Booked-opacity -->
+    <Style x:Key="Style.BlotterDataGridCell.Numeric" TargetType="{x:Type DataGridCell}" BasedOn="{StaticResource Style.BlotterDataGridCell}">
+        <Setter Property="HorizontalContentAlignment" Value="Right"/>
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding Status}" Value="Booked">
+                <Setter Property="Opacity" Value="0.70"/>
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- Toolbar separator style -->
+    <Style x:Key="Style.BlotterToolbarSeparator" TargetType="{x:Type Border}">
+        <Setter Property="Width" Value="1"/>
+        <Setter Property="Height" Value="24"/>
+        <Setter Property="Background" Value="{StaticResource Brush.BorderSoft}"/>
+        <Setter Property="Margin" Value="16,0"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
 
 </ResourceDictionary>
