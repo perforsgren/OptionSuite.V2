@@ -148,6 +148,13 @@ namespace FxTradeHub.Domain.Interfaces
         /// </summary>
         Task<string> GetCurrentMasterAsync(string lockName);
 
+        /// <summary>
+        /// Hämtar alla trades med PENDING status för ett specifikt system.
+        /// Används vid startup för att hitta trades som väntar på response.
+        /// </summary>
+        /// <param name="systemCode">SystemCode (MX3, CALYPSO, etc.)</param>
+        /// <returns>Lista med PENDING trades för systemet</returns>
+        Task<IReadOnlyList<PendingTradeSystemLink>> GetPendingTradeSystemLinksAsync(string systemCode);
 
     }
 }

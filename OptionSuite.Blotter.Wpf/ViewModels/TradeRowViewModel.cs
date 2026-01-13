@@ -57,6 +57,8 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
         public string ReportingEntityId { get; }
         public decimal? Margin { get; }
 
+        public bool StpFlag { get; }
+
         public bool IsNew
         {
             get => _isNew;
@@ -120,6 +122,7 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             string invDecisionId = null,
             string reportingEntityId = null,
             decimal? margin = null,
+            bool stpFlag = false,
             bool isNew = false,
             bool isUpdated = false)
         {
@@ -165,8 +168,11 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             ReportingEntityId = reportingEntityId ?? string.Empty;
             Margin = margin;
 
+            StpFlag = stpFlag;
+
             _isNew = isNew;
             _isUpdated = isUpdated;
+
         }
 
         private string CalculateAggregatedStatus(string mx3Status, string calypsoStatus, string fallbackStatus)

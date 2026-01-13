@@ -975,6 +975,64 @@ VALUES
             }
         }
 
+        /// <summary>
+        /// Hämtar alla trades med PENDING status för ett specifikt system.
+        /// Joinar Trade + TradeSystemLink för att få produkttyp och trade-id.
+        /// </summary>
+        public async Task<IReadOnlyList<PendingTradeSystemLink>> GetPendingTradeSystemLinksAsync(string systemCode)
+        {
+            const string sql = @"
+SELECT 
+    tsl.StpTradeId,
+    t.TradeId,
+    t.ProductType,
+    tsl.SystemCode,
+    tsl.LastStatusUtc
+FROM trade_stp.TradeSystemLink tsl
+INNER JOIN trade_stp.Trade t ON t.StpTradeId = tsl.StpTradeId
+WHERE tsl.SystemCode = @SystemCode
+  AND tsl.Status = 'PENDING'
+  AND tsl.IsDeleted = 0
+  AND t.IsDeleted = 0
+ORDER BY tsl.LastStatusUtc DESC;
+";
+
+            var results = new List<PendingTradeSystemLink>();
+
+            using (var conn = CreateConnection())
+            {
+                await conn.OpenAsync().ConfigureAwait(false);
+
+                using (var cmd = new MySqlCommand(sql, conn))
+                {
+                    cmd.Parameters.AddWithValue("@SystemCode", systemCode);
+
+                    using (var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false))
+                    {
+                        int ordStpTradeId = reader.GetOrdinal("StpTradeId");
+                        int ordTradeId = reader.GetOrdinal("TradeId");
+                        int ordProductType = reader.GetOrdinal("ProductType");
+                        int ordSystemCode = reader.GetOrdinal("SystemCode");
+                        int ordLastStatusUtc = reader.GetOrdinal("LastStatusUtc");
+
+                        while (await reader.ReadAsync().ConfigureAwait(false))
+                        {
+                            results.Add(new PendingTradeSystemLink
+                            {
+                                StpTradeId = reader.GetInt64(ordStpTradeId),
+                                TradeId = reader.GetString(ordTradeId),
+                                ProductType = reader.GetString(ordProductType),
+                                SystemCode = reader.GetString(ordSystemCode),
+                                LastUpdatedUtc = reader.GetDateTime(ordLastStatusUtc)
+                            });
+                        }
+                    }
+                }
+            }
+
+            return results;
+        }
+
 
     }
 }
