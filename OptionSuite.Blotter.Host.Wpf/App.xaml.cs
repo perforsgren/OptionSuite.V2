@@ -90,11 +90,13 @@ namespace OptionSuite.Blotter.Host.Wpf
             {
                 System.Diagnostics.Debug.WriteLine("[App] ✅ I AM MASTER - Starting Mx3 & Calyso FileWatcher");
                 _responseWatcher?.Start();
+                _calypsoResponseWatcher?.Start();
             }
             else
             {
                 System.Diagnostics.Debug.WriteLine("[App] ❌ NOT MASTER - Stopping Mx3 & Calypso  FileWatcher");
                 _responseWatcher?.Stop();
+                _calypsoResponseWatcher?.Stop();
             }
         }
 

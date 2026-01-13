@@ -533,16 +533,24 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             if (SelectedTrade == null)
                 return;
 
-            // Endast Options för nu
-            if (string.IsNullOrEmpty(SelectedTrade.CallPut))
+            // Hämta systemlänkar för vald trade från details-panelen
+            var systemLinks = _selectedTradeSystemLinks
+                .Where(l => l.BookFlag == true &&
+                            (l.Status == "New" || l.Status == "Error"))
+                .ToList();
+
+            if (systemLinks.Count == 0)
             {
-                MessageBox.Show("Linear booking not yet implemented.", "Not Supported",
-                    MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show("No systems configured for booking.", "Book Error",
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
-            var systemCode = "MX3";
-            _ = ExecuteBookTradeAsync(SelectedTrade.StpTradeId, systemCode);
+            // Boka till alla relevanta system
+            foreach (var link in systemLinks)
+            {
+                _ = ExecuteBookTradeAsync(SelectedTrade.StpTradeId, link.SystemCode);
+            }
         }
 
         private void OnBulkBook()
@@ -1132,10 +1140,6 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             }, TaskScheduler.Default);
         }
 
-        /// <summary>
-        /// D4.2c: Bokar vald trade till MX3.
-        /// Skriver till DB, refreshar sedan trade från DB för att uppdatera UI.
-        /// </summary>
         public async Task ExecuteBookTradeAsync(long stpTradeId, string systemCode)
         {
             if (_inFlightBookings.Contains(stpTradeId))
@@ -1151,26 +1155,31 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                 {
                     result = await _commandService.BookOptionToMx3Async(stpTradeId).ConfigureAwait(true);
                 }
+                else if (systemCode == "CALYPSO")  
+                {
+                    result = await _commandService.BookLinearToCalypsoAsync(stpTradeId).ConfigureAwait(true);
+                }
                 else
                 {
-                    MessageBox.Show($"System {systemCode} not yet supported.", "Book Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    MessageBox.Show($"System {systemCode} not yet supported.", "Book Error",
+                        MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
 
                 if (!result.Success)
                 {
-                    MessageBox.Show($"Book failed: {result.ErrorMessage}", "Book Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show($"Book failed: {result.ErrorMessage}", "Book Error",
+                        MessageBoxButton.OK, MessageBoxImage.Error);
                     return;
                 }
 
                 await RefreshSingleTradeAsync(stpTradeId).ConfigureAwait(true);
-
-                // ✅ FIX: Uppdatera Book-knappen efter booking
                 RaiseCanExecuteForBookCommands();
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Book failed: {ex.Message}", "Book Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Book failed: {ex.Message}", "Book Error",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
             {

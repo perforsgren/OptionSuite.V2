@@ -15,6 +15,8 @@ namespace FxTradeHub.Services.Blotter
         /// <param name="stpTradeId">StpTradeId för traden som ska bokas</param>
         /// <returns>Resultat med success/error</returns>
         Task<BookTradeResult> BookOptionToMx3Async(long stpTradeId);
+
+        Task<BookTradeResult> BookLinearToCalypsoAsync(long stpTradeId);
     }
 
     /// <summary>

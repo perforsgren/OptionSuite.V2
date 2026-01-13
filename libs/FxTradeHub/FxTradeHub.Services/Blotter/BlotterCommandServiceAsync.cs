@@ -1,9 +1,10 @@
-﻿using System;
-using System.Threading.Tasks;
-using FxTradeHub.Contracts.Dtos;
+﻿using FxTradeHub.Contracts.Dtos;
 using FxTradeHub.Data.MySql;
 using FxTradeHub.Data.MySql.Repositories;
+using FxTradeHub.Services.CalypsoExport;
 using FxTradeHub.Services.Mx3Export;
+using System;
+using System.Threading.Tasks;
 
 namespace FxTradeHub.Services.Blotter
 {
@@ -15,11 +16,14 @@ namespace FxTradeHub.Services.Blotter
     {
         private readonly MySqlStpRepositoryAsync _repository;
         private readonly Mx3OptionExportService _mx3ExportService;
+        private readonly CalypsoLinearExportService _calypsoExportService;
+
 
         public BlotterCommandServiceAsync(MySqlStpRepositoryAsync repository)
         {
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
             _mx3ExportService = new Mx3OptionExportService();
+            _calypsoExportService = new CalypsoLinearExportService();
         }
 
         /// <summary>
@@ -138,6 +142,104 @@ namespace FxTradeHub.Services.Blotter
                 Broker = trade.BrokerCode,
                 ReportingEntity = trade.ReportingEntityId
             };
+        }
+
+        public async Task<BookTradeResult> BookLinearToCalypsoAsync(long stpTradeId)
+        {
+            try
+            {
+                var trade = await _repository.GetTradeByIdAsync(stpTradeId).ConfigureAwait(false);
+
+                if (trade == null)
+                {
+                    return new BookTradeResult
+                    {
+                        Success = false,
+                        ErrorMessage = $"Trade with StpTradeId={stpTradeId} not found"
+                    };
+                }
+
+                var exportRequest = MapToCalypsoExportRequest(trade);
+                var exportResult = _calypsoExportService.CreateCsvFile(exportRequest);  // ✅ ÄNDRA CreateXmlFile → CreateCsvFile
+
+                if (!exportResult.Success)
+                {
+                    return new BookTradeResult
+                    {
+                        Success = false,
+                        ErrorMessage = $"CSV export failed: {exportResult.ErrorMessage}"  // ✅ ÄNDRA XML → CSV
+                    };
+                }
+
+                await _repository.UpdateTradeSystemLinkOnBookingAsync(
+                    stpTradeId: stpTradeId,
+                    systemCode: "CALYPSO",
+                    bookedBy: Environment.UserName
+                ).ConfigureAwait(false);
+
+                await _repository.InsertTradeWorkflowEventAsync(
+                    stpTradeId: stpTradeId,
+                    eventType: "CalypsoBookingRequested",
+                    systemCode: "CALYPSO",
+                    userId: Environment.UserName,
+                    details: $"CSV file: {exportResult.FileName}, Portfolio: {trade.CalypsoPortfolio}"  // ✅ ÄNDRA XML → CSV
+                ).ConfigureAwait(false);
+
+                return new BookTradeResult
+                {
+                    Success = true,
+                    XmlFileName = exportResult.FileName
+                };
+            }
+            catch (Exception ex)
+            {
+                return new BookTradeResult
+                {
+                    Success = false,
+                    ErrorMessage = $"Book trade failed: {ex.Message}"
+                };
+            }
+        }
+
+
+        private CalypsoLinearExportRequest MapToCalypsoExportRequest(BlotterTradeRow trade)
+        {
+            return new CalypsoLinearExportRequest
+            {
+                TradeId = trade.TradeId,
+                StpTradeId = trade.StpTradeId,
+                Trader = trade.TraderId,
+                CalypsoBook = trade.CalypsoPortfolio,
+                CurrencyPair = trade.CcyPair,
+                Counterparty = trade.CounterpartyCode,
+                BuySell = trade.BuySell,
+                Rate = trade.HedgeRate ?? trade.SpotRate ?? 0,
+                ProductType = DetermineProductType(trade.ProductType),
+                TradeDate = trade.TradeDate ?? DateTime.UtcNow.Date,
+                SettlementDate = trade.SettlementDate ?? DateTime.UtcNow.Date,
+                ExecutionTimeUtc = trade.ExecutionTimeUtc ?? DateTime.UtcNow,
+                Notional = trade.Notional,
+                StpFlag = trade.StpFlag ?? false,
+                Mic = trade.Mic,
+                Tvtic = trade.Tvtic,
+                Uti = trade.Uti,
+                Isin = trade.Isin,
+                InvestorId = trade.InvId
+            };
+        }
+
+        private string DetermineProductType(string productType)
+        {
+            if (string.IsNullOrWhiteSpace(productType))
+                return "Spot";
+
+            var upper = productType.ToUpperInvariant();
+            if (upper.Contains("SPOT"))
+                return "Spot";
+            if (upper.Contains("FWD") || upper.Contains("FORWARD"))
+                return "Forward";
+
+            return "Spot"; // default
         }
 
     }
