@@ -19,20 +19,22 @@ namespace FxTradeHub.Services.Parsing
         private readonly IStpRepository _stpRepository;
         private readonly List<IInboundMessageParser> _parsers;
 
+        // TODO: Flytta till lookup-tabell i DB (stp_venue_config) för att kunna 
+        // administrera STP-eligible venues utan kodändring.
+        // Tabell-förslag: SourceVenueCode VARCHAR(50), StpEligible TINYINT(1), CreatedUtc DATETIME
+        private static readonly HashSet<string> StpEligibleVenues = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "JPM",
+            "BARX",
+            "NATWEST",
+            "AUTOBAHN"
+            // Lägg till fler venues här
+        };
+
         /// <summary>
         /// Skapar en ny instans av MessageInParserOrchestrator med angivna
         /// repository-implementationer och parserlista.
         /// </summary>
-        /// <param name="messageRepo">
-        /// Repository för att läsa och uppdatera MessageIn-poster.
-        /// </param>
-        /// <param name="stpRepository">
-        /// Repository för att persistera Trade, TradeSystemLink och TradeWorkflowEvent.
-        /// </param>
-        /// <param name="parsers">
-        /// Lista med parser-implementationer som kan hantera olika typer av
-        /// inkommande meddelanden (FIX, e-post, filer m.m.).
-        /// </param>
         public MessageInParserOrchestrator(
             IMessageInRepository messageRepo,
             IStpRepository stpRepository,
@@ -60,17 +62,7 @@ namespace FxTradeHub.Services.Parsing
 
         /// <summary>
         /// Bearbetar ett enskilt inkommande meddelande identifierat via MessageInId.
-        /// Hämtar posten från MessageIn, väljer rätt parser och försöker skapa
-        /// en eller flera trades med tillhörande systemlänkar och workflow-event.
-        /// 
-        /// Om meddelandet redan är markerat som behandlat (ParsedFlag = true) så görs normalt inget,
-        /// men om force = true tillåts ett nytt försök (t.ex. efter att mapping/lookup-tabeller uppdaterats).
         /// </summary>
-        /// <param name="messageInId">Primärnyckeln för MessageIn-posten som ska bearbetas.</param>
-        /// <param name="force">
-        /// TRUE för att försöka parsa igen även om ParsedFlag redan är satt.
-        /// Används främst vid test, eller när ParseError fanns och man vill försöka igen.
-        /// </param>
         public void ProcessMessage(long messageInId, bool force)
         {
             var message = _messageRepo.GetById(messageInId);
@@ -94,24 +86,18 @@ namespace FxTradeHub.Services.Parsing
         /// Bearbetar ett enskilt inkommande meddelande identifierat via MessageInId.
         /// Standardbeteende: om ParsedFlag redan är satt så görs inget.
         /// </summary>
-        /// <param name="messageInId">Primärnyckeln för MessageIn-posten som ska bearbetas.</param>
         public void ProcessMessage(long messageInId)
         {
             ProcessMessage(messageInId, false);
         }
 
-
         /// <summary>
         /// Försöker parsa om ett MessageIn även om det redan är markerat som behandlat.
-        /// Avsett för test eller när man korrigerat lookup/mapping och vill göra ett nytt försök.
         /// </summary>
-        /// <param name="messageInId">Primärnyckeln för MessageIn-posten som ska bearbetas.</param>
         public void ReprocessMessage(long messageInId)
         {
             ProcessMessage(messageInId, true);
         }
-
-
 
         private IInboundMessageParser FindParser(MessageIn message)
         {
@@ -125,11 +111,7 @@ namespace FxTradeHub.Services.Parsing
         }
 
         /// <summary>
-        /// Kör parsing för ett MessageIn med vald parser och persisterar resultatet:
-        /// - Insert Trade (en per ParsedTradeResult)
-        /// - Insert TradeWorkflowEvent (per trade)
-        /// - Skapar och Insert TradeSystemLink (routing per trade, baserat på ProductType)
-        /// - Markerar MessageIn som ParsedFlag=true vid lyckad persistens av samtliga trades.
+        /// Kör parsing för ett MessageIn med vald parser och persisterar resultatet.
         /// </summary>
         private void ParseAndPersist(MessageIn source, IInboundMessageParser parser)
         {
@@ -157,13 +139,11 @@ namespace FxTradeHub.Services.Parsing
                         return;
                     }
 
-                    // 1) Koppla Trade tillbaka till MessageIn och spara Trade
                     var trade = tradeBundle.Trade;
                     trade.MessageInId = source.MessageInId;
 
                     var stpTradeId = _stpRepository.InsertTrade(trade);
 
-                    // Event 1: MessageInReceived - dynamisk baserat på SourceType
                     var systemCode = DetermineSystemCode(source.SourceType);
                     var description = BuildMessageInDescription(source);
 
@@ -178,8 +158,6 @@ namespace FxTradeHub.Services.Parsing
                     };
                     _stpRepository.InsertTradeWorkflowEvent(messageInEvent);
 
-
-                    // 2) Skapa systemlänkar (routing) i orchestratorn
                     var systemLinks = BuildSystemLinksForTrade(source, trade);
 
                     foreach (var link in systemLinks)
@@ -188,7 +166,6 @@ namespace FxTradeHub.Services.Parsing
                         _stpRepository.InsertTradeSystemLink(link);
                     }
 
-                    // 3) Spara WorkflowEvents och sätt FK mot StpTradeId
                     if (tradeBundle.WorkflowEvents != null)
                     {
                         foreach (var evt in tradeBundle.WorkflowEvents)
@@ -199,7 +176,6 @@ namespace FxTradeHub.Services.Parsing
                     }
                 }
 
-                // 4) Markera MessageIn som parsed OK om alla trades kunde persisteras
                 MarkSuccess(source);
             }
             catch (Exception ex)
@@ -210,14 +186,12 @@ namespace FxTradeHub.Services.Parsing
 
         /// <summary>
         /// Bygger standardlänkar (TradeSystemLink) för en ny trade baserat på produkt och venue.
-        /// Orchestratorn äger denna logik för att hålla parsern fokuserad på Trade-normalisering.
         /// </summary>
         private IList<TradeSystemLink> BuildSystemLinksForTrade(MessageIn source, Trade trade)
         {
             var now = DateTime.UtcNow;
             var links = new List<TradeSystemLink>();
 
-            // Gemensamma defaults
             const string stpModeManual = "MANUAL";
             const string stpModeAuto = "AUTO";
 
@@ -225,20 +199,19 @@ namespace FxTradeHub.Services.Parsing
             if (trade.ProductType == ProductType.OptionVanilla ||
                 trade.ProductType == ProductType.OptionNdo)
             {
-                // MX3
+                // MX3 (StpFlag=null för options)
                 links.Add(CreateSystemLink(
                     systemCode: SystemCode.Mx3,
                     status: TradeSystemStatus.New,
                     portfolioCode: trade.PortfolioMx3,
                     bookFlag: true,
                     stpMode: stpModeManual,
+                    stpFlag: null,
                     externalTradeId: null,
                     createdUtc: now,
                     lastUpdatedUtc: now,
                     importedBy: "STP"));
 
-                // VOLBROKER_STP (för ACK-flöde / spårbarhet).
-                // ExternalTradeId = Volbrokers trade-id (Trade.TradeId).
                 if (string.Equals(trade.SourceVenueCode, "VOLBROKER", StringComparison.OrdinalIgnoreCase))
                 {
                     links.Add(CreateSystemLink(
@@ -247,6 +220,7 @@ namespace FxTradeHub.Services.Parsing
                         portfolioCode: null,
                         bookFlag: false,
                         stpMode: stpModeAuto,
+                        stpFlag: null,
                         externalTradeId: trade.TradeId,
                         createdUtc: now,
                         lastUpdatedUtc: now,
@@ -256,29 +230,33 @@ namespace FxTradeHub.Services.Parsing
                 return links;
             }
 
-            // SPOT/FWD: bokas i MX3 och i Calypso (Calypso endast relevant för spot/hedge-flöden).
+            // SPOT/FWD: bokas i MX3 och i Calypso.
             if (trade.ProductType == ProductType.Spot ||
                 trade.ProductType == ProductType.Fwd)
             {
-                // MX3
+                // MX3 (StpFlag=null)
                 links.Add(CreateSystemLink(
                     systemCode: SystemCode.Mx3,
                     status: TradeSystemStatus.New,
                     portfolioCode: trade.PortfolioMx3,
                     bookFlag: true,
                     stpMode: stpModeManual,
+                    stpFlag: null,
                     externalTradeId: null,
                     createdUtc: now,
                     lastUpdatedUtc: now,
                     importedBy: "STP"));
 
-                // CALYPSO (PortfolioCode = Trade.CalypsoBook)
+                // CALYPSO (StpFlag baserat på venue)
+                var stpFlag = GetStpFlagForVenue(trade.SourceVenueCode);
+
                 links.Add(CreateSystemLink(
                     systemCode: SystemCode.Calypso,
                     status: TradeSystemStatus.New,
                     portfolioCode: trade.CalypsoBook,
                     bookFlag: true,
                     stpMode: stpModeManual,
+                    stpFlag: stpFlag,
                     externalTradeId: null,
                     createdUtc: now,
                     lastUpdatedUtc: now,
@@ -294,6 +272,7 @@ namespace FxTradeHub.Services.Parsing
                 portfolioCode: trade.PortfolioMx3,
                 bookFlag: true,
                 stpMode: stpModeManual,
+                stpFlag: null,
                 externalTradeId: null,
                 createdUtc: now,
                 lastUpdatedUtc: now,
@@ -303,7 +282,22 @@ namespace FxTradeHub.Services.Parsing
         }
 
         /// <summary>
-        /// Skapar en TradeSystemLink med konsistenta defaults (timestamps, feltexter, flaggor).
+        /// Avgör om venue är STP-eligible (Straight-Through Processing).
+        /// Returnerar true om trades från denna venue ska ha StpFlag=1.
+        /// 
+        /// TODO: Flytta till IStpLookupRepository.IsVenueStpEligible() 
+        /// med data från stp_venue_config-tabell.
+        /// </summary>
+        private bool? GetStpFlagForVenue(string sourceVenueCode)
+        {
+            if (string.IsNullOrWhiteSpace(sourceVenueCode))
+                return null;
+
+            return StpEligibleVenues.Contains(sourceVenueCode) ? true : (bool?)null;
+        }
+
+        /// <summary>
+        /// Skapar en TradeSystemLink med konsistenta defaults.
         /// </summary>
         private TradeSystemLink CreateSystemLink(
             SystemCode systemCode,
@@ -311,6 +305,7 @@ namespace FxTradeHub.Services.Parsing
             string portfolioCode,
             bool? bookFlag,
             string stpMode,
+            bool? stpFlag,
             string externalTradeId,
             DateTime createdUtc,
             DateTime lastUpdatedUtc,
@@ -330,21 +325,18 @@ namespace FxTradeHub.Services.Parsing
                 BookedBy = string.Empty,
                 FirstBookedUtc = null,
                 LastBookedUtc = null,
-                StpFlag = null,
+                StpFlag = stpFlag,
                 IsDeleted = false,
                 CreatedUtc = createdUtc,
                 LastUpdatedUtc = lastUpdatedUtc
             };
         }
 
-
-
         private void MarkSuccess(MessageIn msg)
         {
             msg.ParsedFlag = true;
             msg.ParsedUtc = DateTime.UtcNow;
             msg.ParseError = null;
-
             _messageRepo.UpdateParsingState(msg);
         }
 
@@ -353,17 +345,13 @@ namespace FxTradeHub.Services.Parsing
             msg.ParsedFlag = true;
             msg.ParsedUtc = DateTime.UtcNow;
             msg.ParseError = error;
-
             _messageRepo.UpdateParsingState(msg);
         }
 
-        /// <summary>
-        /// Avgör SystemCode baserat på MessageIn.SourceType.
-        /// </summary>
         private SystemCode DetermineSystemCode(string sourceType)
         {
             if (string.IsNullOrWhiteSpace(sourceType))
-                return SystemCode.Fix; // Fallback
+                return SystemCode.Fix;
 
             var upperSourceType = sourceType.ToUpperInvariant();
 
@@ -375,15 +363,12 @@ namespace FxTradeHub.Services.Parsing
                 case "MAIL":
                     return SystemCode.Mail;
                 case "FILE":
-                    return SystemCode.Fix; // TODO: Lägg till SystemCode.File när FILE-import implementeras
+                    return SystemCode.Fix;
                 default:
                     return SystemCode.Fix;
             }
         }
 
-        /// <summary>
-        /// Bygger description för MessageInReceived event baserat på SourceType.
-        /// </summary>
         private string BuildMessageInDescription(MessageIn source)
         {
             if (string.IsNullOrWhiteSpace(source.SourceType))
@@ -396,18 +381,14 @@ namespace FxTradeHub.Services.Parsing
                 case "FIX":
                     var seqNum = source.FixSeqNum.HasValue ? source.FixSeqNum.Value.ToString() : "N/A";
                     return $"FIX {source.FixMsgType ?? "AE"} from {source.SourceVenueCode}, SeqNum={seqNum}";
-
                 case "EMAIL":
                 case "MAIL":
                     return $"Email from {source.SourceVenueCode}";
-
                 case "FILE":
                     return $"File from {source.SourceVenueCode}";
-
                 default:
                     return $"Message from {source.SourceVenueCode}";
             }
         }
-
     }
 }

@@ -542,23 +542,25 @@ SELECT
     t.IsDeleted AS TradeIsDeleted,
     t.LastUpdatedUtc AS TradeLastUpdatedUtc,
     t.LastUpdatedBy AS TradeLastUpdatedBy,
-    tsl.SystemLinkId,
-    tsl.SystemCode,
-    tsl.Status,
-    tsl.Status AS SystemStatus,
-    tsl.SystemTradeId,
-    tsl.SystemTradeId AS ExternalTradeId,
-    tsl.LastStatusUtc,
+    mx3.SystemLinkId,
+    mx3.SystemCode,
+    mx3.Status,
+    mx3.Status AS SystemStatus,
+    mx3.SystemTradeId,
+    mx3.SystemTradeId AS ExternalTradeId,
+    mx3.LastStatusUtc,
     COALESCE(calypso.PortfolioCode, t.CalypsoBook) AS CalypsoPortfolio,
-    COALESCE(calypso.StpFlag, tsl.StpFlag) AS StpFlag,
+    COALESCE(calypso.StpFlag, mx3.StpFlag) AS StpFlag,
+    mx3.Status AS Mx3Status,
+    calypso.Status AS CalypsoStatus,
     GREATEST(
         COALESCE(t.LastUpdatedUtc, '1970-01-01'), 
-        COALESCE(tsl.LastStatusUtc, '1970-01-01'),
+        COALESCE(mx3.LastStatusUtc, '1970-01-01'),
         COALESCE(calypso.LastStatusUtc, '1970-01-01')
     ) AS LastChangeUtc
 FROM trade_stp.Trade t
-LEFT JOIN trade_stp.TradeSystemLink tsl ON t.StpTradeId = tsl.StpTradeId 
-    AND tsl.SystemCode = 'MX3' AND tsl.IsDeleted = 0
+LEFT JOIN trade_stp.TradeSystemLink mx3 ON t.StpTradeId = mx3.StpTradeId 
+    AND mx3.SystemCode = 'MX3' AND mx3.IsDeleted = 0
 LEFT JOIN trade_stp.TradeSystemLink calypso ON t.StpTradeId = calypso.StpTradeId 
     AND calypso.SystemCode = 'CALYPSO' AND calypso.IsDeleted = 0
 WHERE t.StpTradeId = @StpTradeId
@@ -769,13 +771,11 @@ VALUES
                 CalypsoPortfolio = reader.IsDBNull(reader.GetOrdinal("CalypsoPortfolio")) ? null : reader.GetString("CalypsoPortfolio"),
                 Margin = reader.IsDBNull(reader.GetOrdinal("Margin")) ? (decimal?)null : reader.GetDecimal("Margin"),
                 Tvtic = reader.IsDBNull(reader.GetOrdinal("Tvtic")) ? null : reader.GetString("Tvtic"),
-
                 HedgeRate = reader.IsDBNull(reader.GetOrdinal("HedgeRate")) ? (decimal?)null : reader.GetDecimal("HedgeRate"),
                 SpotRate = reader.IsDBNull(reader.GetOrdinal("SpotRate")) ? (decimal?)null : reader.GetDecimal("SpotRate"),
                 SwapPoints = reader.IsDBNull(reader.GetOrdinal("SwapPoints")) ? (decimal?)null : reader.GetDecimal("SwapPoints"),
                 HedgeType = reader.IsDBNull(reader.GetOrdinal("HedgeType")) ? null : reader.GetString("HedgeType"),
                 StpFlag = reader.IsDBNull(reader.GetOrdinal("StpFlag")) ? (bool?)null : reader.GetBoolean("StpFlag"),
-
                 TradeIsDeleted = reader.GetBoolean("TradeIsDeleted"),
                 TradeLastUpdatedUtc = reader.IsDBNull(reader.GetOrdinal("TradeLastUpdatedUtc")) ? (DateTime?)null : reader.GetDateTime("TradeLastUpdatedUtc"),
                 TradeLastUpdatedBy = reader.IsDBNull(reader.GetOrdinal("TradeLastUpdatedBy")) ? null : reader.GetString("TradeLastUpdatedBy"),
@@ -784,12 +784,13 @@ VALUES
                 SystemStatus = reader.IsDBNull(reader.GetOrdinal("SystemStatus")) ? null : reader.GetString("SystemStatus"),
                 SystemTradeId = reader.IsDBNull(reader.GetOrdinal("SystemTradeId")) ? null : reader.GetString("SystemTradeId"),
                 ExternalTradeId = reader.IsDBNull(reader.GetOrdinal("ExternalTradeId")) ? null : reader.GetString("ExternalTradeId"),
-                LastChangeUtc = reader.IsDBNull(reader.GetOrdinal("LastChangeUtc")) ? (DateTime?)null : reader.GetDateTime("LastChangeUtc")
+                LastChangeUtc = reader.IsDBNull(reader.GetOrdinal("LastChangeUtc")) ? (DateTime?)null : reader.GetDateTime("LastChangeUtc"),
+
+                // Mappa båda system-statusarna separat
+                Mx3Status = reader.IsDBNull(reader.GetOrdinal("Mx3Status")) ? null : reader.GetString("Mx3Status"),
+                CalypsoStatus = reader.IsDBNull(reader.GetOrdinal("CalypsoStatus")) ? null : reader.GetString("CalypsoStatus")
             };
         }
-
-
-
 
         /// <summary>
         /// Mappar databaskod (VARCHAR) till ProductType-enum.
@@ -871,9 +872,6 @@ VALUES
                     throw new ArgumentOutOfRangeException(nameof(value), value, "Unknown TradeSystemStatus database value.");
             }
         }
-
-
-
 
         // ==========================================
         // LEADER ELECTION METHODS 

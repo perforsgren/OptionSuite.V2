@@ -92,9 +92,8 @@ namespace OptionSuite.Blotter.Wpf.Services
         }
 
         /// <summary>
-        /// ✅ NYTT: Extraherar StpTradeId från filnamn (samma logik som MX3).
-        /// Input: 127_FX_SPOT_20260109_155433_AUDUSD_H1_result.xml
-        /// Output: StpTradeId = 127
+        /// Extraherar StpTradeId från filnamn.
+        /// Format: FX_SPOT_580_3966887408_result.xml → StpTradeId = 580
         /// </summary>
         private static long ExtractStpTradeIdFromFileName(string fileName)
         {
@@ -102,24 +101,29 @@ namespace OptionSuite.Blotter.Wpf.Services
             {
                 // Ta bort file extension
                 var nameWithoutExt = Path.GetFileNameWithoutExtension(fileName);
-                // "127_FX_SPOT_20260109_155433_AUDUSD_H1_result"
+                // "FX_SPOT_580_3966887408_result"
 
                 // Ta bort "_result" suffix
                 if (nameWithoutExt.EndsWith("_result", StringComparison.OrdinalIgnoreCase))
                 {
                     nameWithoutExt = nameWithoutExt.Substring(0, nameWithoutExt.Length - 7);
                 }
-                // "127_FX_SPOT_20260109_155433_AUDUSD_H1"
+                // "FX_SPOT_580_3966887408"
 
-                // Första delen före _ är StpTradeId (samma som MX3)
                 var parts = nameWithoutExt.Split('_');
-                if (parts.Length < 2)
+                if (parts.Length < 3)
                     return 0;
 
-                if (!long.TryParse(parts[0], out var stpTradeId))
-                    return 0;
+                // Format: FX_SPOT_580_3966887408 → parts[2] = "580"
+                if (parts[0].Equals("FX", StringComparison.OrdinalIgnoreCase) &&
+                    (parts[1].Equals("SPOT", StringComparison.OrdinalIgnoreCase) ||
+                     parts[1].Equals("FORWARD", StringComparison.OrdinalIgnoreCase)))
+                {
+                    if (long.TryParse(parts[2], out var stpTradeId))
+                        return stpTradeId;
+                }
 
-                return stpTradeId;
+                return 0;
             }
             catch
             {

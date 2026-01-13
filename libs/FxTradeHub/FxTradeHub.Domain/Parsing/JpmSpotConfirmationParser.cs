@@ -104,7 +104,6 @@ namespace FxTradeHub.Domain.Parsing
                     SourceType = "EMAIL",
                     SourceVenueCode = "JPM",
                     CounterpartyCode = counterpartyCode,
-                    //BrokerCode = "JPM",
                     TraderId = traderRouting.InternalUserId,
                     InvId = traderRouting.InvId,
                     ReportingEntityId = traderRouting.ReportingEntityId,

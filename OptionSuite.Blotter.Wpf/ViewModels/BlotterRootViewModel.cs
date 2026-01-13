@@ -88,7 +88,9 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
         private int _detailsRequestVersion = 0;  // request version för concurrency
 
         // UI-skydd mot dubbelklick/race
-        private readonly HashSet<long> _inFlightBookings = new HashSet<long>();
+        //private readonly HashSet<long> _inFlightBookings = new HashSet<long>();
+        private readonly HashSet<string> _inFlightBookings = new HashSet<string>(StringComparer.Ordinal);
+
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -1142,17 +1144,31 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
 
         public async Task ExecuteBookTradeAsync(long stpTradeId, string systemCode)
         {
-            if (_inFlightBookings.Contains(stpTradeId))
+            // ✅ FIX: Använd kombination av stpTradeId + systemCode som nyckel
+            var bookingKey = $"{stpTradeId}:{systemCode}";
+
+            if (_inFlightBookings.Contains(bookingKey))
                 return;
 
-            _inFlightBookings.Add(stpTradeId);
+            _inFlightBookings.Add(bookingKey);
 
             try
             {
                 BookTradeResult result = null;
 
-                // ✅ FIX: Avgör om traden är option eller linear baserat på CallPut
-                var isOption = !string.IsNullOrEmpty(SelectedTrade?.CallPut);
+                // ✅ FIX: Hitta traden baserat på stpTradeId, inte SelectedTrade
+                var trade = OptionTrades.FirstOrDefault(t => t.StpTradeId == stpTradeId)
+                         ?? LinearTrades.FirstOrDefault(t => t.StpTradeId == stpTradeId);
+
+                if (trade == null)
+                {
+                    MessageBox.Show($"Trade with ID {stpTradeId} not found.", "Book Error",
+                        MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                // Avgör om traden är option baserat på CallPut-fältet
+                var isOption = !string.IsNullOrEmpty(trade.CallPut);
 
                 if (systemCode == "MX3")
                 {
@@ -1193,7 +1209,7 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             }
             finally
             {
-                _inFlightBookings.Remove(stpTradeId);
+                _inFlightBookings.Remove(bookingKey);
             }
         }
 
@@ -1264,7 +1280,7 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             }
         }
 
-        private TradeRowViewModel MapToTradeRowViewModel(FxTradeHub.Contracts.Dtos.BlotterTradeRow trade)
+        private TradeRowViewModel MapToTradeRowViewModel(BlotterTradeRow trade)
         {
             return new TradeRowViewModel(
                 stpTradeId: trade.StpTradeId,
@@ -1295,8 +1311,8 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                 settlementCurrency: trade.SettlementCcy,
                 isNonDeliverable: trade.IsNonDeliverable,
                 fixingDate: trade.FixingDate,
-                mx3Status: trade.SystemCode == "MX3" ? trade.Status : null,
-                calypsoStatus: trade.SystemCode == "CALYPSO" ? trade.Status : null,
+                mx3Status: trade.Mx3Status,
+                calypsoStatus: trade.CalypsoStatus,
                 mic: trade.Mic,
                 tvtic: trade.Tvtic,
                 isin: trade.Isin,
@@ -1319,14 +1335,16 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             if (SelectedTrade.Status != "New" && SelectedTrade.Status != "Error")
                 return false;
 
-            if (_inFlightBookings.Contains(SelectedTrade.StpTradeId))
+            // Kolla om NÅGON bokning pågår för denna trade (till något system)
+            var bookingPrefix = $"{SelectedTrade.StpTradeId}:";
+            if (_inFlightBookings.Any(key => key.StartsWith(bookingPrefix, StringComparison.Ordinal)))
                 return false;
 
             return true;
         }
 
         /// <summary>
-        /// ✅ FIX: CanExecuteBulkBook kollar nu BÅDA grids OCH filtrerar på current user.
+        /// CanExecuteBulkBook kollar nu BÅDA grids OCH filtrerar på current user.
         /// </summary>
         private bool CanExecuteBulkBook()
         {

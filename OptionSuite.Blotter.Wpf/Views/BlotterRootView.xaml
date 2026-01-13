@@ -19,7 +19,7 @@
         <converters:EventTypeToColorConverter x:Key="EventTypeToColor"/>
         <converters:SystemStatusToColorConverter x:Key="SystemStatusToColor"/>
         <converters:NullToBoolConverter x:Key="NullToBoolConverter"/>
-        <converters:UtcToLocalTimeConverter x:Key="UtcToLocalTime"/>        
+        <converters:UtcToLocalTimeConverter x:Key="UtcToLocalTime"/>
 
         <!-- =========================================================
              SOFT FOG (token-baserad)
@@ -895,6 +895,7 @@
                                         <DataGridTextColumn Header="Portfolio MX3" Binding="{Binding PortfolioMx3}" Width="110"/>
                                         <DataGridTextColumn Header="Trader" Binding="{Binding Trader}" Width="80"/>
                                         <DataGridTemplateColumn Header="Status" Width="150" CellTemplate="{StaticResource StatusPillTemplate}" CellStyle="{StaticResource Style.BlotterDataGridCell.Status}" />
+                                        <DataGridCheckBoxColumn Header="STP" Width="40" Binding="{Binding StpFlag, Mode=OneWay}" IsReadOnly="True"/>
                                     </DataGrid.Columns>
 
                                 </DataGrid>

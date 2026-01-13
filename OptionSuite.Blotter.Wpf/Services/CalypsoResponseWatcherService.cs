@@ -47,11 +47,12 @@ namespace OptionSuite.Blotter.Wpf.Services
                 _watcher = new FileSystemWatcher(_responseFolder)
                 {
                     Filter = "*_result.xml",
-                    NotifyFilter = NotifyFilters.FileName,
+                    NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite,
                     EnableRaisingEvents = true
                 };
 
                 _watcher.Created += OnFileCreated;
+                _watcher.Changed += OnFileCreated; // ✅ FIX: Fånga även Changed events
                 _watcher.Error += OnFileSystemWatcherError;
 
                 _isWatching = true;
@@ -127,20 +128,27 @@ namespace OptionSuite.Blotter.Wpf.Services
 
                 foreach (var trade in pendingTrades)
                 {
-                    var expectedFileName = BuildExpectedResponseFileName(trade);
+                    var expectedFileNames = BuildExpectedResponseFileNames(trade);
+
+                    Debug.WriteLine($"[CalypsoWatcher] Looking for response files for StpTradeId={trade.StpTradeId}, ProductType={trade.ProductType}");
+                    foreach (var expected in expectedFileNames)
+                    {
+                        Debug.WriteLine($"[CalypsoWatcher]    Candidate: {expected}");
+                    }
 
                     var matchingFile = responseFiles.FirstOrDefault(f =>
-                        f.FileName.Equals(expectedFileName, StringComparison.OrdinalIgnoreCase));
+                        expectedFileNames.Any(expected =>
+                            f.FileName.Equals(expected, StringComparison.OrdinalIgnoreCase)));
 
                     if (matchingFile != null)
                     {
-                        Debug.WriteLine($"[CalypsoWatcher] ✅ Found response for StpTradeId={trade.StpTradeId}: {expectedFileName}");
+                        Debug.WriteLine($"[CalypsoWatcher] ✅ Found response for StpTradeId={trade.StpTradeId}: {matchingFile.FileName}");
                         await ProcessResponseFileAsync(matchingFile.FullPath);
                         foundResponses++;
                     }
                     else
                     {
-                        Debug.WriteLine($"[CalypsoWatcher] ⏳ PENDING trade {trade.StpTradeId} waiting for response: {expectedFileName}");
+                        Debug.WriteLine($"[CalypsoWatcher] ⏳ PENDING trade {trade.StpTradeId} waiting for response");
                         missingResponses++;
                     }
                 }
@@ -183,18 +191,71 @@ namespace OptionSuite.Blotter.Wpf.Services
             }
         }
 
-        private string BuildExpectedResponseFileName(PendingCalypsoTrade trade)
+        /// <summary>
+        /// ✅ FIX: Returnerar LISTA av möjliga filnamn för att hantera 
+        /// olika ProductType-format (SPOT, Spot, FWD, Fwd, FORWARD, etc.)
+        /// </summary>
+        private List<string> BuildExpectedResponseFileNames(PendingCalypsoTrade trade)
         {
-            var prefix = trade.ProductType.ToUpperInvariant().Contains("SPOT") ? "FX_SPOT_" : "FX_FORWARD_";
-            return $"{trade.StpTradeId}_{prefix}{trade.TradeId}_result.xml";
+            var results = new List<string>();
+            var productUpper = trade.ProductType?.ToUpperInvariant() ?? "";
+
+            // Avgör om det är SPOT eller FORWARD baserat på ProductType
+            bool isSpot = productUpper == "SPOT" || productUpper.Contains("SPOT");
+            bool isForward = productUpper == "FWD" || productUpper == "FORWARD" ||
+                             productUpper.Contains("FWD") || productUpper.Contains("FORWARD");
+
+            // Lägg till båda varianter om oklart
+            if (isSpot || (!isSpot && !isForward))
+            {
+                results.Add($"FX_SPOT_{trade.StpTradeId}_{trade.TradeId}_result.xml");
+            }
+
+            if (isForward || (!isSpot && !isForward))
+            {
+                results.Add($"FX_FORWARD_{trade.StpTradeId}_{trade.TradeId}_result.xml");
+            }
+
+            return results;
         }
+
+        // ✅ FIX: HashSet för att undvika dubbel-processning av samma fil
+        private readonly HashSet<string> _processedFiles = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         private async void OnFileCreated(object sender, FileSystemEventArgs e)
         {
-            Debug.WriteLine($"[CalypsoWatcher] 📁 New file detected: {Path.GetFileName(e.FullPath)}");
+            var fileName = Path.GetFileName(e.FullPath);
 
-            await Task.Delay(1000);
-            await ProcessResponseFileAsync(e.FullPath);
+            // ✅ FIX: Undvik dubbel-processning (Created + Changed kan trigga båda)
+            lock (_processedFiles)
+            {
+                if (_processedFiles.Contains(fileName))
+                {
+                    Debug.WriteLine($"[CalypsoWatcher] ⏭️ Already processing {fileName}, skipping duplicate event");
+                    return;
+                }
+                _processedFiles.Add(fileName);
+            }
+
+            try
+            {
+                Debug.WriteLine($"[CalypsoWatcher] 📁 New file detected: {fileName}");
+
+                // Vänta lite längre för att filen ska bli helt skriven
+                await Task.Delay(2000);
+                await ProcessResponseFileAsync(e.FullPath);
+            }
+            finally
+            {
+                // Ta bort från processed efter en stund för att tillåta re-processning vid behov
+                _ = Task.Delay(30000).ContinueWith(_ =>
+                {
+                    lock (_processedFiles)
+                    {
+                        _processedFiles.Remove(fileName);
+                    }
+                });
+            }
         }
 
         private async Task ProcessResponseFileAsync(string filePath)
@@ -205,6 +266,13 @@ namespace OptionSuite.Blotter.Wpf.Services
             {
                 Debug.WriteLine($"[CalypsoWatcher] 🔄 Processing file: {fileName}");
 
+                // ✅ FIX: Kontrollera att filen finns och inte är låst
+                if (!File.Exists(filePath))
+                {
+                    Debug.WriteLine($"[CalypsoWatcher] ⚠️ File does not exist: {fileName}");
+                    return;
+                }
+
                 var response = CalypsoResponseParserService.Parse(filePath);
 
                 if (response.StpTradeId == 0)
@@ -213,7 +281,7 @@ namespace OptionSuite.Blotter.Wpf.Services
                     return;
                 }
 
-                Debug.WriteLine($"[CalypsoWatcher] Parsed StpTradeId={response.StpTradeId} from {fileName}");
+                Debug.WriteLine($"[CalypsoWatcher] Parsed StpTradeId={response.StpTradeId}, IsSuccess={response.IsSuccess}, CalypsoTradeId={response.CalypsoTradeId}");
 
                 if (await IsAlreadyProcessedAsync(response.StpTradeId))
                 {
@@ -256,6 +324,7 @@ namespace OptionSuite.Blotter.Wpf.Services
             catch (Exception ex)
             {
                 Debug.WriteLine($"[CalypsoWatcher] ❌ Error processing {fileName}: {ex.Message}");
+                Debug.WriteLine($"[CalypsoWatcher]    StackTrace: {ex.StackTrace}");
             }
         }
 

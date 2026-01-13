@@ -181,26 +181,31 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             if (string.IsNullOrEmpty(CallPut) == false)
             {
                 var status = fallbackStatus ?? "New";
-                return ToProperCase(status); 
+                return ToProperCase(status);
             }
 
-            // För Linear: beräkna från båda system
-            var mx3 = mx3Status ?? "New";
-            var caly = calypsoStatus ?? "New";
+            // För Linear: beräkna från båda system med case-normalisering
+            var mx3 = ToProperCase(mx3Status ?? "New");
+            var caly = ToProperCase(calypsoStatus ?? "New");
 
+            // Båda booked = fully booked
             if (mx3 == "Booked" && caly == "Booked")
                 return "Booked";
 
+            // Något system failed = overall failed
             if (mx3 == "Failed" || caly == "Failed")
                 return "Failed";
 
+            // Ett system booked, ett inte = partial
             if ((mx3 == "Booked" && caly != "Booked") ||
                 (caly == "Booked" && mx3 != "Booked"))
                 return "Partial";
 
+            // Något system pending = overall pending
             if (mx3 == "Pending" || caly == "Pending")
                 return "Pending";
 
+            // Annars new
             return "New";
         }
 

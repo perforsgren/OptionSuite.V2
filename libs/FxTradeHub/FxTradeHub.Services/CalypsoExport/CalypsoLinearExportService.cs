@@ -22,10 +22,9 @@ namespace FxTradeHub.Services.CalypsoExport
             {
                 var exportFolder = AppPaths.CalypsoImportFolder;
 
-                // ✅ FIX: Använd samma filnamnsstruktur som MX3
+                // Filnamn ska BÖRJA med FX_SPOT_ eller FX_FORWARD_
                 var prefix = request.ProductType == "Spot" ? "FX_SPOT_" : "FX_FORWARD_";
-                var fileName = $"{request.StpTradeId}_{prefix}{request.TradeId}.csv";
-                // Exempel: "127_FX_SPOT_20260109_155433_AUDUSD_H1.csv"
+                var fileName = $"{prefix}{request.StpTradeId}_{request.TradeId}.csv";
 
                 var fullPath = Path.Combine(exportFolder, fileName);
 
