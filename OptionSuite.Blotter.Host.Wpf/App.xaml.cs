@@ -60,7 +60,7 @@ namespace OptionSuite.Blotter.Host.Wpf
                     SmtpPassword = null,
                     FromAddress = "per.forsgren@swedbank.se",
                     ToAddresses = new[] { "per.forsgren@swedbank.se" },
-                    SendOnSuccess = true,   // ✅ Skicka mail även vid success
+                    SendOnSuccess = false,   // ✅ Skicka mail även vid success
                     SendOnFailure = true
                 };
 
