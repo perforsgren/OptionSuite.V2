@@ -169,7 +169,7 @@ namespace FxTradeHub.Services.CalypsoExport
         private string FormatTimestamp(DateTime utc)
         {
             var local = utc.ToLocalTime();
-            return local.ToString("yyyyMMdd'T'HHmmss");
+            return local.ToString("yyyyMMdd'T'HH:mm:ss");
         }
 
         private string FormatExecutionDateTime(DateTime utc)

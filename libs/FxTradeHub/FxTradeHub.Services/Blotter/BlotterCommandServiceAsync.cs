@@ -274,6 +274,12 @@ namespace FxTradeHub.Services.Blotter
 
         private CalypsoLinearExportRequest MapToCalypsoExportRequest(BlotterTradeRow trade)
         {
+            // För linear trades: använd SpotRate eller HedgeRate baserat på produkttyp
+            var productType = DetermineProductType(trade.ProductType);
+            var rate = productType == "Spot"
+                ? (trade.SpotRate ?? trade.HedgeRate ?? 0)
+                : (trade.HedgeRate ?? trade.SpotRate ?? 0);
+
             return new CalypsoLinearExportRequest
             {
                 TradeId = trade.TradeId,
@@ -283,8 +289,8 @@ namespace FxTradeHub.Services.Blotter
                 CurrencyPair = trade.CcyPair,
                 Counterparty = trade.CounterpartyCode,
                 BuySell = trade.BuySell,
-                Rate = trade.HedgeRate ?? trade.SpotRate ?? 0,
-                ProductType = DetermineProductType(trade.ProductType),
+                Rate = rate,
+                ProductType = productType,
                 TradeDate = trade.TradeDate ?? DateTime.UtcNow.Date,
                 SettlementDate = trade.SettlementDate ?? DateTime.UtcNow.Date,
                 ExecutionTimeUtc = trade.ExecutionTimeUtc ?? DateTime.UtcNow,
