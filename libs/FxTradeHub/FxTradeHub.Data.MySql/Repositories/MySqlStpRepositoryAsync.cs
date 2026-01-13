@@ -498,7 +498,7 @@ namespace FxTradeHub.Data.MySql.Repositories
 
 
         /// <summary>
-        /// D4.2b: Hämtar en trade med systemlänk-info för bokning.
+        /// Hämtar en trade med systemlänk-info för bokning.
         /// Joinar Trade + TradeSystemLink för att få komplett BlotterTradeRow.
         /// </summary>
         public async Task<BlotterTradeRow> GetTradeByIdAsync(long stpTradeId)
@@ -533,9 +533,12 @@ SELECT
     t.PremiumCurrency AS PremiumCcy,
     t.PremiumDate,
     t.PortfolioMx3,
-    t.CalypsoBook AS CalypsoPortfolio,
     t.Margin,
     t.Tvtic,
+    t.HedgeRate,
+    t.SpotRate,
+    t.SwapPoints,
+    t.HedgeType,
     t.IsDeleted AS TradeIsDeleted,
     t.LastUpdatedUtc AS TradeLastUpdatedUtc,
     t.LastUpdatedBy AS TradeLastUpdatedBy,
@@ -546,9 +549,18 @@ SELECT
     tsl.SystemTradeId,
     tsl.SystemTradeId AS ExternalTradeId,
     tsl.LastStatusUtc,
-    GREATEST(COALESCE(t.LastUpdatedUtc, '1970-01-01'), COALESCE(tsl.LastStatusUtc, '1970-01-01')) AS LastChangeUtc
+    COALESCE(calypso.PortfolioCode, t.CalypsoBook) AS CalypsoPortfolio,
+    COALESCE(calypso.StpFlag, tsl.StpFlag) AS StpFlag,
+    GREATEST(
+        COALESCE(t.LastUpdatedUtc, '1970-01-01'), 
+        COALESCE(tsl.LastStatusUtc, '1970-01-01'),
+        COALESCE(calypso.LastStatusUtc, '1970-01-01')
+    ) AS LastChangeUtc
 FROM trade_stp.Trade t
-LEFT JOIN trade_stp.TradeSystemLink tsl ON t.StpTradeId = tsl.StpTradeId AND tsl.SystemCode = 'MX3' AND tsl.IsDeleted = 0
+LEFT JOIN trade_stp.TradeSystemLink tsl ON t.StpTradeId = tsl.StpTradeId 
+    AND tsl.SystemCode = 'MX3' AND tsl.IsDeleted = 0
+LEFT JOIN trade_stp.TradeSystemLink calypso ON t.StpTradeId = calypso.StpTradeId 
+    AND calypso.SystemCode = 'CALYPSO' AND calypso.IsDeleted = 0
 WHERE t.StpTradeId = @StpTradeId
   AND t.IsDeleted = 0
 LIMIT 1;
@@ -574,6 +586,8 @@ LIMIT 1;
 
             return null;
         }
+
+
 
         /// <summary>
         /// D4.2b: Uppdaterar status för TradeSystemLink.
@@ -717,7 +731,7 @@ VALUES
         }
 
         /// <summary>
-        /// D4.2b: Helper för att mappa DataReader till BlotterTradeRow.
+        /// Helper för att mappa DataReader till BlotterTradeRow.
         /// </summary>
         private BlotterTradeRow MapBlotterTradeRow(MySqlDataReader reader)
         {
@@ -755,6 +769,13 @@ VALUES
                 CalypsoPortfolio = reader.IsDBNull(reader.GetOrdinal("CalypsoPortfolio")) ? null : reader.GetString("CalypsoPortfolio"),
                 Margin = reader.IsDBNull(reader.GetOrdinal("Margin")) ? (decimal?)null : reader.GetDecimal("Margin"),
                 Tvtic = reader.IsDBNull(reader.GetOrdinal("Tvtic")) ? null : reader.GetString("Tvtic"),
+
+                HedgeRate = reader.IsDBNull(reader.GetOrdinal("HedgeRate")) ? (decimal?)null : reader.GetDecimal("HedgeRate"),
+                SpotRate = reader.IsDBNull(reader.GetOrdinal("SpotRate")) ? (decimal?)null : reader.GetDecimal("SpotRate"),
+                SwapPoints = reader.IsDBNull(reader.GetOrdinal("SwapPoints")) ? (decimal?)null : reader.GetDecimal("SwapPoints"),
+                HedgeType = reader.IsDBNull(reader.GetOrdinal("HedgeType")) ? null : reader.GetString("HedgeType"),
+                StpFlag = reader.IsDBNull(reader.GetOrdinal("StpFlag")) ? (bool?)null : reader.GetBoolean("StpFlag"),
+
                 TradeIsDeleted = reader.GetBoolean("TradeIsDeleted"),
                 TradeLastUpdatedUtc = reader.IsDBNull(reader.GetOrdinal("TradeLastUpdatedUtc")) ? (DateTime?)null : reader.GetDateTime("TradeLastUpdatedUtc"),
                 TradeLastUpdatedBy = reader.IsDBNull(reader.GetOrdinal("TradeLastUpdatedBy")) ? null : reader.GetString("TradeLastUpdatedBy"),
@@ -766,6 +787,7 @@ VALUES
                 LastChangeUtc = reader.IsDBNull(reader.GetOrdinal("LastChangeUtc")) ? (DateTime?)null : reader.GetDateTime("LastChangeUtc")
             };
         }
+
 
 
 
@@ -854,7 +876,7 @@ VALUES
 
 
         // ==========================================
-        // LEADER ELECTION METHODS (D4.3)
+        // LEADER ELECTION METHODS 
         // ==========================================
 
         public async Task UpdatePresenceAsync(string nodeId, string userName, string machineName)
