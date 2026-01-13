@@ -9,25 +9,27 @@ using System.Threading.Tasks;
 namespace FxTradeHub.Services.Blotter
 {
     /// <summary>
-    /// D4.2a: Command Service för write-operationer i blottern.
+    /// Command Service för write-operationer i blottern.
     /// Hanterar bokning till MX3/Calypso med XML-export + DB-uppdateringar.
     /// </summary>
     public sealed class BlotterCommandServiceAsync : IBlotterCommandServiceAsync
     {
         private readonly MySqlStpRepositoryAsync _repository;
-        private readonly Mx3OptionExportService _mx3ExportService;
+        private readonly Mx3OptionExportService _mx3OptionExportService;
+        private readonly Mx3LinearExportService _mx3LinearExportService;
         private readonly CalypsoLinearExportService _calypsoExportService;
 
 
         public BlotterCommandServiceAsync(MySqlStpRepositoryAsync repository)
         {
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
-            _mx3ExportService = new Mx3OptionExportService();
+            _mx3OptionExportService = new Mx3OptionExportService();
+            _mx3LinearExportService = new Mx3LinearExportService();
             _calypsoExportService = new CalypsoLinearExportService();
         }
 
         /// <summary>
-        /// D4.2a: Bokar en option trade till MX3.
+        /// Bokar en option trade till MX3.
         /// 
         /// Workflow:
         /// 1. Hämta trade från DB
@@ -40,8 +42,6 @@ namespace FxTradeHub.Services.Blotter
         {
             try
             {
-                // 1. Hämta trade från DB
-                // TODO: Implementera GetTradeByIdAsync i repository (D4.2b)
                 var trade = await _repository.GetTradeByIdAsync(stpTradeId).ConfigureAwait(false);
 
                 if (trade == null)
@@ -53,11 +53,8 @@ namespace FxTradeHub.Services.Blotter
                     };
                 }
 
-                // 2. Bygg Mx3OptionExportRequest från trade data
-                var exportRequest = MapToExportRequest(trade);
-
-                // 3. Skapa XML-fil
-                var exportResult = _mx3ExportService.CreateXmlFile(exportRequest);
+                var exportRequest = MapToOptionExportRequest(trade);
+                var exportResult = _mx3OptionExportService.CreateXmlFile(exportRequest);
 
                 if (!exportResult.Success)
                 {
@@ -68,21 +65,12 @@ namespace FxTradeHub.Services.Blotter
                     };
                 }
 
-                // 4. Uppdatera TradeSystemLink: Status = PENDING
-                //await _repository.UpdateTradeSystemLinkStatusAsync(
-                //    stpTradeId: stpTradeId,
-                //    systemCode: "MX3",
-                //    status: "PENDING",
-                //    lastError: null
-                //).ConfigureAwait(false);
-
                 await _repository.UpdateTradeSystemLinkOnBookingAsync(
                     stpTradeId: stpTradeId,
                     systemCode: "MX3",
                     bookedBy: Environment.UserName
                 ).ConfigureAwait(false);
 
-                // 5. Skapa TradeWorkflowEvent: Mx3BookingRequested
                 await _repository.InsertTradeWorkflowEventAsync(
                     stpTradeId: stpTradeId,
                     eventType: "Mx3BookingRequested",
@@ -108,9 +96,126 @@ namespace FxTradeHub.Services.Blotter
         }
 
         /// <summary>
-        /// D4.2a: Mappar BlotterTradeRow till Mx3OptionExportRequest.
+        /// Bokar en linear trade till MX3.
         /// </summary>
-        private Mx3OptionExportRequest MapToExportRequest(BlotterTradeRow trade)
+        public async Task<BookTradeResult> BookLinearToMx3Async(long stpTradeId)
+        {
+            try
+            {
+                var trade = await _repository.GetTradeByIdAsync(stpTradeId).ConfigureAwait(false);
+
+                if (trade == null)
+                {
+                    return new BookTradeResult
+                    {
+                        Success = false,
+                        ErrorMessage = $"Trade with StpTradeId={stpTradeId} not found"
+                    };
+                }
+
+                var exportRequest = MapToMx3LinearExportRequest(trade);
+                var exportResult = _mx3LinearExportService.CreateXmlFile(exportRequest);
+
+                if (!exportResult.Success)
+                {
+                    return new BookTradeResult
+                    {
+                        Success = false,
+                        ErrorMessage = $"MX3 XML export failed: {exportResult.ErrorMessage}"
+                    };
+                }
+
+                await _repository.UpdateTradeSystemLinkOnBookingAsync(
+                    stpTradeId: stpTradeId,
+                    systemCode: "MX3",
+                    bookedBy: Environment.UserName
+                ).ConfigureAwait(false);
+
+                await _repository.InsertTradeWorkflowEventAsync(
+                    stpTradeId: stpTradeId,
+                    eventType: "Mx3BookingRequested",
+                    systemCode: "MX3",
+                    userId: Environment.UserName,
+                    details: $"XML file: {exportResult.FileName}, Portfolio: {trade.PortfolioMx3}"
+                ).ConfigureAwait(false);
+
+                return new BookTradeResult
+                {
+                    Success = true,
+                    XmlFileName = exportResult.FileName
+                };
+            }
+            catch (Exception ex)
+            {
+                return new BookTradeResult
+                {
+                    Success = false,
+                    ErrorMessage = $"Book trade to MX3 failed: {ex.Message}"
+                };
+            }
+        }
+
+        public async Task<BookTradeResult> BookLinearToCalypsoAsync(long stpTradeId)
+        {
+            try
+            {
+                var trade = await _repository.GetTradeByIdAsync(stpTradeId).ConfigureAwait(false);
+
+                if (trade == null)
+                {
+                    return new BookTradeResult
+                    {
+                        Success = false,
+                        ErrorMessage = $"Trade with StpTradeId={stpTradeId} not found"
+                    };
+                }
+
+                var exportRequest = MapToCalypsoExportRequest(trade);
+                var exportResult = _calypsoExportService.CreateCsvFile(exportRequest);
+
+                if (!exportResult.Success)
+                {
+                    return new BookTradeResult
+                    {
+                        Success = false,
+                        ErrorMessage = $"CSV export failed: {exportResult.ErrorMessage}"
+                    };
+                }
+
+                await _repository.UpdateTradeSystemLinkOnBookingAsync(
+                    stpTradeId: stpTradeId,
+                    systemCode: "CALYPSO",
+                    bookedBy: Environment.UserName
+                ).ConfigureAwait(false);
+
+                await _repository.InsertTradeWorkflowEventAsync(
+                    stpTradeId: stpTradeId,
+                    eventType: "CalypsoBookingRequested",
+                    systemCode: "CALYPSO",
+                    userId: Environment.UserName,
+                    details: $"CSV file: {exportResult.FileName}, Portfolio: {trade.CalypsoPortfolio}"
+                ).ConfigureAwait(false);
+
+                return new BookTradeResult
+                {
+                    Success = true,
+                    XmlFileName = exportResult.FileName
+                };
+            }
+            catch (Exception ex)
+            {
+                return new BookTradeResult
+                {
+                    Success = false,
+                    ErrorMessage = $"Book trade failed: {ex.Message}"
+                };
+            }
+        }
+
+        /// <summary>
+        /// Mappar BlotterTradeRow till Mx3OptionExportRequest.
+        /// </summary>
+        private Mx3OptionExportRequest MapToOptionExportRequest(BlotterTradeRow trade)
         {
             return new Mx3OptionExportRequest
             {
@@ -131,8 +236,8 @@ namespace FxTradeHub.Services.Blotter
                 NotionalCurrency = trade.NotionalCcy,
                 Premium = trade.Premium ?? 0,
                 PremiumCurrency = trade.PremiumCcy,
-                Counterpart = trade.CounterpartyCode, // TODO: Finns det longname ID-fält?
-                CounterpartId = trade.CounterpartyCode, 
+                Counterpart = trade.CounterpartyCode,
+                CounterpartId = trade.CounterpartyCode,
                 ExecutionTime = trade.ExecutionTimeUtc?.ToString("yyyy-MM-dd HH:mm:ss:fff"),
                 ISIN = trade.Isin,
                 MIC = trade.Mic,
@@ -144,63 +249,28 @@ namespace FxTradeHub.Services.Blotter
             };
         }
 
-        public async Task<BookTradeResult> BookLinearToCalypsoAsync(long stpTradeId)
+        /// <summary>
+        /// Mappar BlotterTradeRow till Mx3LinearExportRequest.
+        /// </summary>
+        private Mx3LinearExportRequest MapToMx3LinearExportRequest(BlotterTradeRow trade)
         {
-            try
+            return new Mx3LinearExportRequest
             {
-                var trade = await _repository.GetTradeByIdAsync(stpTradeId).ConfigureAwait(false);
-
-                if (trade == null)
-                {
-                    return new BookTradeResult
-                    {
-                        Success = false,
-                        ErrorMessage = $"Trade with StpTradeId={stpTradeId} not found"
-                    };
-                }
-
-                var exportRequest = MapToCalypsoExportRequest(trade);
-                var exportResult = _calypsoExportService.CreateCsvFile(exportRequest);  // ✅ ÄNDRA CreateXmlFile → CreateCsvFile
-
-                if (!exportResult.Success)
-                {
-                    return new BookTradeResult
-                    {
-                        Success = false,
-                        ErrorMessage = $"CSV export failed: {exportResult.ErrorMessage}"  // ✅ ÄNDRA XML → CSV
-                    };
-                }
-
-                await _repository.UpdateTradeSystemLinkOnBookingAsync(
-                    stpTradeId: stpTradeId,
-                    systemCode: "CALYPSO",
-                    bookedBy: Environment.UserName
-                ).ConfigureAwait(false);
-
-                await _repository.InsertTradeWorkflowEventAsync(
-                    stpTradeId: stpTradeId,
-                    eventType: "CalypsoBookingRequested",
-                    systemCode: "CALYPSO",
-                    userId: Environment.UserName,
-                    details: $"CSV file: {exportResult.FileName}, Portfolio: {trade.CalypsoPortfolio}"  // ✅ ÄNDRA XML → CSV
-                ).ConfigureAwait(false);
-
-                return new BookTradeResult
-                {
-                    Success = true,
-                    XmlFileName = exportResult.FileName
-                };
-            }
-            catch (Exception ex)
-            {
-                return new BookTradeResult
-                {
-                    Success = false,
-                    ErrorMessage = $"Book trade failed: {ex.Message}"
-                };
-            }
+                TradeId = trade.TradeId,
+                StpTradeId = trade.StpTradeId,
+                Trader = trade.TraderId,
+                Portfolio = trade.PortfolioMx3,
+                CurrencyPair = trade.CcyPair,
+                BuySell = trade.BuySell,
+                Rate = trade.HedgeRate ?? trade.SpotRate ?? 0,
+                ProductType = DetermineProductType(trade.ProductType),
+                TradeDate = trade.TradeDate ?? DateTime.UtcNow.Date,
+                SettlementDate = trade.SettlementDate ?? DateTime.UtcNow.Date,
+                Notional = trade.Notional,
+                Counterpart = trade.CounterpartyCode,
+                CounterpartId = trade.CounterpartyCode
+            };
         }
-
 
         private CalypsoLinearExportRequest MapToCalypsoExportRequest(BlotterTradeRow trade)
         {
@@ -241,6 +311,5 @@ namespace FxTradeHub.Services.Blotter
 
             return "Spot"; // default
         }
-
     }
 }
