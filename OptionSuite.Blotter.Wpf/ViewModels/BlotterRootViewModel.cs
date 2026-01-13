@@ -1151,11 +1151,21 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             {
                 BookTradeResult result = null;
 
+                // ✅ FIX: Avgör om traden är option eller linear baserat på CallPut
+                var isOption = !string.IsNullOrEmpty(SelectedTrade?.CallPut);
+
                 if (systemCode == "MX3")
                 {
-                    result = await _commandService.BookOptionToMx3Async(stpTradeId).ConfigureAwait(true);
+                    if (isOption)
+                    {
+                        result = await _commandService.BookOptionToMx3Async(stpTradeId).ConfigureAwait(true);
+                    }
+                    else
+                    {
+                        result = await _commandService.BookLinearToMx3Async(stpTradeId).ConfigureAwait(true);
+                    }
                 }
-                else if (systemCode == "CALYPSO")  
+                else if (systemCode == "CALYPSO")
                 {
                     result = await _commandService.BookLinearToCalypsoAsync(stpTradeId).ConfigureAwait(true);
                 }

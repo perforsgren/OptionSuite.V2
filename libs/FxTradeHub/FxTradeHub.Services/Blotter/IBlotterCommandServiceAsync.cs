@@ -3,24 +3,34 @@
 namespace FxTradeHub.Services.Blotter
 {
     /// <summary>
-    /// D4.2a: Command Service för write-operationer i blottern.
+    /// Command Service för write-operationer i blottern.
     /// Separerad från read service enligt CQRS-pattern.
     /// </summary>
     public interface IBlotterCommandServiceAsync
     {
         /// <summary>
-        /// D4.2a: Bokar en option trade till MX3.
+        /// Bokar en option trade till MX3.
         /// Skapar XML-fil, uppdaterar TradeSystemLink till PENDING, och loggar TradeWorkflowEvent.
         /// </summary>
         /// <param name="stpTradeId">StpTradeId för traden som ska bokas</param>
         /// <returns>Resultat med success/error</returns>
         Task<BookTradeResult> BookOptionToMx3Async(long stpTradeId);
 
+        /// <summary>
+        /// Bokar en linear trade till Calypso.
+        /// Skapar CSV-fil, uppdaterar TradeSystemLink till PENDING, och loggar TradeWorkflowEvent.
+        /// </summary>
         Task<BookTradeResult> BookLinearToCalypsoAsync(long stpTradeId);
+
+        /// <summary>
+        /// Bokar en linear trade till MX3.
+        /// Skapar XML-fil, uppdaterar TradeSystemLink till PENDING, och loggar TradeWorkflowEvent.
+        /// </summary>
+        Task<BookTradeResult> BookLinearToMx3Async(long stpTradeId);
     }
 
     /// <summary>
-    /// D4.2a: Resultat från Book Trade-operation.
+    /// Resultat från Book Trade-operation.
     /// </summary>
     public sealed class BookTradeResult
     {
