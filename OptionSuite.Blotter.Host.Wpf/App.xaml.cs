@@ -6,8 +6,7 @@ using OptionSuite.Blotter.Wpf.Services;
 using FxTradeHub.Services.Ingest;
 using FxTradeHub.Services.Parsing;
 using FxTradeHub.Domain.Parsing;
-using System.Collections.Generic;
-using FxTradeHub.Domain.Interfaces;
+using FxTradeHub.Services.Notifications;
 
 namespace OptionSuite.Blotter.Host.Wpf
 {
@@ -51,7 +50,23 @@ namespace OptionSuite.Blotter.Host.Wpf
                 var messageInService = new MessageInService(messageInRepo);
                 var fileInboxService = new FileInboxService(messageInService);
 
-                // Skapa parsers för MessageInParserOrchestrator
+                // ✅ 6b. Skapa Email Notification Service
+                var notificationSettings = new MessageInNotificationSettings
+                {
+                    SmtpHost = "ismtp.swedbank.se",
+                    SmtpPort = 25,
+                    EnableSsl = true,
+                    SmtpUser = null,
+                    SmtpPassword = null,
+                    FromAddress = "per.forsgren@swedbank.se",
+                    ToAddresses = new[] { "per.forsgren@swedbank.se" },
+                    SendOnSuccess = true,   // ✅ Skicka mail även vid success
+                    SendOnFailure = true
+                };
+
+                var notificationService = new SmtpMessageInNotificationService(notificationSettings);
+
+                // 7. Skapa parsers för MessageInParserOrchestrator
                 var parsers = new List<IInboundMessageParser>
                 {
                     new VolbrokerFixAeParser(lookupRepo),
@@ -60,17 +75,21 @@ namespace OptionSuite.Blotter.Host.Wpf
                     new NatWestSpotConfirmationParser(lookupRepo)
                 };
 
-                var parserOrchestrator = new MessageInParserOrchestrator(messageInRepo, repositorySync, parsers);
+                // ✅ 8. Skapa MessageInParserOrchestrator MED notification service
+                var parserOrchestrator = new MessageInParserOrchestrator(
+                    messageInRepo,
+                    repositorySync,
+                    parsers,
+                    notificationService);  // ✅ Injektera notification service
 
                 _emailWatcher = new EmailInboxWatcherService(fileInboxService, parserOrchestrator, emailInboxFolder);
                 _emailWatcher.Start();  // Starta ALLTID
 
-                // 7. Lyssna på master-status ändringar (för Mx3 watcher)
+                // 9. Lyssna på master-status ändringar (för Mx3 watcher)
                 _electionService.MasterStatusChanged += OnMasterStatusChanged;
 
                 System.Diagnostics.Debug.WriteLine("[App] All services initialized successfully");
             }
-
             catch (Exception ex)
             {
                 MessageBox.Show(
@@ -83,6 +102,7 @@ namespace OptionSuite.Blotter.Host.Wpf
                 Shutdown(1);
             }
         }
+
 
         private void OnMasterStatusChanged(object sender, bool isMaster)
         {

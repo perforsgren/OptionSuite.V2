@@ -12,6 +12,7 @@
 
         <!-- Converters -->
         <BooleanToVisibilityConverter x:Key="BoolToVisConverter"/>
+        <converters:BoolToYesNoConverter x:Key="BoolToYesNoConverter"/>
         <converters:NullToCollapsedConverter x:Key="NullToCollapsed"/>
         <converters:NullToVisibleConverter x:Key="NullToVisible"/>
         <converters:DetailsToLinesConverter x:Key="DetailsToLines"/>
@@ -895,16 +896,11 @@
                                         <DataGridTextColumn Header="Portfolio MX3" Binding="{Binding PortfolioMx3}" Width="110"/>
                                         <DataGridTextColumn Header="Trader" Binding="{Binding Trader}" Width="80"/>
                                         <DataGridTemplateColumn Header="Status" Width="150" CellTemplate="{StaticResource StatusPillTemplate}" CellStyle="{StaticResource Style.BlotterDataGridCell.Status}" />
-                                        <DataGridCheckBoxColumn Header="STP" Width="40" Binding="{Binding StpFlag, Mode=OneWay}" IsReadOnly="True"/>
+                                        <DataGridTextColumn  Header="STP" Width="50" Binding="{Binding StpFlag, Converter={StaticResource BoolToYesNoConverter}}" IsReadOnly="True"/>
                                     </DataGrid.Columns>
 
                                 </DataGrid>
                             </Grid>
-
-
-
-
-
 
                             <!-- Column separator -->
                             <Border Grid.Column="1" Background="{StaticResource Brush.BorderSoft}"/>

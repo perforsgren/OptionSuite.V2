@@ -5,6 +5,7 @@ using FxTradeHub.Domain.Interfaces;
 using FxTradeHub.Domain.Parsing;
 using FxTradeHub.Domain.Enums;
 using FxTradeHub.Domain.Repositories;
+using FxTradeHub.Services.Notifications;
 
 namespace FxTradeHub.Services.Parsing
 {
@@ -18,37 +19,33 @@ namespace FxTradeHub.Services.Parsing
         private readonly IMessageInRepository _messageRepo;
         private readonly IStpRepository _stpRepository;
         private readonly List<IInboundMessageParser> _parsers;
+        private readonly IMessageInNotificationService _notificationService;
 
         // TODO: Flytta till lookup-tabell i DB (stp_venue_config) för att kunna 
         // administrera STP-eligible venues utan kodändring.
-        // Tabell-förslag: SourceVenueCode VARCHAR(50), StpEligible TINYINT(1), CreatedUtc DATETIME
         private static readonly HashSet<string> StpEligibleVenues = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             "JPM",
             "BARX",
             "NATWEST",
             "AUTOBAHN"
-            // Lägg till fler venues här
         };
 
         /// <summary>
-        /// Skapar en ny instans av MessageInParserOrchestrator med angivna
-        /// repository-implementationer och parserlista.
+        /// Skapar en ny instans av MessageInParserOrchestrator.
         /// </summary>
         public MessageInParserOrchestrator(
             IMessageInRepository messageRepo,
             IStpRepository stpRepository,
-            List<IInboundMessageParser> parsers)
+            List<IInboundMessageParser> parsers,
+            IMessageInNotificationService notificationService = null)
         {
             _messageRepo = messageRepo ?? throw new ArgumentNullException(nameof(messageRepo));
             _stpRepository = stpRepository ?? throw new ArgumentNullException(nameof(stpRepository));
             _parsers = parsers ?? new List<IInboundMessageParser>();
+            _notificationService = notificationService; // Optional - kan vara null
         }
 
-        /// <summary>
-        /// Bearbetar en batch av oparsade meddelanden (ParsedFlag = false).
-        /// Hämtar ett begränsat antal rader från MessageIn och försöker parsa dem.
-        /// </summary>
         public void ProcessPendingMessages()
         {
             const int maxBatchSize = 100;
@@ -60,9 +57,6 @@ namespace FxTradeHub.Services.Parsing
             }
         }
 
-        /// <summary>
-        /// Bearbetar ett enskilt inkommande meddelande identifierat via MessageInId.
-        /// </summary>
         public void ProcessMessage(long messageInId, bool force)
         {
             var message = _messageRepo.GetById(messageInId);
@@ -75,25 +69,30 @@ namespace FxTradeHub.Services.Parsing
             var parser = FindParser(message);
             if (parser == null)
             {
-                MarkFailed(message, "No parser available for this message.");
+                var errorMsg = "No parser available for this message.";
+                MarkFailed(message, errorMsg);
+
+                // ✅ Skicka email-notifiering vid total failure
+                _notificationService?.NotifyMessageInFailure(
+                    venueCode: message.SourceVenueCode ?? "UNKNOWN",
+                    messageType: message.SourceType ?? "UNKNOWN",
+                    sourceMessageKey: message.SourceMessageKey ?? $"MsgInId={message.MessageInId}",
+                    fileName: BuildFileNameDescription(message),
+                    errorMessage: errorMsg,
+                    rawPayload: message.RawPayload ?? "(no payload)"
+                );
+
                 return;
             }
 
             ParseAndPersist(message, parser);
         }
 
-        /// <summary>
-        /// Bearbetar ett enskilt inkommande meddelande identifierat via MessageInId.
-        /// Standardbeteende: om ParsedFlag redan är satt så görs inget.
-        /// </summary>
         public void ProcessMessage(long messageInId)
         {
             ProcessMessage(messageInId, false);
         }
 
-        /// <summary>
-        /// Försöker parsa om ett MessageIn även om det redan är markerat som behandlat.
-        /// </summary>
         public void ReprocessMessage(long messageInId)
         {
             ProcessMessage(messageInId, true);
@@ -110,9 +109,6 @@ namespace FxTradeHub.Services.Parsing
             return null;
         }
 
-        /// <summary>
-        /// Kör parsing för ett MessageIn med vald parser och persisterar resultatet.
-        /// </summary>
         private void ParseAndPersist(MessageIn source, IInboundMessageParser parser)
         {
             try
@@ -122,12 +118,35 @@ namespace FxTradeHub.Services.Parsing
                 if (!result.Success)
                 {
                     MarkFailed(source, result.ErrorMessage);
+
+                    // ✅ Skicka email vid parser failure
+                    _notificationService?.NotifyMessageInFailure(
+                        venueCode: source.SourceVenueCode ?? "UNKNOWN",
+                        messageType: source.SourceType ?? "UNKNOWN",
+                        sourceMessageKey: source.SourceMessageKey ?? $"MsgInId={source.MessageInId}",
+                        fileName: BuildFileNameDescription(source),
+                        errorMessage: $"Parser: {parser.GetType().Name}, Error: {result.ErrorMessage}",
+                        rawPayload: source.RawPayload ?? "(no payload)"
+                    );
+
                     return;
                 }
 
                 if (result.Trades == null || result.Trades.Count == 0)
                 {
-                    MarkFailed(source, "Parser returned success but no trades.");
+                    var errorMsg = "Parser returned success but no trades.";
+                    MarkFailed(source, errorMsg);
+
+                    // ✅ Skicka email vid no-trades failure
+                    _notificationService?.NotifyMessageInFailure(
+                        venueCode: source.SourceVenueCode ?? "UNKNOWN",
+                        messageType: source.SourceType ?? "UNKNOWN",
+                        sourceMessageKey: source.SourceMessageKey ?? $"MsgInId={source.MessageInId}",
+                        fileName: BuildFileNameDescription(source),
+                        errorMessage: errorMsg,
+                        rawPayload: source.RawPayload ?? "(no payload)"
+                    );
+
                     return;
                 }
 
@@ -135,7 +154,19 @@ namespace FxTradeHub.Services.Parsing
                 {
                     if (tradeBundle == null || tradeBundle.Trade == null)
                     {
-                        MarkFailed(source, "Parser returned a trade bundle without Trade.");
+                        var errorMsg = "Parser returned a trade bundle without Trade.";
+                        MarkFailed(source, errorMsg);
+
+                        // ✅ Skicka email vid null trade
+                        _notificationService?.NotifyMessageInFailure(
+                            venueCode: source.SourceVenueCode ?? "UNKNOWN",
+                            messageType: source.SourceType ?? "UNKNOWN",
+                            sourceMessageKey: source.SourceMessageKey ?? $"MsgInId={source.MessageInId}",
+                            fileName: BuildFileNameDescription(source),
+                            errorMessage: errorMsg,
+                            rawPayload: source.RawPayload ?? "(no payload)"
+                        );
+
                         return;
                     }
 
@@ -177,16 +208,26 @@ namespace FxTradeHub.Services.Parsing
                 }
 
                 MarkSuccess(source);
+
+                // ✅ Skicka email vid success (om aktiverat i settings)
+                _notificationService?.NotifyMessageInSuccess(source);
             }
             catch (Exception ex)
             {
                 MarkFailed(source, ex.ToString());
+
+                // ✅ Skicka email vid exception
+                _notificationService?.NotifyMessageInFailure(
+                    venueCode: source.SourceVenueCode ?? "UNKNOWN",
+                    messageType: source.SourceType ?? "UNKNOWN",
+                    sourceMessageKey: source.SourceMessageKey ?? $"MsgInId={source.MessageInId}",
+                    fileName: BuildFileNameDescription(source),
+                    errorMessage: $"Exception: {ex.Message}\n\nStackTrace:\n{ex.StackTrace}",
+                    rawPayload: source.RawPayload ?? "(no payload)"
+                );
             }
         }
 
-        /// <summary>
-        /// Bygger standardlänkar (TradeSystemLink) för en ny trade baserat på produkt och venue.
-        /// </summary>
         private IList<TradeSystemLink> BuildSystemLinksForTrade(MessageIn source, Trade trade)
         {
             var now = DateTime.UtcNow;
@@ -195,11 +236,9 @@ namespace FxTradeHub.Services.Parsing
             const string stpModeManual = "MANUAL";
             const string stpModeAuto = "AUTO";
 
-            // OPTION: bokas i MX3 och kan kräva ACK tillbaka (VOLBROKER_STP-länk).
             if (trade.ProductType == ProductType.OptionVanilla ||
                 trade.ProductType == ProductType.OptionNdo)
             {
-                // MX3 (StpFlag=null för options)
                 links.Add(CreateSystemLink(
                     systemCode: SystemCode.Mx3,
                     status: TradeSystemStatus.New,
@@ -230,11 +269,9 @@ namespace FxTradeHub.Services.Parsing
                 return links;
             }
 
-            // SPOT/FWD: bokas i MX3 och i Calypso.
             if (trade.ProductType == ProductType.Spot ||
                 trade.ProductType == ProductType.Fwd)
             {
-                // MX3 (StpFlag=null)
                 links.Add(CreateSystemLink(
                     systemCode: SystemCode.Mx3,
                     status: TradeSystemStatus.New,
@@ -247,7 +284,6 @@ namespace FxTradeHub.Services.Parsing
                     lastUpdatedUtc: now,
                     importedBy: "STP"));
 
-                // CALYPSO (StpFlag baserat på venue)
                 var stpFlag = GetStpFlagForVenue(trade.SourceVenueCode);
 
                 links.Add(CreateSystemLink(
@@ -265,7 +301,6 @@ namespace FxTradeHub.Services.Parsing
                 return links;
             }
 
-            // Övriga produkttyper (SWAP/NDF etc) – V1: endast MX3 som default.
             links.Add(CreateSystemLink(
                 systemCode: SystemCode.Mx3,
                 status: TradeSystemStatus.New,
@@ -281,13 +316,6 @@ namespace FxTradeHub.Services.Parsing
             return links;
         }
 
-        /// <summary>
-        /// Avgör om venue är STP-eligible (Straight-Through Processing).
-        /// Returnerar true om trades från denna venue ska ha StpFlag=1.
-        /// 
-        /// TODO: Flytta till IStpLookupRepository.IsVenueStpEligible() 
-        /// med data från stp_venue_config-tabell.
-        /// </summary>
         private bool? GetStpFlagForVenue(string sourceVenueCode)
         {
             if (string.IsNullOrWhiteSpace(sourceVenueCode))
@@ -296,9 +324,6 @@ namespace FxTradeHub.Services.Parsing
             return StpEligibleVenues.Contains(sourceVenueCode) ? true : (bool?)null;
         }
 
-        /// <summary>
-        /// Skapar en TradeSystemLink med konsistenta defaults.
-        /// </summary>
         private TradeSystemLink CreateSystemLink(
             SystemCode systemCode,
             TradeSystemStatus status,
@@ -389,6 +414,28 @@ namespace FxTradeHub.Services.Parsing
                 default:
                     return $"Message from {source.SourceVenueCode}";
             }
+        }
+
+        /// <summary>
+        /// Bygger en beskrivning av filnamn/meddelandetyp för email-notifieringar.
+        /// </summary>
+        private string BuildFileNameDescription(MessageIn source)
+        {
+            // För EMAIL: använd SourceMessageKey som ofta är filnamnet
+            if (source.SourceType != null &&
+                source.SourceType.Equals("EMAIL", StringComparison.OrdinalIgnoreCase))
+            {
+                return source.SourceMessageKey ?? "(no filename)";
+            }
+
+            // För FIX: använd FIX message type + venue
+            if (source.SourceType != null &&
+                source.SourceType.Equals("FIX", StringComparison.OrdinalIgnoreCase))
+            {
+                return $"FIX {source.FixMsgType ?? "?"} from {source.SourceVenueCode ?? "?"}";
+            }
+
+            return source.SourceMessageKey ?? $"MessageInId={source.MessageInId}";
         }
     }
 }

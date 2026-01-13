@@ -892,8 +892,7 @@
         <Setter Property="Foreground" Value="{StaticResource Brush.TextMuted}"/>
         <Setter Property="TextWrapping" Value="Wrap"/>
     </Style>
-
-
+    
     <!-- System link card (MX3, CALYPSO etc) -->
     <Style x:Key="Style.BlotterSystemCard" TargetType="{x:Type Border}">
         <Setter Property="Background">
