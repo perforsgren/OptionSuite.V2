@@ -27,6 +27,12 @@ namespace FxTradeHub.Services.Blotter
         /// Skapar XML-fil, uppdaterar TradeSystemLink till PENDING, och loggar TradeWorkflowEvent.
         /// </summary>
         Task<BookTradeResult> BookLinearToMx3Async(long stpTradeId);
+
+        /// <summary>
+        /// Bokar en NDF trade till MX3.
+        /// Skapar XML-fil, uppdaterar TradeSystemLink till PENDING, och loggar TradeWorkflowEvent.
+        /// </summary>
+        Task<BookTradeResult> BookNdfToMx3Async(long stpTradeId);
     }
 
     /// <summary>

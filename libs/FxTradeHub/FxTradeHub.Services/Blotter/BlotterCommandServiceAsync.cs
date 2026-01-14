@@ -231,7 +231,7 @@ namespace FxTradeHub.Services.Blotter
                 SettlementDate = trade.SettlementDate ?? DateTime.UtcNow.Date,
                 FixingDate = trade.FixingDate ?? trade.SettlementDate ?? DateTime.UtcNow.Date,
                 Notional = trade.Notional,
-                SettlementCurrency = trade.SettlementCurrency ?? "USD",  // default
+                SettlementCurrency = trade.SettlementCcy ?? "USD",  // default
                 FixingSource = "NDF_group"  // default, kan göras konfigurerbar
             };
         }
