@@ -1236,8 +1236,6 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
         /// - Trader = current user
         /// - Har BookFlag = true för minst ett system
         /// </summary>
-        /// <summary>
-        /// </summary>
         private async Task AutoBookNewTradesAsync(List<TradeRowViewModel> newTrades)
         {
             if (!AutoBookEnabled)
@@ -1294,6 +1292,15 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
 
                     foreach (var link in systemsToBook)
                     {
+                        var bookingKey = $"{trade.StpTradeId}_{link.SystemCode}";
+
+                        // ✅ FIX: Kontrollera om bokningen redan pågår för att undvika duplicates
+                        if (_inFlightBookings.Contains(bookingKey))
+                        {
+                            Debug.WriteLine($"[AutoBook] Trade {trade.TradeId} to {link.SystemCode} already in progress, skipping");
+                            continue;
+                        }
+
                         Debug.WriteLine($"[AutoBook] Auto-booking trade {trade.TradeId} to {link.SystemCode}");
 
                         // Fire-and-forget booking (UI uppdateras via RefreshSingleTradeAsync)
@@ -1306,6 +1313,7 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                 }
             }
         }
+
 
         private async Task RefreshSingleTradeAsync(long stpTradeId)
         {

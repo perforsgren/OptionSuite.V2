@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Globalization;
+using System.Windows;
 using System.Windows.Data;
 
 namespace OptionSuite.Blotter.Wpf.Converters
@@ -11,23 +12,35 @@ namespace OptionSuite.Blotter.Wpf.Converters
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value is DateTime dt && dt.Kind == DateTimeKind.Utc)
+            // ✅ FIX: Hantera null explicit
+            if (value == null)
+                return DependencyProperty.UnsetValue;
+
+            if (value is DateTime dt)
             {
-                return dt.ToLocalTime();
+                // Om redan UTC, konvertera till lokal tid
+                if (dt.Kind == DateTimeKind.Utc)
+                {
+                    return dt.ToLocalTime();
+                }
+
+                // Om Kind är Unspecified, anta UTC och konvertera
+                if (dt.Kind == DateTimeKind.Unspecified)
+                {
+                    return DateTime.SpecifyKind(dt, DateTimeKind.Utc).ToLocalTime();
+                }
+
+                // Om redan lokal tid, returnera som den är
+                return dt;
             }
 
-            if (value is DateTime dtUnspecified)
-            {
-                // Anta UTC om Kind är Unspecified
-                return DateTime.SpecifyKind(dtUnspecified, DateTimeKind.Utc).ToLocalTime();
-            }
-
-            return value;
+            // Om värdet inte är en DateTime, returnera UnsetValue
+            return DependencyProperty.UnsetValue;
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            throw new NotImplementedException();
+            throw new NotImplementedException("UtcToLocalTimeConverter does not support ConvertBack.");
         }
     }
 }

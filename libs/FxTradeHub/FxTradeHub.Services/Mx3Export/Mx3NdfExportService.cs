@@ -71,40 +71,58 @@ namespace FxTradeHub.Services.Mx3Export
             if (req.BuySell == "Buy")
             {
                 // Buy base currency (USD i USDCNY)
-                // Notional är i quote currency (CNY): vi betalar CNY, får USD
                 if (req.NotionalCurrency == quoteCcy)
                 {
-                    ccy1 = quoteCcy;  // Vi betalar
-                    ccy2 = baseCcy;   // Vi får
-                    notional1 = req.Notional;
-                    notional2 = req.Notional / req.Rate;
+                    // Notional är i quote currency (CNY): vi betalar CNY, får USD
+                    ccy1 = quoteCcy;  // Vi betalar (CNY)
+                    ccy2 = baseCcy;   // Vi får (USD)
+                    notional1 = req.Notional;              // CNY
+                    notional2 = req.Notional / req.Rate;   // USD = CNY / Rate
+                }
+                else if (req.NotionalCurrency == baseCcy)
+                {
+                    // Notional är i base currency (USD): vi betalar quote, får base
+                    ccy1 = quoteCcy;  // Vi betalar (CNY)
+                    ccy2 = baseCcy;   // Vi får (USD)
+                    notional1 = req.Notional * req.Rate;   // CNY = USD * Rate
+                    notional2 = req.Notional;              // USD
                 }
                 else
                 {
-                    // Notional är i base currency (USD): vi betalar quote, får base
-                    ccy1 = quoteCcy;
-                    ccy2 = baseCcy;
-                    notional1 = req.Notional * req.Rate;
-                    notional2 = req.Notional;
+                    throw new ArgumentException(
+                        $"NotionalCurrency '{req.NotionalCurrency}' does not match CurrencyPair '{req.CurrencyPair}'. " +
+                        $"Expected either '{baseCcy}' or '{quoteCcy}'.");
+                }
+            }
+            else if (req.BuySell == "Sell")
+            {
+                // Sell base currency (USD i USDCNY) = vi säljer USD, får CNY
+                if (req.NotionalCurrency == quoteCcy)
+                {
+                    // Notional är i quote currency (CNY): vi får CNY notional, betalar USD
+                    ccy1 = baseCcy;   // Vi betalar (USD)
+                    ccy2 = quoteCcy;  // Vi får (CNY)
+                    notional1 = req.Notional / req.Rate;   // USD = CNY / Rate
+                    notional2 = req.Notional;              // CNY
+                }
+                else if (req.NotionalCurrency == baseCcy)
+                {
+                    // Notional är i base currency (USD): vi betalar USD notional, får CNY
+                    ccy1 = baseCcy;   // Vi betalar (USD)
+                    ccy2 = quoteCcy;  // Vi får (CNY)
+                    notional1 = req.Notional;              // USD
+                    notional2 = req.Notional * req.Rate;   // CNY = USD * Rate
+                }
+                else
+                {
+                    throw new ArgumentException(
+                        $"NotionalCurrency '{req.NotionalCurrency}' does not match CurrencyPair '{req.CurrencyPair}'. " +
+                        $"Expected either '{baseCcy}' or '{quoteCcy}'.");
                 }
             }
             else
             {
-                // Sell base currency (USD i USDCNY)
-                if (req.NotionalCurrency == quoteCcy)
-                {
-                    ccy1 = baseCcy;
-                    ccy2 = quoteCcy;
-                    notional1 = req.Notional / req.Rate;
-                    notional2 = req.Notional;
-                }
-                else
-                {
-                    ccy1 = baseCcy;
-                    ccy2 = quoteCcy;
-                    notional1 = req.Notional;
-                    notional2 = req.Notional * req.Rate;
-                }
+                throw new ArgumentException($"Invalid BuySell value: '{req.BuySell}'. Expected 'Buy' or 'Sell'.");
             }
 
             // Format dates
