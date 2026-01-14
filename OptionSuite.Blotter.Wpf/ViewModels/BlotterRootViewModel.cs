@@ -1328,12 +1328,14 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
 
                 var optionIndex = -1;
                 var linearIndex = -1;
+                TradeRowViewModel existingVm = null;  // ✅ Spara befintlig VM
 
                 for (int i = 0; i < OptionTrades.Count; i++)
                 {
                     if (OptionTrades[i].StpTradeId == stpTradeId)
                     {
                         optionIndex = i;
+                        existingVm = OptionTrades[i];  // ✅ Spara referens
                         break;
                     }
                 }
@@ -1345,12 +1347,13 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                         if (LinearTrades[i].StpTradeId == stpTradeId)
                         {
                             linearIndex = i;
+                            existingVm = LinearTrades[i];  // ✅ Spara referens
                             break;
                         }
                     }
                 }
 
-                var newVm = MapToTradeRowViewModel(updatedTrade);
+                var newVm = MapToTradeRowViewModel(updatedTrade, existingVm);  // ✅ Skicka med existing
 
                 if (optionIndex >= 0)
                 {
@@ -1382,7 +1385,7 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             }
         }
 
-        private TradeRowViewModel MapToTradeRowViewModel(BlotterTradeRow trade)
+        private TradeRowViewModel MapToTradeRowViewModel(BlotterTradeRow trade, TradeRowViewModel existing = null)
         {
             return new TradeRowViewModel(
                 stpTradeId: trade.StpTradeId,
@@ -1401,7 +1404,7 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                 portfolioMx3: trade.PortfolioMx3,
                 trader: trade.TraderId,
                 status: trade.Status,
-                time: trade.TradeDate ?? DateTime.MinValue,
+                time: trade.TradeDate ?? existing?.Time ?? DateTime.UtcNow,  
                 system: trade.SystemCode,
                 product: trade.ProductType,
                 spotRate: trade.SpotRate,
@@ -1422,10 +1425,11 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                 reportingEntityId: trade.ReportingEntityId,
                 margin: trade.Margin,
                 stpFlag: trade.StpFlag ?? false,
-                isNew: false,
-                isUpdated: false
+                isNew: false,       
+                isUpdated: false    
             );
         }
+
 
         // === CONTEXT MENU COMMAND HANDLERS ===
 

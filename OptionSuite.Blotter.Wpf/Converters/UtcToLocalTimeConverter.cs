@@ -12,12 +12,20 @@ namespace OptionSuite.Blotter.Wpf.Converters
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            // ✅ FIX: Hantera null explicit
+            // Hantera null explicit
             if (value == null)
                 return DependencyProperty.UnsetValue;
 
             if (value is DateTime dt)
             {
+                // Skippa konvertering av DateTime.MinValue/MaxValue (invalid dates)
+                if (dt == DateTime.MinValue || dt == DateTime.MaxValue)
+                    return DependencyProperty.UnsetValue;
+
+                // Skippa konvertering av "epoch-near" dates (0001-01-01 till 0001-12-31)
+                if (dt.Year == 1)
+                    return DependencyProperty.UnsetValue;
+
                 // Om redan UTC, konvertera till lokal tid
                 if (dt.Kind == DateTimeKind.Utc)
                 {
