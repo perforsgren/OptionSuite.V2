@@ -969,11 +969,6 @@
                                             </ScrollViewer.Style>
 
                                             <StackPanel>
-                                                
-                                                
-                                                
-                                                
-                                                
 
                                                 <!-- TRADE SUMMARY card -->
                                                 <Border Style="{StaticResource Style.BlotterRightCard}">
@@ -1049,10 +1044,10 @@
                                                                 </TextBlock.Style>
                                                             </TextBlock>
 
-
                                                             <TextBlock Grid.Row="7" Grid.Column="0" Text="TradeTime" Style="{StaticResource Style.BlotterRightKey}"/>
-                                                            <TextBlock Grid.Row="7" Grid.Column="1" Text="{Binding SelectedTrade.Time, StringFormat='yyyy-MM-dd HH:mm:ss'}" Style="{StaticResource Style.BlotterRightValue}"/>
-
+                                                            <TextBlock Grid.Row="7" Grid.Column="1" 
+                                                                       Text="{Binding SelectedTrade.Time, Converter={StaticResource UtcToLocalTime}, StringFormat='yyyy-MM-dd HH:mm:ss'}" 
+                                                                       Style="{StaticResource Style.BlotterRightValue}"/>
                                                         </Grid>
 
                                                     </StackPanel>

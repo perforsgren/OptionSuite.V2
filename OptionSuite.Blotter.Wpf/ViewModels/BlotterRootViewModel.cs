@@ -871,8 +871,18 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
 
                     TriggerDetailsLoadForSelection();
 
-                    // ✅ FIX: Uppdatera Book-knappen efter refresh
+                    // Uppdatera Book-knappen efter refresh
                     RaiseCanExecuteForBookCommands();
+
+                    // Boka nya trades automatiskt om aktiverat
+                    var allNewTrades = newOptionTrades.Concat(newLinearTrades)
+                        .Where(t => t.IsNew)
+                        .ToList();
+
+                    if (allNewTrades.Count > 0 && AutoBookEnabled)
+                    {
+                        _ = AutoBookNewTradesAsync(allNewTrades);
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -1215,6 +1225,85 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             finally
             {
                 _inFlightBookings.Remove(bookingKey);
+            }
+        }
+
+        /// <summary>
+        /// Autobokar nya trades som matchar kriterierna om AutoBookEnabled = true.
+        /// Väntar en kort stund innan bokning för att ge användaren chans att avbryta.
+        /// Bokar endast trades som:
+        /// - Status = "New"
+        /// - Trader = current user
+        /// - Har BookFlag = true för minst ett system
+        /// </summary>
+        /// <summary>
+        /// </summary>
+        private async Task AutoBookNewTradesAsync(List<TradeRowViewModel> newTrades)
+        {
+            if (!AutoBookEnabled)
+                return;
+
+            if (newTrades == null || newTrades.Count == 0)
+                return;
+
+            var currentUser = Environment.UserName.ToUpper();
+
+            // Filtrera trades som ska autobokas
+            var tradesToAutoBook = newTrades
+                .Where(t => t.IsNew &&
+                            t.Status == "New" &&
+                            string.Equals(t.Trader, currentUser, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+            if (tradesToAutoBook.Count == 0)
+                return;
+
+            Debug.WriteLine($"[AutoBook] Found {tradesToAutoBook.Count} new trades to auto-book");
+
+            // Kort fördröjning för att ge användaren chans att se traden innan bokning
+            await Task.Delay(500).ConfigureAwait(true);
+
+            // Kontrollera igen att auto-book fortfarande är aktiverat
+            if (!AutoBookEnabled)
+            {
+                Debug.WriteLine("[AutoBook] Auto-book disabled during delay, aborting");
+                return;
+            }
+
+            foreach (var trade in tradesToAutoBook)
+            {
+                // Skippa om traden redan är bokad (status kan ha ändrats)
+                if (trade.Status != "New")
+                    continue;
+
+                try
+                {
+                    // Hämta systemlinks för att veta vilka system som ska bokas
+                    var links = await _readService.GetTradeSystemLinksAsync(trade.StpTradeId).ConfigureAwait(true);
+
+                    var systemsToBook = links
+                        .Where(l => l.BookFlag == true &&
+                                    string.Equals(l.Status, "New", StringComparison.OrdinalIgnoreCase))
+                        .ToList();
+
+                    if (systemsToBook.Count == 0)
+                    {
+                        Debug.WriteLine($"[AutoBook] Trade {trade.TradeId}: No systems configured for booking");
+                        continue;
+                    }
+
+                    foreach (var link in systemsToBook)
+                    {
+                        Debug.WriteLine($"[AutoBook] Auto-booking trade {trade.TradeId} to {link.SystemCode}");
+
+                        // Fire-and-forget booking (UI uppdateras via RefreshSingleTradeAsync)
+                        FireAndForget(ExecuteBookTradeAsync(trade.StpTradeId, link.SystemCode), "AutoBook");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"[AutoBook] Failed to auto-book trade {trade.TradeId}: {ex.Message}");
+                }
             }
         }
 
