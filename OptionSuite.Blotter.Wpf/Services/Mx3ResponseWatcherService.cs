@@ -151,7 +151,7 @@ namespace OptionSuite.Blotter.Wpf.Services
                 var eventType = response.IsSuccess ? "BookingConfirmed" : "BookingRejected";
                 var details = response.IsSuccess
                     ? $"MX3 Trade ID: {response.Mx3TradeId}, Contract ID: {response.Mx3ContractId}"
-                    : $"Errors: {response.ErrorMessage}";
+                    : FormatErrorDetails(response.ErrorMessage);  // ✅ Använd helper
 
                 await _repository.InsertTradeWorkflowEventAsync(
                     response.StpTradeId,
@@ -177,6 +177,34 @@ namespace OptionSuite.Blotter.Wpf.Services
                 }
             }
         }
+
+        private string FormatErrorDetails(string errorMessage)
+        {
+            if (string.IsNullOrWhiteSpace(errorMessage))
+                return "Unknown error";
+
+            // Försök hitta <Description> taggar i XML error
+            var descriptionStart = errorMessage.IndexOf("<Description>");
+            if (descriptionStart >= 0)
+            {
+                descriptionStart += "<Description>".Length;
+                var descriptionEnd = errorMessage.IndexOf("</Description>", descriptionStart);
+                if (descriptionEnd > descriptionStart)
+                {
+                    var description = errorMessage.Substring(descriptionStart, descriptionEnd - descriptionStart);
+                    return $"MX3 Error: {description.Trim()}";
+                }
+            }
+
+            // Fallback: visa första 300 tecken
+            if (errorMessage.Length > 300)
+            {
+                return $"Error: {errorMessage.Substring(0, 300)}...";
+            }
+
+            return $"Error: {errorMessage}";
+        }
+
 
         private void ArchiveResponseFiles(long stpTradeId, string processedFileName)
         {

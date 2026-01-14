@@ -1677,8 +1677,12 @@
                                                                                         <TextBlock Text="{Binding}"
                                                                                                    FontSize="11"
                                                                                                    Foreground="{StaticResource Brush.TextMuted}"
-                                                                                                   Margin="0,0,0,2"
-                                                                                                   TextWrapping="Wrap"/>
+                                                                                                   TextWrapping="Wrap"
+                                                                                                   MaxWidth="400">
+                                                                                            <TextBlock.ToolTip>
+                                                                                                <ToolTip Content="{Binding}" MaxWidth="600"/>
+                                                                                            </TextBlock.ToolTip>
+                                                                                        </TextBlock>
                                                                                     </DataTemplate>
                                                                                 </ItemsControl.ItemTemplate>
                                                                             </ItemsControl>

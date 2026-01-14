@@ -27,10 +27,16 @@ namespace OptionSuite.Blotter.Wpf.Converters
                 return new SolidColorBrush(Color.FromRgb(0x10, 0xB9, 0x81)); // Green
             }
 
+            // ========== ERROR (Red) ==========  
+            if (status == "ERROR" ||
+                status == "REJECTED" ||
+                status == "FAILED")
+            {
+                return new SolidColorBrush(Color.FromRgb(0xEF, 0x44, 0x44)); // Red
+            }
+
             // ========== WARNING (Orange/Yellow) ==========
             if (status == "PENDING" ||
-                status == "ERROR" ||
-                status == "REJECTED" ||
                 status.Contains("PENDING"))
             {
                 return new SolidColorBrush(Color.FromRgb(0xF5, 0x9E, 0x0B)); // Orange

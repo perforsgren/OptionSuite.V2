@@ -526,6 +526,10 @@ SELECT
     t.TradeDate,
     t.ExpiryDate,
     t.SettlementDate,
+    t.NearSettlementDate,        
+    t.IsNonDeliverable,          
+    t.FixingDate,                  
+    t.SettlementCurrency AS SettlementCcy,  
     t.ExecutionTimeUtc,
     t.Mic,
     t.Isin,
@@ -539,6 +543,7 @@ SELECT
     t.SpotRate,
     t.SwapPoints,
     t.HedgeType,
+    t.Uti,
     t.IsDeleted AS TradeIsDeleted,
     t.LastUpdatedUtc AS TradeLastUpdatedUtc,
     t.LastUpdatedBy AS TradeLastUpdatedBy,
@@ -761,6 +766,10 @@ VALUES
                 TradeDate = reader.IsDBNull(reader.GetOrdinal("TradeDate")) ? (DateTime?)null : reader.GetDateTime("TradeDate"),
                 ExpiryDate = reader.IsDBNull(reader.GetOrdinal("ExpiryDate")) ? (DateTime?)null : reader.GetDateTime("ExpiryDate"),
                 SettlementDate = reader.IsDBNull(reader.GetOrdinal("SettlementDate")) ? (DateTime?)null : reader.GetDateTime("SettlementDate"),
+                NearSettlementDate = reader.IsDBNull(reader.GetOrdinal("NearSettlementDate")) ? (DateTime?)null : reader.GetDateTime("NearSettlementDate"),  // ✅ LÄGG TILL
+                IsNonDeliverable = reader.IsDBNull(reader.GetOrdinal("IsNonDeliverable")) ? (bool?)null : reader.GetBoolean("IsNonDeliverable"),  // ✅ LÄGG TILL
+                FixingDate = reader.IsDBNull(reader.GetOrdinal("FixingDate")) ? (DateTime?)null : reader.GetDateTime("FixingDate"),  // ✅ LÄGG TILL
+                SettlementCcy = reader.IsDBNull(reader.GetOrdinal("SettlementCcy")) ? null : reader.GetString("SettlementCcy"),  // ✅ LÄGG TILL
                 ExecutionTimeUtc = reader.IsDBNull(reader.GetOrdinal("ExecutionTimeUtc")) ? (DateTime?)null : reader.GetDateTime("ExecutionTimeUtc"),
                 Mic = reader.IsDBNull(reader.GetOrdinal("Mic")) ? null : reader.GetString("Mic"),
                 Isin = reader.IsDBNull(reader.GetOrdinal("Isin")) ? null : reader.GetString("Isin"),
@@ -771,6 +780,7 @@ VALUES
                 CalypsoPortfolio = reader.IsDBNull(reader.GetOrdinal("CalypsoPortfolio")) ? null : reader.GetString("CalypsoPortfolio"),
                 Margin = reader.IsDBNull(reader.GetOrdinal("Margin")) ? (decimal?)null : reader.GetDecimal("Margin"),
                 Tvtic = reader.IsDBNull(reader.GetOrdinal("Tvtic")) ? null : reader.GetString("Tvtic"),
+                Uti = reader.IsDBNull(reader.GetOrdinal("Uti")) ? null : reader.GetString("Uti"),  // ✅ LÄGG TILL
                 HedgeRate = reader.IsDBNull(reader.GetOrdinal("HedgeRate")) ? (decimal?)null : reader.GetDecimal("HedgeRate"),
                 SpotRate = reader.IsDBNull(reader.GetOrdinal("SpotRate")) ? (decimal?)null : reader.GetDecimal("SpotRate"),
                 SwapPoints = reader.IsDBNull(reader.GetOrdinal("SwapPoints")) ? (decimal?)null : reader.GetDecimal("SwapPoints"),
@@ -785,12 +795,11 @@ VALUES
                 SystemTradeId = reader.IsDBNull(reader.GetOrdinal("SystemTradeId")) ? null : reader.GetString("SystemTradeId"),
                 ExternalTradeId = reader.IsDBNull(reader.GetOrdinal("ExternalTradeId")) ? null : reader.GetString("ExternalTradeId"),
                 LastChangeUtc = reader.IsDBNull(reader.GetOrdinal("LastChangeUtc")) ? (DateTime?)null : reader.GetDateTime("LastChangeUtc"),
-
-                // Mappa båda system-statusarna separat
                 Mx3Status = reader.IsDBNull(reader.GetOrdinal("Mx3Status")) ? null : reader.GetString("Mx3Status"),
                 CalypsoStatus = reader.IsDBNull(reader.GetOrdinal("CalypsoStatus")) ? null : reader.GetString("CalypsoStatus")
             };
         }
+
 
         /// <summary>
         /// Mappar databaskod (VARCHAR) till ProductType-enum.

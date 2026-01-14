@@ -87,16 +87,36 @@ namespace OptionSuite.Blotter.Wpf.Services
                 if (!string.IsNullOrEmpty(errorFile) && File.Exists(errorFile))
                 {
                     var errorXml = XDocument.Load(errorFile);
+
+                    // ✅ Ta ALLA errors (Warning, Abort, Fatal, etc.)
                     var exceptions = errorXml.Descendants("MXException")
-                        .Where(e => e.Element("Level")?.Value == "Warning")
-                        .Select(e => e.Element("Description")?.Value)
-                        .Where(d => !string.IsNullOrEmpty(d))
+                        .Select(e => new
+                        {
+                            Level = e.Element("Level")?.Value,
+                            Code = e.Element("Code")?.Value,
+                            Description = e.Element("Description")?.Value,
+                            Module = e.Element("Module")?.Value
+                        })
+                        .Where(e => !string.IsNullOrEmpty(e.Description))
+                        .Where(e => e.Level == "Abort" || e.Level == "Warning" || e.Level == "Fatal")  // ✅ Inkludera Abort
                         .ToList();
 
                     if (exceptions.Any())
                     {
-                        result.ErrorMessage = string.Join("; ", exceptions);
+                        // Hitta mest specifika error (ofta den sista)
+                        var mainError = exceptions
+                            .Where(e => e.Code != "Checkpoint")  // Skip generic wrapper errors
+                            .LastOrDefault() ?? exceptions.Last();
+
+                        result.ErrorMessage = $"[{mainError.Code}] {mainError.Description}";
+
+                        // Om det finns modul-info, lägg till det
+                        if (!string.IsNullOrEmpty(mainError.Module) && mainError.Module != "MXSI")
+                        {
+                            result.ErrorMessage += $" (Module: {mainError.Module})";
+                        }
                     }
+
                 }
 
                 return result;
