@@ -9,7 +9,6 @@ namespace FxTradeHub.Services.Mx3Export
 {
     /// <summary>
     /// Service för att exportera NDF trades till MX3 XML-format.
-    /// Non-Deliverable Forward har specialstruktur med fxFixing och settlementCurrency.
     /// </summary>
     public sealed class Mx3NdfExportService
     {
@@ -20,6 +19,10 @@ namespace FxTradeHub.Services.Mx3Export
                 var exportFolder = AppPaths.Mx3ImportFolder;
                 var fileName = $"{request.StpTradeId}_{request.TradeId}.xml";
                 var fullPath = Path.Combine(exportFolder, fileName);
+
+                // ✅ DEBUG: Logga margin-info
+                System.Diagnostics.Debug.WriteLine($"[Mx3NdfExport] StpTradeId={request.StpTradeId}, Margin={request.Margin}, ReportingEntity={request.ReportingEntityId}");
+
 
                 var xmlDoc = BuildXmlDocument(request);
                 xmlDoc.Save(fullPath);
@@ -52,44 +55,56 @@ namespace FxTradeHub.Services.Mx3Export
             if (string.IsNullOrEmpty(req.SettlementCurrency) || req.SettlementCurrency.Length != 3)
                 throw new ArgumentException($"Invalid SettlementCurrency: {req.SettlementCurrency}");
 
+            if (string.IsNullOrEmpty(req.NotionalCurrency) || req.NotionalCurrency.Length != 3)
+                throw new ArgumentException($"Invalid NotionalCurrency: {req.NotionalCurrency}");
+
             // Parse currency pair
             var baseCcy = req.CurrencyPair.Substring(0, 3);   // USD
             var quoteCcy = req.CurrencyPair.Substring(3, 3);  // CNY
 
-            // ✅ FIX: Notional är alltid i NotionalCurrency (som är i request objektet)
-            // Vi behöver avgöra vilket som är vilket baserat på NotionalCurrency från BlotterTradeRow
-
+            // Beräkna flows baserat på NotionalCurrency och BuySell
             decimal notional1;
             decimal notional2;
             string ccy1;
             string ccy2;
 
-            // Avgör vilken valuta Notional är i och beräkna den andra
-            // Rate är alltid i termer av CurrencyPair (base/quote)
             if (req.BuySell == "Buy")
             {
-                // Buy = vi köper base currency (USD i USDCNY)
-                // Om Notional är i quote currency (CNY):
-                //   - Vi betalar CNY (notional)
-                //   - Vi får USD (notional / rate)
-                // Om Notional är i base currency (USD):
-                //   - Vi betalar quote (notional * rate)
-                //   - Vi får base (notional)
-
-                // Eftersom din data visar Notional=1000000 CNY, NotionalCurrency=CNY
-                // och det är en BUY av USD:
-                ccy1 = quoteCcy;  // CNY (vi betalar)
-                ccy2 = baseCcy;   // USD (vi får)
-                notional1 = req.Notional;  // 1,000,000 CNY
-                notional2 = req.Notional / req.Rate;  // 1,000,000 / 6.9823 = 143,214.77 USD
+                // Buy base currency (USD i USDCNY)
+                // Notional är i quote currency (CNY): vi betalar CNY, får USD
+                if (req.NotionalCurrency == quoteCcy)
+                {
+                    ccy1 = quoteCcy;  // Vi betalar
+                    ccy2 = baseCcy;   // Vi får
+                    notional1 = req.Notional;
+                    notional2 = req.Notional / req.Rate;
+                }
+                else
+                {
+                    // Notional är i base currency (USD): vi betalar quote, får base
+                    ccy1 = quoteCcy;
+                    ccy2 = baseCcy;
+                    notional1 = req.Notional * req.Rate;
+                    notional2 = req.Notional;
+                }
             }
             else
             {
-                // Sell = vi säljer base currency (USD i USDCNY)
-                ccy1 = baseCcy;   // USD (vi betalar)
-                ccy2 = quoteCcy;  // CNY (vi får)
-                notional1 = req.Notional / req.Rate;  // USD amount
-                notional2 = req.Notional;  // CNY amount
+                // Sell base currency (USD i USDCNY)
+                if (req.NotionalCurrency == quoteCcy)
+                {
+                    ccy1 = baseCcy;
+                    ccy2 = quoteCcy;
+                    notional1 = req.Notional / req.Rate;
+                    notional2 = req.Notional;
+                }
+                else
+                {
+                    ccy1 = baseCcy;
+                    ccy2 = quoteCcy;
+                    notional1 = req.Notional;
+                    notional2 = req.Notional * req.Rate;
+                }
             }
 
             // Format dates
@@ -133,7 +148,7 @@ namespace FxTradeHub.Services.Mx3Export
             var contractNode = xmlDoc.CreateElement("contract");
             SetAttribute(xmlDoc, contractNode, "id", "contract_0");
             SetAttribute(xmlDoc, contractNode, "mefClass", "mxContractISINGLE");
-            SetAttribute(xmlDoc, contractNode, "mefClassInstanceLabel", "Spot-Forward");
+            SetAttribute(xmlDoc, contractNode, "mefClassInstanceLabel", "Spot-Forward"); 
             contractsNode.AppendChild(contractNode);
 
             var contractHeaderNode = xmlDoc.CreateElement("contractHeader");
@@ -168,11 +183,11 @@ namespace FxTradeHub.Services.Mx3Export
             SetAttribute(xmlDoc, tradeNode, "mefClass", "mxContractITRADE");
             tradesNode.AppendChild(tradeNode);
 
-            BuildTradeParties(xmlDoc, tradeNode);
-            BuildTradePortfolios(xmlDoc, tradeNode, req.Portfolio);
-            BuildTradeHeader(xmlDoc, tradeNode, tradedate, req.Portfolio, req.Trader, req.TradeId);
+            BuildTradeParties(xmlDoc, tradeNode, req.Counterparty);
+            BuildTradePortfolios(xmlDoc, tradeNode, req.Portfolio, req.Margin, req.ReportingEntityId);
+            BuildTradeHeader(xmlDoc, tradeNode, tradedate, req.Portfolio, req.Trader, req.TradeId, req);
             BuildTradeBody(xmlDoc, tradeNode, req.Portfolio, ccy1, ccy2, notional1, notional2,
-                settlementdate, fixingdate, req.Rate, req.CurrencyPair, req.SettlementCurrency, req.FixingSource);
+                settlementdate, fixingdate, req.Rate, req.CurrencyPair, req.SettlementCurrency, req.FixingSource, req.Counterparty);
             BuildTradeInputConditions(xmlDoc, tradeNode, req.Trader, tradedate);
             #endregion
 
@@ -181,7 +196,7 @@ namespace FxTradeHub.Services.Mx3Export
 
         #region Helper methods
 
-        private void BuildTradeParties(XmlDocument xmlDoc, XmlNode tradeNode)
+        private void BuildTradeParties(XmlDocument xmlDoc, XmlNode tradeNode, string counterparty)
         {
             var partiesNode = xmlDoc.CreateElement("parties");
             tradeNode.AppendChild(partiesNode);
@@ -194,29 +209,40 @@ namespace FxTradeHub.Services.Mx3Export
             var party2 = xmlDoc.CreateElement("party");
             SetAttribute(xmlDoc, party2, "id", "_24");
             partiesNode.AppendChild(party2);
-            AppendElement(xmlDoc, party2, "partyName", "HEDGE");
+            AppendElement(xmlDoc, party2, "partyName", counterparty ?? "COUNTERPARTY");  // ✅ Verkligt namn
         }
 
-        private void BuildTradePortfolios(XmlDocument xmlDoc, XmlNode tradeNode, string portfolio)
+        private void BuildTradePortfolios(XmlDocument xmlDoc, XmlNode tradeNode, string portfolio, decimal? margin, string reportingEntityId)
         {
             var portfoliosNode = xmlDoc.CreateElement("portfolios");
             tradeNode.AppendChild(portfoliosNode);
 
+            // Main portfolio
             var portfolioNode = xmlDoc.CreateElement("portfolio");
             SetAttribute(xmlDoc, portfolioNode, "id", portfolio);
             portfoliosNode.AppendChild(portfolioNode);
             AppendElement(xmlDoc, portfolioNode, "portfolioLabel", portfolio);
+
+            // Margin portfolio (if margin exists)
+            if (margin.HasValue && margin.Value != 0)
+            {
+                var marginPortfolio = DetermineMarginPortfolio(reportingEntityId);
+                var portfolioNodeMargin = xmlDoc.CreateElement("portfolio");
+                SetAttribute(xmlDoc, portfolioNodeMargin, "id", marginPortfolio);
+                portfoliosNode.AppendChild(portfolioNodeMargin);
+                AppendElement(xmlDoc, portfolioNodeMargin, "portfolioLabel", marginPortfolio);
+            }
         }
 
         private void BuildTradeHeader(XmlDocument xmlDoc, XmlNode tradeNode, string tradedate,
-            string portfolio, string trader, string tradeId)
+            string portfolio, string trader, string tradeId, Mx3NdfExportRequest req)
         {
             var tradeHeaderNode = xmlDoc.CreateElement("tradeHeader");
             tradeNode.AppendChild(tradeHeaderNode);
 
             AppendElement(xmlDoc, tradeHeaderNode, "tradeDate", tradedate);
 
-            // ✅ NDF-specifik tradeCategory
+            // tradeCategory
             var tradeCategoryNode = xmlDoc.CreateElement("tradeCategory");
             tradeHeaderNode.AppendChild(tradeCategoryNode);
             AppendElement(xmlDoc, tradeCategoryNode, "tradeDestination", "external");
@@ -251,26 +277,93 @@ namespace FxTradeHub.Services.Mx3Export
             SetAttribute(xmlDoc, partyRef2, "href", "#_24");
             tradeView2.AppendChild(partyRef2);
 
-            // User defined fields
+            // ✅ MiFID User Defined Fields
             var udfNode = xmlDoc.CreateElement("tradeUserDefinedFields");
             tradeHeaderNode.AppendChild(udfNode);
 
+            // FO_COMMENT (TradeId)
             var foCommentNode = xmlDoc.CreateElement("userDefinedField");
             udfNode.AppendChild(foCommentNode);
             AppendElement(xmlDoc, foCommentNode, "fieldLabel", "FO_COMMENT");
             AppendElement(xmlDoc, foCommentNode, "fieldValue", tradeId);
             AppendElement(xmlDoc, foCommentNode, "fieldType", "character");
+
+            // SALES (margin)
+            if (req.Margin.HasValue && req.Margin.Value != 0)
+            {
+                var salesNode = xmlDoc.CreateElement("userDefinedField");
+                udfNode.AppendChild(salesNode);
+                AppendElement(xmlDoc, salesNode, "fieldLabel", "SALES");
+                AppendElement(xmlDoc, salesNode, "fieldValue", req.Margin.Value.ToString(CultureInfo.InvariantCulture));
+                AppendElement(xmlDoc, salesNode, "fieldType", "numeric");
+            }
+
+            // MIC
+            if (!string.IsNullOrEmpty(req.Mic))
+            {
+                var micNode = xmlDoc.CreateElement("userDefinedField");
+                udfNode.AppendChild(micNode);
+                AppendElement(xmlDoc, micNode, "fieldLabel", "MIFID_MIC");
+                AppendElement(xmlDoc, micNode, "fieldValue", req.Mic);
+                AppendElement(xmlDoc, micNode, "fieldType", "character");
+            }
+
+            // ISIN
+            if (!string.IsNullOrEmpty(req.Isin))
+            {
+                var isinNode = xmlDoc.CreateElement("userDefinedField");
+                udfNode.AppendChild(isinNode);
+                AppendElement(xmlDoc, isinNode, "fieldLabel", "MIFID_ISIN");
+                AppendElement(xmlDoc, isinNode, "fieldValue", req.Isin);
+                AppendElement(xmlDoc, isinNode, "fieldType", "character");
+            }
+
+            // InvId
+            if (!string.IsNullOrEmpty(req.InvId))
+            {
+                var invIdNode = xmlDoc.CreateElement("userDefinedField");
+                udfNode.AppendChild(invIdNode);
+                AppendElement(xmlDoc, invIdNode, "fieldLabel", "INV_DEC_ID");
+                AppendElement(xmlDoc, invIdNode, "fieldValue", req.InvId);
+                AppendElement(xmlDoc, invIdNode, "fieldType", "character");
+            }
+
+            // ReportingEntityId
+            if (!string.IsNullOrEmpty(req.ReportingEntityId))
+            {
+                var reportingNode = xmlDoc.CreateElement("userDefinedField");
+                udfNode.AppendChild(reportingNode);
+                AppendElement(xmlDoc, reportingNode, "fieldLabel", "REPORT_ENT");
+                AppendElement(xmlDoc, reportingNode, "fieldValue", req.ReportingEntityId);
+                AppendElement(xmlDoc, reportingNode, "fieldType", "character");
+            }
+
+            // ExecutionTime
+            if (req.ExecutionTimeUtc.HasValue)
+            {
+                var execTimeNode = xmlDoc.CreateElement("userDefinedField");
+                udfNode.AppendChild(execTimeNode);
+                AppendElement(xmlDoc, execTimeNode, "fieldLabel", "EXEC_TIME");
+                AppendElement(xmlDoc, execTimeNode, "fieldValue", req.ExecutionTimeUtc.Value.ToString("yyyyMMdd HH:mm:ss.fff"));
+                AppendElement(xmlDoc, execTimeNode, "fieldType", "character");
+            }
+
+            // ✅ Trade fees (margin)
+            if (req.Margin.HasValue && req.Margin.Value != 0)
+            {
+                BuildTradeFees(xmlDoc, tradeHeaderNode, portfolio, req.Margin.Value, tradedate, req.ReportingEntityId);
+            }
         }
 
         private void BuildTradeBody(XmlDocument xmlDoc, XmlNode tradeNode, string portfolio,
             string ccy1, string ccy2, decimal notional1, decimal notional2,
             string settlementdate, string fixingdate, decimal rate, string ccyPair,
-            string settlementCurrency, string fixingSource)
+            string settlementCurrency, string fixingSource, string counterparty)
         {
             var tradeBodyNode = xmlDoc.CreateElement("tradeBody");
             tradeNode.AppendChild(tradeBodyNode);
 
-            // ✅ NDF använder fxSpotForward som wrapper, nonDeliverableForward är en UNDERNODE
+            // ✅ fxSpotForward är wrapper
             var fxSpotForwardNode = xmlDoc.CreateElement("fxSpotForward");
             tradeBodyNode.AppendChild(fxSpotForwardNode);
 
@@ -328,19 +421,17 @@ namespace FxTradeHub.Services.Mx3Export
 
             AppendElement(xmlDoc, exchangeRateNode, "rate", rate.ToString(CultureInfo.InvariantCulture));
 
-            // ✅ NDF-SEKTION - som UNDERNODE till fxSpotForward
+            // ✅ nonDeliverableForward som UNDERNODE till fxSpotForward
             var ndfNode = xmlDoc.CreateElement("nonDeliverableForward");
             fxSpotForwardNode.AppendChild(ndfNode);
 
-            // settlementCurrency
             AppendElement(xmlDoc, ndfNode, "settlementCurrency", settlementCurrency);
 
-            // fxFixing
             var fxFixingNode = xmlDoc.CreateElement("fxFixing");
             ndfNode.AppendChild(fxFixingNode);
 
-            AppendElement(xmlDoc, fxFixingNode, "currency1", ccyPair.Substring(0, 3));  // ✅ USD
-            AppendElement(xmlDoc, fxFixingNode, "currency2", ccyPair.Substring(3, 3));  // ✅ CNY
+            AppendElement(xmlDoc, fxFixingNode, "currency1", ccyPair.Substring(0, 3));
+            AppendElement(xmlDoc, fxFixingNode, "currency2", ccyPair.Substring(3, 3));
 
             var fxRateSourceNode = xmlDoc.CreateElement("fxRateSource");
             fxFixingNode.AppendChild(fxRateSourceNode);
@@ -349,17 +440,15 @@ namespace FxTradeHub.Services.Mx3Export
 
             AppendElement(xmlDoc, fxFixingNode, "date", fixingdate);
 
-            // ndfEstimationDate
             AppendElement(xmlDoc, ndfNode, "ndfEstimationDate", "fixingValueDate");
 
-            // ✅ Lägg till obligatoriska fält för fxSpotForward
+            // ✅ Obligatoriska fält för fxSpotForward
             AppendElement(xmlDoc, fxSpotForwardNode, "fxAsianAverageRounding", "Disabled");
             AppendElement(xmlDoc, fxSpotForwardNode, "forwardDelivery", "forward");
             AppendElement(xmlDoc, fxSpotForwardNode, "fxQuantitiesInputMode", "oneQuantity");
-            AppendElement(xmlDoc, fxSpotForwardNode, "riskSection", ccyPair);
+            AppendElement(xmlDoc, fxSpotForwardNode, "riskSection", $"{ccyPair.Substring(0, 3)}/{ccyPair.Substring(3, 3)}"); 
             AppendElement(xmlDoc, fxSpotForwardNode, "offsettingBuySellContribution", "false");
         }
-
 
         private void BuildTradeInputConditions(XmlDocument xmlDoc, XmlNode tradeNode, string trader, string tradedate)
         {
@@ -388,5 +477,69 @@ namespace FxTradeHub.Services.Mx3Export
         }
 
         #endregion
+
+        private void BuildTradeFees(XmlDocument xmlDoc, XmlNode tradeHeaderNode, string portfolio, decimal margin,
+            string tradedate, string reportingEntityId)
+        {
+            var tradeFeesNode = xmlDoc.CreateElement("tradeFees");
+            tradeHeaderNode.AppendChild(tradeFeesNode);
+
+            var tradeFeeNode = xmlDoc.CreateElement("tradeFee");
+            SetAttribute(xmlDoc, tradeFeeNode, "index", "0");
+            tradeFeesNode.AppendChild(tradeFeeNode);
+
+            // Payer
+            var payerPartyRef = xmlDoc.CreateElement("payerPartyReference");
+            SetAttribute(xmlDoc, payerPartyRef, "href", "#SWEDBANK");
+            tradeFeeNode.AppendChild(payerPartyRef);
+
+            var payerPortfolioRef = xmlDoc.CreateElement("portfolioReference");
+            SetAttribute(xmlDoc, payerPortfolioRef, "href", "#" + portfolio);
+            payerPartyRef.AppendChild(payerPortfolioRef);
+
+            // Receiver
+            var receiverPartyRef = xmlDoc.CreateElement("receiverPartyReference");
+            SetAttribute(xmlDoc, receiverPartyRef, "href", "#SWEDBANK");
+            tradeFeeNode.AppendChild(receiverPartyRef);
+
+            var marginPortfolio = DetermineMarginPortfolio(reportingEntityId);
+            var receiverPortfolioRef = xmlDoc.CreateElement("portfolioReference");
+            SetAttribute(xmlDoc, receiverPortfolioRef, "href", "#" + marginPortfolio);
+            receiverPartyRef.AppendChild(receiverPortfolioRef);
+
+            // Fee details
+            AppendElement(xmlDoc, tradeFeeNode, "feeType", "internalFee");
+            AppendElement(xmlDoc, tradeFeeNode, "feeCurrency", "SEK");
+            AppendElement(xmlDoc, tradeFeeNode, "feeAmount", margin.ToString(CultureInfo.InvariantCulture));
+            AppendElement(xmlDoc, tradeFeeNode, "feeDateType", "transactionDate");
+            AppendElement(xmlDoc, tradeFeeNode, "feeDate", tradedate);
+            AppendElement(xmlDoc, tradeFeeNode, "autoShell", "false");
+            AppendElement(xmlDoc, tradeFeeNode, "autoFee", "false");
+            AppendElement(xmlDoc, tradeFeeNode, "feeRate", "0");
+        }
+
+        private string DetermineMarginPortfolio(string reportingEntity)
+        {
+            if (string.IsNullOrEmpty(reportingEntity))
+                return "FX_INST";
+
+            switch (reportingEntity)
+            {
+                case "CORPORATE SALES FINLAND":
+                    return "FX_HELSINKI";
+                case "CORPORATE SALES GOTHENBURG":
+                case "CORPORATE SALES MALMO":
+                case "CORPORATE SALES STOCKHOLM":
+                    return "FX_RETAIL";
+                case "CORPORATE SALES NORWAY":
+                    return "FXOPT_NORWAY";
+                case "FX INSTITUTIONAL CLIENTS":
+                    return "FX_INST";
+                case "FX VOLATILITY":
+                    return "FX_INST";
+                default:
+                    return "FX_INST";
+            }
+        }
     }
 }

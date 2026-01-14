@@ -54,8 +54,7 @@ namespace FxTradeHub.Services.Mx3Export
 
 
         /// <summary>
-        /// D4.2a: Bygger MX3 XML-dokumentet för en option trade.
-        /// Följer exakt strukturen från legacy blotter (beprövad mot MX3).
+        /// Bygger MX3 XML-dokumentet för en option trade.
         /// </summary>
         private XmlDocument BuildXmlDocument(Mx3OptionExportRequest req)
         {

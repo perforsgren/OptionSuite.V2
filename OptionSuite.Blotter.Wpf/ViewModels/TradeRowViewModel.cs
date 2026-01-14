@@ -9,6 +9,8 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
         private bool _isNew;
         private bool _isUpdated;
 
+        public bool HasMargin => Margin != null && Margin != 0;
+
         public event PropertyChangedEventHandler PropertyChanged;
 
         // Primärnyckel i STP (behövs för att hämta links/events per trade)
@@ -178,31 +180,35 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
         private string CalculateAggregatedStatus(string mx3Status, string calypsoStatus, string fallbackStatus)
         {
             // För Options: använd fallback (ingen dual-system booking)
-            if (string.IsNullOrEmpty(CallPut) == false)
+            if (!string.IsNullOrEmpty(CallPut))
             {
                 var status = fallbackStatus ?? "New";
                 return ToProperCase(status);
             }
 
-            // För NDF: endast MX3, ingen Calypso-länk
-            // Om Calypso är null/empty, använd endast MX3 status
-            var hasCalypsoLink = !string.IsNullOrEmpty(calypsoStatus) && calypsoStatus.ToUpper() != "NEW";
+            // Normalisera statusar
+            var mx3 = ToProperCase(mx3Status ?? "New");
+            var caly = ToProperCase(calypsoStatus ?? "New");
+
+            // För NDF: endast MX3 (CalypsoStatus är null eller "New")
+            // För Spot/Fwd: båda MX3 och Calypso
+            var hasCalypsoLink = !string.IsNullOrEmpty(calypsoStatus) &&
+                                 caly != "New" &&
+                                 caly != "Unknown";
 
             if (!hasCalypsoLink)
             {
-                // Endast MX3 - använd den statusen direkt
-                return ToProperCase(mx3Status ?? "New");
+                // Endast MX3 - returnera MX3 status direkt
+                return mx3;
             }
 
-            // För Linear med båda system: beräkna från båda system med case-normalisering
-            var mx3 = ToProperCase(mx3Status ?? "New");
-            var caly = ToProperCase(calypsoStatus ?? "New");
+            // För Linear med båda system: beräkna aggregerad status
 
             // Båda booked = fully booked
             if (mx3 == "Booked" && caly == "Booked")
                 return "Booked";
 
-            // ✅ Något system ERROR eller FAILED = overall error
+            // Något system ERROR/FAILED/REJECTED = overall error
             if (mx3 == "Error" || caly == "Error" ||
                 mx3 == "Failed" || caly == "Failed" ||
                 mx3 == "Rejected" || caly == "Rejected")
@@ -220,8 +226,6 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             // Annars new
             return "New";
         }
-
-
 
         private string ToProperCase(string status)
         {

@@ -123,6 +123,9 @@
                                         <DataTrigger Binding="{Binding Status}" Value="Pending">
                                             <Setter Property="Fill" Value="#FBBF24"/>
                                         </DataTrigger>
+                                        <DataTrigger Binding="{Binding Status}" Value="Error">
+                                            <Setter Property="Fill" Value="#EF4444"/>
+                                        </DataTrigger>
                                         <DataTrigger Binding="{Binding Status}" Value="Rejected">
                                             <Setter Property="Fill" Value="#FB7185"/>
                                         </DataTrigger>

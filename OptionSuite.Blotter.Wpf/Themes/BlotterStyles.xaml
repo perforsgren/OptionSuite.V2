@@ -1166,7 +1166,7 @@
      GRID-SPECIFIKA ROW STYLES (olika accent-färger)
      ============================================================ -->
 
-    <!-- OPTIONS: Cyan accent -->
+    <!-- OPTIONS: Cyan accent - MED margin indicator -->
     <Style x:Key="Style.BlotterDataGridRow.Options" 
        TargetType="{x:Type DataGridRow}">
         <Setter Property="Template">
@@ -1178,17 +1178,39 @@
                         <!-- NEW flash -->
                         <Border x:Name="FlashOverlay" Background="#592DD4BF" BorderBrush="#402DD4BF" BorderThickness="1" Opacity="0" Panel.ZIndex="1"/>
 
-                        <!-- UPDATED flash (NY!) -->
+                        <!-- UPDATED flash -->
                         <Border x:Name="UpdatedOverlay" Background="#332DD4BF" Opacity="0" Panel.ZIndex="1"/>
 
                         <DataGridCellsPresenter Panel.ZIndex="2"/>
+
+                        <!-- ✅ MARGIN INDICATOR: grön vänster-border -->
+                        <Border x:Name="MarginAccent" 
+                            Width="3" 
+                            HorizontalAlignment="Left" 
+                            Background="Transparent" 
+                            Panel.ZIndex="2"/>
+
                         <Border x:Name="LeftAccent" Width="3" HorizontalAlignment="Left" Background="Transparent" Panel.ZIndex="3"/>
                         <Border x:Name="TopLine" Height="1" VerticalAlignment="Top" Background="{StaticResource Blotter.Brush.RowLine}" Opacity="0" Panel.ZIndex="4"/>
                         <Border x:Name="BottomLine" Height="1" VerticalAlignment="Bottom" Background="{StaticResource Blotter.Brush.RowLine}" Opacity="0" Panel.ZIndex="4"/>
-                    
+
                     </Grid>
 
                     <ControlTemplate.Triggers>
+
+                        <!-- ✅ MARGIN INDICATOR: Subtil grön accent -->
+                        <DataTrigger Binding="{Binding HasMargin}" Value="True">
+                            <Setter TargetName="MarginAccent" Property="Background">
+                                <Setter.Value>
+                                    <SolidColorBrush Color="#10B981" Opacity="0.5"/>
+                                </Setter.Value>
+                            </Setter>
+                            <Setter TargetName="RowFill" Property="Background">
+                                <Setter.Value>
+                                    <SolidColorBrush Color="#10B981" Opacity="0.02"/>
+                                </Setter.Value>
+                            </Setter>
+                        </DataTrigger>
 
                         <!-- IsUpdated - Wash + hairlines -->
                         <DataTrigger Binding="{Binding IsUpdated}" Value="True">
@@ -1196,23 +1218,22 @@
                                 <BeginStoryboard>
                                     <Storyboard>
                                         <DoubleAnimation Storyboard.TargetName="UpdatedOverlay" 
-                                                         Storyboard.TargetProperty="Opacity" 
-                                                         From="0.5" To="0.0" Duration="0:0:2.0"
-                                                         EasingFunction="{StaticResource EaseOutQuad}"/>
+                                                     Storyboard.TargetProperty="Opacity" 
+                                                     From="0.5" To="0.0" Duration="0:0:2.0"
+                                                     EasingFunction="{StaticResource EaseOutQuad}"/>
                                         <DoubleAnimation Storyboard.TargetName="TopLine" 
-                                                         Storyboard.TargetProperty="Opacity" 
-                                                         From="1.0" To="0.0" Duration="0:0:2.0"
-                                                         EasingFunction="{StaticResource EaseOutQuad}"/>
+                                                     Storyboard.TargetProperty="Opacity" 
+                                                     From="1.0" To="0.0" Duration="0:0:2.0"
+                                                     EasingFunction="{StaticResource EaseOutQuad}"/>
                                         <DoubleAnimation Storyboard.TargetName="BottomLine" 
-                                                         Storyboard.TargetProperty="Opacity" 
-                                                         From="1.0" To="0.0" Duration="0:0:2.0"
-                                                         EasingFunction="{StaticResource EaseOutQuad}"/>
+                                                     Storyboard.TargetProperty="Opacity" 
+                                                     From="1.0" To="0.0" Duration="0:0:2.0"
+                                                     EasingFunction="{StaticResource EaseOutQuad}"/>
                                     </Storyboard>
                                 </BeginStoryboard>
                             </DataTrigger.EnterActions>
                         </DataTrigger>
 
-                        <!-- IsUpdated - Wash + hairlines -->
                         <DataTrigger Binding="{Binding IsUpdated}" Value="True">
                             <Setter TargetName="UpdatedOverlay" Property="Opacity" Value="1"/>
                             <Setter TargetName="TopLine" Property="Opacity" Value="1"/>
@@ -1221,24 +1242,24 @@
                             <Setter TargetName="BottomLine" Property="Background" Value="#2DD4BF"/>
                         </DataTrigger>
 
-                        <!-- IsNew flash (LÄGG TILL DENNA!) -->
+                        <!-- IsNew flash -->
                         <DataTrigger Binding="{Binding IsNew}" Value="True">
                             <DataTrigger.EnterActions>
                                 <BeginStoryboard>
                                     <Storyboard>
                                         <DoubleAnimation Storyboard.TargetName="FlashOverlay" 
-                                 Storyboard.TargetProperty="Opacity" 
-                                 From="0" To="0.65" Duration="0:0:0.3"/>
+                                                     Storyboard.TargetProperty="Opacity" 
+                                                     From="0" To="0.65" Duration="0:0:0.3"/>
                                         <DoubleAnimation Storyboard.TargetName="FlashOverlay"
-                                 Storyboard.TargetProperty="Opacity"
-                                 From="0.65" To="0" Duration="0:0:1.5"
-                                 BeginTime="0:0:1.0"/>
+                                                     Storyboard.TargetProperty="Opacity"
+                                                     From="0.65" To="0" Duration="0:0:1.5"
+                                                     BeginTime="0:0:1.0"/>
                                     </Storyboard>
                                 </BeginStoryboard>
                             </DataTrigger.EnterActions>
                         </DataTrigger>
 
-                        <!-- IsMouseOver - Hover effect -->
+                        <!-- ✅ HOVER: trumfar margin bakgrund, behåller grön border -->
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="RowFill" Property="Background">
                                 <Setter.Value>
@@ -1251,13 +1272,14 @@
                             <Setter Property="Opacity" Value="1.0"/>
                         </Trigger>
 
-                        <!-- IsSelected - Selected row style -->
+                        <!-- ✅ SELECTED: trumfar allt, ersätter grön border med cyan -->
                         <Trigger Property="IsSelected" Value="True">
                             <Setter TargetName="RowFill" Property="Background" Value="{StaticResource Blotter.Brush.RowSelectedGlass}"/>
                             <Setter TargetName="TopLine" Property="Opacity" Value="1"/>
                             <Setter TargetName="BottomLine" Property="Opacity" Value="1"/>
                             <Setter TargetName="TopLine" Property="Background" Value="{StaticResource Blotter.Brush.RowLineStrong}"/>
                             <Setter TargetName="BottomLine" Property="Background" Value="{StaticResource Blotter.Brush.RowLineStrong}"/>
+                            <Setter TargetName="MarginAccent" Property="Background" Value="Transparent"/>
                             <Setter TargetName="LeftAccent" Property="Background" Value="#2DD4BF"/>
                             <Setter TargetName="FlashOverlay" Property="Opacity" Value="0"/>
                             <Setter TargetName="UpdatedOverlay" Property="Opacity" Value="0"/>
@@ -1284,31 +1306,46 @@
         </Setter>
     </Style>
 
-    <!-- LINEAR: Purple accent -->
+    <!-- LINEAR: Purple accent - MED margin indicator -->
     <Style x:Key="Style.BlotterDataGridRow.Linear" 
        TargetType="{x:Type DataGridRow}">
         <Setter Property="Template">
             <Setter.Value>
-                
                 <ControlTemplate TargetType="{x:Type DataGridRow}">
                     <Grid SnapsToDevicePixels="True">
                         <Border x:Name="RowFill" Background="Transparent" Panel.ZIndex="0"/>
-                        <Border x:Name="FlashOverlay" Background="#592DD4BF" BorderBrush="#402DD4BF" 
-            BorderThickness="1" Opacity="0" Panel.ZIndex="1"/>
-
-                        <!-- UPDATED flash (NY!) -->
+                        <Border x:Name="FlashOverlay" Background="#592DD4BF" BorderBrush="#402DD4BF" BorderThickness="1" Opacity="0" Panel.ZIndex="1"/>
                         <Border x:Name="UpdatedOverlay" Background="#33A78BFA" Opacity="0" Panel.ZIndex="1"/>
 
                         <DataGridCellsPresenter Panel.ZIndex="2"/>
-                        <Border x:Name="LeftAccent" Width="3" HorizontalAlignment="Left" 
-            Background="Transparent" Panel.ZIndex="3"/>
-                        <Border x:Name="TopLine" Height="1" VerticalAlignment="Top" 
-            Background="{StaticResource Blotter.Brush.RowLine}" Opacity="0" Panel.ZIndex="4"/>
-                        <Border x:Name="BottomLine" Height="1" VerticalAlignment="Bottom" 
-            Background="{StaticResource Blotter.Brush.RowLine}" Opacity="0" Panel.ZIndex="4"/>
+
+                        <!-- ✅ MARGIN INDICATOR: grön vänster-border -->
+                        <Border x:Name="MarginAccent" 
+                            Width="3" 
+                            HorizontalAlignment="Left" 
+                            Background="Transparent" 
+                            Panel.ZIndex="2"/>
+
+                        <Border x:Name="LeftAccent" Width="3" HorizontalAlignment="Left" Background="Transparent" Panel.ZIndex="3"/>
+                        <Border x:Name="TopLine" Height="1" VerticalAlignment="Top" Background="{StaticResource Blotter.Brush.RowLine}" Opacity="0" Panel.ZIndex="4"/>
+                        <Border x:Name="BottomLine" Height="1" VerticalAlignment="Bottom" Background="{StaticResource Blotter.Brush.RowLine}" Opacity="0" Panel.ZIndex="4"/>
                     </Grid>
 
                     <ControlTemplate.Triggers>
+
+                        <!-- ✅ MARGIN INDICATOR: Subtil grön accent -->
+                        <DataTrigger Binding="{Binding HasMargin}" Value="True">
+                            <Setter TargetName="MarginAccent" Property="Background">
+                                <Setter.Value>
+                                    <SolidColorBrush Color="#10B981" Opacity="0.5"/>
+                                </Setter.Value>
+                            </Setter>
+                            <Setter TargetName="RowFill" Property="Background">
+                                <Setter.Value>
+                                    <SolidColorBrush Color="#10B981" Opacity="0.02"/>
+                                </Setter.Value>
+                            </Setter>
+                        </DataTrigger>
 
                         <!-- IsUpdated - Wash + hairlines (purple) -->
                         <DataTrigger Binding="{Binding IsUpdated}" Value="True">
@@ -1316,24 +1353,22 @@
                                 <BeginStoryboard>
                                     <Storyboard>
                                         <DoubleAnimation Storyboard.TargetName="UpdatedOverlay" 
-                                 Storyboard.TargetProperty="Opacity" 
-                                 From="0.5" To="0.0" Duration="0:0:2.0"
-                                 EasingFunction="{StaticResource EaseOutQuad}"/>
+                                                     Storyboard.TargetProperty="Opacity" 
+                                                     From="0.5" To="0.0" Duration="0:0:2.0"
+                                                     EasingFunction="{StaticResource EaseOutQuad}"/>
                                         <DoubleAnimation Storyboard.TargetName="TopLine" 
-                                 Storyboard.TargetProperty="Opacity" 
-                                 From="1.0" To="0.0" Duration="0:0:2.0"
-                                 EasingFunction="{StaticResource EaseOutQuad}"/>
+                                                     Storyboard.TargetProperty="Opacity" 
+                                                     From="1.0" To="0.0" Duration="0:0:2.0"
+                                                     EasingFunction="{StaticResource EaseOutQuad}"/>
                                         <DoubleAnimation Storyboard.TargetName="BottomLine" 
-                                 Storyboard.TargetProperty="Opacity" 
-                                 From="1.0" To="0.0" Duration="0:0:2.0"
-                                 EasingFunction="{StaticResource EaseOutQuad}"/>
+                                                     Storyboard.TargetProperty="Opacity" 
+                                                     From="1.0" To="0.0" Duration="0:0:2.0"
+                                                     EasingFunction="{StaticResource EaseOutQuad}"/>
                                     </Storyboard>
                                 </BeginStoryboard>
                             </DataTrigger.EnterActions>
                         </DataTrigger>
 
-
-                        <!-- IsUpdated - Wash + hairlines (purple) -->
                         <DataTrigger Binding="{Binding IsUpdated}" Value="True">
                             <Setter TargetName="UpdatedOverlay" Property="Opacity" Value="1"/>
                             <Setter TargetName="TopLine" Property="Opacity" Value="1"/>
@@ -1342,24 +1377,24 @@
                             <Setter TargetName="BottomLine" Property="Background" Value="#A78BFA"/>
                         </DataTrigger>
 
-                        <!-- IsNew flash (LÄGG TILL DENNA!) -->
+                        <!-- IsNew flash -->
                         <DataTrigger Binding="{Binding IsNew}" Value="True">
                             <DataTrigger.EnterActions>
                                 <BeginStoryboard>
                                     <Storyboard>
                                         <DoubleAnimation Storyboard.TargetName="FlashOverlay" 
-                                 Storyboard.TargetProperty="Opacity" 
-                                 From="0" To="0.65" Duration="0:0:0.3"/>
+                                                     Storyboard.TargetProperty="Opacity" 
+                                                     From="0" To="0.65" Duration="0:0:0.3"/>
                                         <DoubleAnimation Storyboard.TargetName="FlashOverlay"
-                                 Storyboard.TargetProperty="Opacity"
-                                 From="0.65" To="0" Duration="0:0:1.5"
-                                 BeginTime="0:0:1.0"/>
+                                                     Storyboard.TargetProperty="Opacity"
+                                                     From="0.65" To="0" Duration="0:0:1.5"
+                                                     BeginTime="0:0:1.0"/>
                                     </Storyboard>
                                 </BeginStoryboard>
                             </DataTrigger.EnterActions>
                         </DataTrigger>
 
-                        <!-- IsMouseOver - Hover effect (purple) -->
+                        <!-- ✅ HOVER: trumfar margin bakgrund, behåller grön border -->
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="RowFill" Property="Background">
                                 <Setter.Value>
@@ -1372,13 +1407,14 @@
                             <Setter Property="Opacity" Value="1.0"/>
                         </Trigger>
 
-                        <!-- IsSelected - Selected row style (purple) -->
+                        <!-- ✅ SELECTED: trumfar allt, ersätter grön border med purple -->
                         <Trigger Property="IsSelected" Value="True">
                             <Setter TargetName="RowFill" Property="Background" Value="{StaticResource Blotter.Brush.RowSelectedGlass}"/>
                             <Setter TargetName="TopLine" Property="Opacity" Value="1"/>
                             <Setter TargetName="BottomLine" Property="Opacity" Value="1"/>
                             <Setter TargetName="TopLine" Property="Background" Value="{StaticResource Blotter.Brush.RowLineStrong}"/>
                             <Setter TargetName="BottomLine" Property="Background" Value="{StaticResource Blotter.Brush.RowLineStrong}"/>
+                            <Setter TargetName="MarginAccent" Property="Background" Value="Transparent"/>
                             <Setter TargetName="LeftAccent" Property="Background" Value="#A78BFA"/>
                             <Setter TargetName="FlashOverlay" Property="Opacity" Value="0"/>
                             <Setter TargetName="UpdatedOverlay" Property="Opacity" Value="0"/>

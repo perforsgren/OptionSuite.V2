@@ -231,8 +231,20 @@ namespace FxTradeHub.Services.Blotter
                 SettlementDate = trade.SettlementDate ?? DateTime.UtcNow.Date,
                 FixingDate = trade.FixingDate ?? trade.SettlementDate ?? DateTime.UtcNow.Date,
                 Notional = trade.Notional,
-                SettlementCurrency = trade.SettlementCcy ?? "USD",  // default
-                FixingSource = "NDF_group"  // default, kan göras konfigurerbar
+                NotionalCurrency = trade.NotionalCcy,
+                SettlementCurrency = string.IsNullOrEmpty(trade.SettlementCcy) ? "USD" : trade.SettlementCcy,
+                FixingSource = "NDF_group",
+                Counterparty = trade.CounterpartyCode,
+
+                // MiFID fields
+                Mic = trade.Mic,
+                Isin = trade.Isin,
+                InvId = trade.InvId,
+                ReportingEntityId = trade.ReportingEntityId,
+                ExecutionTimeUtc = trade.ExecutionTimeUtc,
+
+                // Sales margin
+                Margin = trade.Margin
             };
         }
 
