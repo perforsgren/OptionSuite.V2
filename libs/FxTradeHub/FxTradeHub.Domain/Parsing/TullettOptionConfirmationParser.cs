@@ -66,7 +66,7 @@ namespace FxTradeHub.Domain.Parsing
 
                 var hedge = ParseHedge(body, headerInfo);
 
-                var traderRouting = _lookupRepository.LookupTraderByExternalUser("EMAIL", "TULLETT", headerInfo.TraderName);
+                var traderRouting = _lookupRepository.GetTraderRoutingInfo("TULLETT", headerInfo.TraderName);
                 if (traderRouting == null)
                 {
                     return ParseResult.Failed($"Trader routing not found for TULLETT trader: {headerInfo.TraderName}");
@@ -432,10 +432,10 @@ namespace FxTradeHub.Domain.Parsing
         private ParsedTradeResult BuildOptionTrade(OptionData option, HeaderInfo headerInfo, TraderRoutingInfo traderRouting, MessageIn message)
         {
             bool isBuyer = string.Equals(option.BuyerLEI, SWEDBANK_LEI, StringComparison.OrdinalIgnoreCase) ||
-                           (string.IsNullOrEmpty(option.BuyerLEI) && option.BuyerName.Contains("SWEDBANK", StringComparison.OrdinalIgnoreCase));
+                           (string.IsNullOrEmpty(option.BuyerLEI) && option.BuyerName.IndexOf("SWEDBANK", StringComparison.OrdinalIgnoreCase) >= 0);
 
             bool isSeller = string.Equals(option.SellerLEI, SWEDBANK_LEI, StringComparison.OrdinalIgnoreCase) ||
-                            (string.IsNullOrEmpty(option.SellerLEI) && option.SellerName.Contains("SWEDBANK", StringComparison.OrdinalIgnoreCase));
+                            (string.IsNullOrEmpty(option.SellerLEI) && option.SellerName.IndexOf("SWEDBANK", StringComparison.OrdinalIgnoreCase) >= 0);
 
             if (!isBuyer && !isSeller)
             {
@@ -499,7 +499,7 @@ namespace FxTradeHub.Domain.Parsing
                 SpotRate = option.SpotRate,
                 SwapPoints = option.SwapPoints,
                 PortfolioMx3 = portfolioMx3,
-                CalypsoBook = calypsoBook,
+                CalypsoBook = calypsoBook?.CalypsoBook,
                 IsDeleted = false,
                 LastUpdatedUtc = DateTime.UtcNow
             };
@@ -561,7 +561,7 @@ namespace FxTradeHub.Domain.Parsing
                 HedgeRate = hedge.HedgeRate,
                 HedgeType = productType == ProductType.Spot ? "SPOT" : "FWD",
                 PortfolioMx3 = portfolioMx3,
-                CalypsoBook = calypsoBook,
+                CalypsoBook = calypsoBook?.CalypsoBook,
                 IsDeleted = false,
                 LastUpdatedUtc = DateTime.UtcNow
             };

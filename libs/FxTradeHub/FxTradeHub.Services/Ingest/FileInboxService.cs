@@ -170,31 +170,46 @@ namespace FxTradeHub.Services.Ingest
             if (string.IsNullOrWhiteSpace(from) && string.IsNullOrWhiteSpace(subject))
                 return "UNKNOWN";
 
-            var combined = (from ?? "") + " " + (subject ?? "");
-            var upper = combined.ToUpperInvariant();
+            var fromUpper = (from ?? "").ToUpperInvariant();
+            var subjectUpper = (subject ?? "").ToUpperInvariant();
+            var combined = fromUpper + " " + subjectUpper;
 
-            // JPM
-            if (upper.IndexOf("JPMORGAN", StringComparison.Ordinal) >= 0 ||
-                upper.IndexOf("JPM", StringComparison.Ordinal) >= 0)
+            // ✅ Tullett Prebon / TP ICAP (kolla FÖRST för att undvika false positives från motpart i body)
+            if (fromUpper.IndexOf("TULLETTPREBON.COM", StringComparison.Ordinal) >= 0 ||
+                fromUpper.IndexOf("TPICAP.COM", StringComparison.Ordinal) >= 0 ||
+                subjectUpper.IndexOf("TP ICAP", StringComparison.Ordinal) >= 0 ||
+                subjectUpper.IndexOf("TULLETT", StringComparison.Ordinal) >= 0)
+            {
+                return "TULLETT";
+            }
+
+            // JPM (kolla domän för att undvika false positive när JPM är counterparty)
+            if (fromUpper.IndexOf("@JPMORGAN.COM", StringComparison.Ordinal) >= 0 ||
+                fromUpper.IndexOf("@JPMCHASE.COM", StringComparison.Ordinal) >= 0 ||
+                fromUpper.IndexOf("@JPM.COM", StringComparison.Ordinal) >= 0)
             {
                 return "JPM";
             }
 
             // Barclays
-            if (upper.IndexOf("BARCLAYS", StringComparison.Ordinal) >= 0 ||
-                upper.IndexOf("BARX", StringComparison.Ordinal) >= 0)
+            if (fromUpper.IndexOf("@BARCLAYS.COM", StringComparison.Ordinal) >= 0 ||
+                fromUpper.IndexOf("BARX", StringComparison.Ordinal) >= 0 ||
+                subjectUpper.IndexOf("BARCLAYS", StringComparison.Ordinal) >= 0)
             {
                 return "BARX";
             }
 
             // NatWest
-            if (upper.IndexOf("NATWEST", StringComparison.Ordinal) >= 0)
+            if (fromUpper.IndexOf("@NATWEST.COM", StringComparison.Ordinal) >= 0 ||
+                fromUpper.IndexOf("NATWEST", StringComparison.Ordinal) >= 0 ||
+                subjectUpper.IndexOf("NATWEST", StringComparison.Ordinal) >= 0)
             {
                 return "NATWEST";
             }
 
             return "UNKNOWN";
         }
+
 
 
 

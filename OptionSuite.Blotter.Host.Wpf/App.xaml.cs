@@ -72,7 +72,8 @@ namespace OptionSuite.Blotter.Host.Wpf
                     new VolbrokerFixAeParser(lookupRepo),
                     new JpmSpotConfirmationParser(lookupRepo),
                     new BarclaysSpotConfirmationParser(lookupRepo),
-                    new NatWestSpotConfirmationParser(lookupRepo)
+                    new NatWestSpotConfirmationParser(lookupRepo),
+                    new TullettOptionConfirmationParser(lookupRepo)
                 };
 
                 // ✅ 8. Skapa MessageInParserOrchestrator MED notification service
