@@ -17,14 +17,15 @@ namespace FxTradeHub.Services.Blotter
         private readonly MySqlStpRepositoryAsync _repository;
         private readonly Mx3OptionExportService _mx3OptionExportService;
         private readonly Mx3LinearExportService _mx3LinearExportService;
+        private readonly Mx3NdfExportService _mx3NdfExportService;
         private readonly CalypsoLinearExportService _calypsoExportService;
-
 
         public BlotterCommandServiceAsync(MySqlStpRepositoryAsync repository)
         {
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
             _mx3OptionExportService = new Mx3OptionExportService();
             _mx3LinearExportService = new Mx3LinearExportService();
+            _mx3NdfExportService = new Mx3NdfExportService();
             _calypsoExportService = new CalypsoLinearExportService();
         }
 
@@ -153,6 +154,86 @@ namespace FxTradeHub.Services.Blotter
                     ErrorMessage = $"Book trade to MX3 failed: {ex.Message}"
                 };
             }
+        }
+
+        /// <summary>
+        /// Bokar en NDF trade till MX3.
+        /// </summary>
+        public async Task<BookTradeResult> BookNdfToMx3Async(long stpTradeId)
+        {
+            try
+            {
+                var trade = await _repository.GetTradeByIdAsync(stpTradeId).ConfigureAwait(false);
+
+                if (trade == null)
+                {
+                    return new BookTradeResult
+                    {
+                        Success = false,
+                        ErrorMessage = $"Trade with StpTradeId={stpTradeId} not found"
+                    };
+                }
+
+                var exportRequest = MapToMx3NdfExportRequest(trade);
+                var exportResult = _mx3NdfExportService.CreateXmlFile(exportRequest);
+
+                if (!exportResult.Success)
+                {
+                    return new BookTradeResult
+                    {
+                        Success = false,
+                        ErrorMessage = $"MX3 NDF XML export failed: {exportResult.ErrorMessage}"
+                    };
+                }
+
+                await _repository.UpdateTradeSystemLinkOnBookingAsync(
+                    stpTradeId: stpTradeId,
+                    systemCode: "MX3",
+                    bookedBy: Environment.UserName
+                ).ConfigureAwait(false);
+
+                await _repository.InsertTradeWorkflowEventAsync(
+                    stpTradeId: stpTradeId,
+                    eventType: "Mx3BookingRequested",
+                    systemCode: "MX3",
+                    userId: Environment.UserName,
+                    details: $"XML file: {exportResult.FileName}, Portfolio: {trade.PortfolioMx3}"
+                ).ConfigureAwait(false);
+
+                return new BookTradeResult
+                {
+                    Success = true,
+                    XmlFileName = exportResult.FileName
+                };
+            }
+            catch (Exception ex)
+            {
+                return new BookTradeResult
+                {
+                    Success = false,
+                    ErrorMessage = $"Book NDF to MX3 failed: {ex.Message}"
+                };
+            }
+        }
+
+        private Mx3NdfExportRequest MapToMx3NdfExportRequest(BlotterTradeRow trade)
+        {
+            return new Mx3NdfExportRequest
+            {
+                TradeId = trade.TradeId,
+                StpTradeId = trade.StpTradeId,
+                Trader = trade.TraderId,
+                Portfolio = trade.PortfolioMx3,
+                CurrencyPair = trade.CcyPair,
+                BuySell = trade.BuySell,
+                Rate = trade.HedgeRate ?? 0,
+                TradeDate = trade.TradeDate ?? DateTime.UtcNow.Date,
+                SettlementDate = trade.SettlementDate ?? DateTime.UtcNow.Date,
+                FixingDate = trade.FixingDate ?? trade.SettlementDate ?? DateTime.UtcNow.Date,
+                Notional = trade.Notional,
+                SettlementCurrency = trade.SettlementCurrency ?? "USD",  // default
+                FixingSource = "NDF_group"  // default, kan göras konfigurerbar
+            };
         }
 
         public async Task<BookTradeResult> BookLinearToCalypsoAsync(long stpTradeId)

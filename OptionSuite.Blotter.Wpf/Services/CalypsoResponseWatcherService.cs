@@ -219,12 +219,19 @@ namespace OptionSuite.Blotter.Wpf.Services
             return results;
         }
 
-        // ✅ FIX: HashSet för att undvika dubbel-processning av samma fil
+        // HashSet för att undvika dubbel-processning av samma fil
         private readonly HashSet<string> _processedFiles = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         private async void OnFileCreated(object sender, FileSystemEventArgs e)
         {
             var fileName = Path.GetFileName(e.FullPath);
+
+            // ✅ FIX: Filtrera bara relevanta filer (FX_SPOT, FX_FORWARD, FXSWAP)
+            if (!IsRelevantCalypsoFile(fileName))
+            {
+                Debug.WriteLine($"[CalypsoWatcher] ⏭️ Skipping irrelevant file: {fileName}");
+                return;
+            }
 
             // ✅ FIX: Undvik dubbel-processning (Created + Changed kan trigga båda)
             lock (_processedFiles)
@@ -256,6 +263,22 @@ namespace OptionSuite.Blotter.Wpf.Services
                     }
                 });
             }
+        }
+
+        /// <summary>
+        /// Kontrollerar om filen är relevant för Calypso response processing.
+        /// Bara FX_SPOT, FX_FORWARD och FXSWAP ska processas.
+        /// </summary>
+        private bool IsRelevantCalypsoFile(string fileName)
+        {
+            if (string.IsNullOrWhiteSpace(fileName))
+                return false;
+
+            var upperFileName = fileName.ToUpperInvariant();
+
+            return upperFileName.StartsWith("FX_SPOT_") ||
+                   upperFileName.StartsWith("FX_FORWARD_") ||
+                   upperFileName.StartsWith("FXSWAP_");
         }
 
         private async Task ProcessResponseFileAsync(string filePath)

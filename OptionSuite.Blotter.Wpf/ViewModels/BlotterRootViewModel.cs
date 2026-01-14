@@ -1169,12 +1169,17 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
 
                 // Avgör om traden är option baserat på CallPut-fältet
                 var isOption = !string.IsNullOrEmpty(trade.CallPut);
+                var isNdf = trade.IsNonDeliverable ?? false;  // ✅ Kolla NDF-flag
 
                 if (systemCode == "MX3")
                 {
                     if (isOption)
                     {
                         result = await _commandService.BookOptionToMx3Async(stpTradeId).ConfigureAwait(true);
+                    }
+                    else if (isNdf)
+                    {
+                        result = await _commandService.BookNdfToMx3Async(stpTradeId).ConfigureAwait(true); 
                     }
                     else
                     {
