@@ -53,29 +53,49 @@ namespace FxTradeHub.Services.Mx3Export
                 throw new ArgumentException($"Invalid SettlementCurrency: {req.SettlementCurrency}");
 
             // Parse currency pair
-            var ccy1 = req.CurrencyPair.Substring(0, 3);
-            var ccy2 = req.CurrencyPair.Substring(3, 3);
+            var baseCcy = req.CurrencyPair.Substring(0, 3);   // USD
+            var quoteCcy = req.CurrencyPair.Substring(3, 3);  // CNY
+
+            // ✅ FIX: Notional är alltid i NotionalCurrency (som är i request objektet)
+            // Vi behöver avgöra vilket som är vilket baserat på NotionalCurrency från BlotterTradeRow
+
+            decimal notional1;
+            decimal notional2;
+            string ccy1;
+            string ccy2;
+
+            // Avgör vilken valuta Notional är i och beräkna den andra
+            // Rate är alltid i termer av CurrencyPair (base/quote)
+            if (req.BuySell == "Buy")
+            {
+                // Buy = vi köper base currency (USD i USDCNY)
+                // Om Notional är i quote currency (CNY):
+                //   - Vi betalar CNY (notional)
+                //   - Vi får USD (notional / rate)
+                // Om Notional är i base currency (USD):
+                //   - Vi betalar quote (notional * rate)
+                //   - Vi får base (notional)
+
+                // Eftersom din data visar Notional=1000000 CNY, NotionalCurrency=CNY
+                // och det är en BUY av USD:
+                ccy1 = quoteCcy;  // CNY (vi betalar)
+                ccy2 = baseCcy;   // USD (vi får)
+                notional1 = req.Notional;  // 1,000,000 CNY
+                notional2 = req.Notional / req.Rate;  // 1,000,000 / 6.9823 = 143,214.77 USD
+            }
+            else
+            {
+                // Sell = vi säljer base currency (USD i USDCNY)
+                ccy1 = baseCcy;   // USD (vi betalar)
+                ccy2 = quoteCcy;  // CNY (vi får)
+                notional1 = req.Notional / req.Rate;  // USD amount
+                notional2 = req.Notional;  // CNY amount
+            }
 
             // Format dates
             var tradedate = req.TradeDate.ToString("yyyyMMdd");
             var settlementdate = req.SettlementDate.ToString("yyyyMMdd");
             var fixingdate = req.FixingDate.ToString("yyyyMMdd");
-
-            // Calculate notionals (alltid i settlement currency för NDF)
-            decimal notional1 = req.Notional;
-            decimal notional2 = req.Notional * req.Rate;
-
-            // Swap currencies if Buy (we receive ccy1, pay ccy2)
-            if (req.BuySell == "Buy")
-            {
-                var tempCcy = ccy1;
-                ccy1 = ccy2;
-                ccy2 = tempCcy;
-
-                var tempNotional = notional1;
-                notional1 = notional2;
-                notional2 = tempNotional;
-            }
 
             #region Root: MxML
             var rootNode = xmlDoc.CreateElement("MxML");
@@ -113,7 +133,7 @@ namespace FxTradeHub.Services.Mx3Export
             var contractNode = xmlDoc.CreateElement("contract");
             SetAttribute(xmlDoc, contractNode, "id", "contract_0");
             SetAttribute(xmlDoc, contractNode, "mefClass", "mxContractISINGLE");
-            SetAttribute(xmlDoc, contractNode, "mefClassInstanceLabel", "Non Deliv Fwd");
+            SetAttribute(xmlDoc, contractNode, "mefClassInstanceLabel", "Spot-Forward");
             contractsNode.AppendChild(contractNode);
 
             var contractHeaderNode = xmlDoc.CreateElement("contractHeader");
@@ -250,13 +270,13 @@ namespace FxTradeHub.Services.Mx3Export
             var tradeBodyNode = xmlDoc.CreateElement("tradeBody");
             tradeNode.AppendChild(tradeBodyNode);
 
-            // ✅ NDF: använd nonDeliverableForward istället för fxSpotForward
-            var ndfNode = xmlDoc.CreateElement("nonDeliverableForward");
-            tradeBodyNode.AppendChild(ndfNode);
+            // ✅ NDF använder fxSpotForward som wrapper, nonDeliverableForward är en UNDERNODE
+            var fxSpotForwardNode = xmlDoc.CreateElement("fxSpotForward");
+            tradeBodyNode.AppendChild(fxSpotForwardNode);
 
             // currency1Flow (we PAY)
             var currency1FlowNode = xmlDoc.CreateElement("currency1Flow");
-            ndfNode.AppendChild(currency1FlowNode);
+            fxSpotForwardNode.AppendChild(currency1FlowNode);
 
             var payerPartyRef1 = xmlDoc.CreateElement("payerPartyReference");
             SetAttribute(xmlDoc, payerPartyRef1, "href", "#SWEDBANK");
@@ -276,7 +296,7 @@ namespace FxTradeHub.Services.Mx3Export
 
             // currency2Flow (we RECEIVE)
             var currency2FlowNode = xmlDoc.CreateElement("currency2Flow");
-            ndfNode.AppendChild(currency2FlowNode);
+            fxSpotForwardNode.AppendChild(currency2FlowNode);
 
             var payerPartyRef2 = xmlDoc.CreateElement("payerPartyReference");
             SetAttribute(xmlDoc, payerPartyRef2, "href", "#_24");
@@ -296,7 +316,7 @@ namespace FxTradeHub.Services.Mx3Export
 
             // exchangeRate
             var exchangeRateNode = xmlDoc.CreateElement("exchangeRate");
-            ndfNode.AppendChild(exchangeRateNode);
+            fxSpotForwardNode.AppendChild(exchangeRateNode);
 
             var fxQuotationNode = xmlDoc.CreateElement("fxQuotation");
             exchangeRateNode.AppendChild(fxQuotationNode);
@@ -308,19 +328,20 @@ namespace FxTradeHub.Services.Mx3Export
 
             AppendElement(xmlDoc, exchangeRateNode, "rate", rate.ToString(CultureInfo.InvariantCulture));
 
-            // ✅ NDF-SPECIFIKA FÄLT
+            // ✅ NDF-SEKTION - som UNDERNODE till fxSpotForward
+            var ndfNode = xmlDoc.CreateElement("nonDeliverableForward");
+            fxSpotForwardNode.AppendChild(ndfNode);
 
-            // settlementCurrency (t.ex. USD)
+            // settlementCurrency
             AppendElement(xmlDoc, ndfNode, "settlementCurrency", settlementCurrency);
 
             // fxFixing
             var fxFixingNode = xmlDoc.CreateElement("fxFixing");
             ndfNode.AppendChild(fxFixingNode);
 
-            AppendElement(xmlDoc, fxFixingNode, "currency1", ccyPair.Substring(0, 3));
-            AppendElement(xmlDoc, fxFixingNode, "currency2", ccyPair.Substring(3, 3));
+            AppendElement(xmlDoc, fxFixingNode, "currency1", ccyPair.Substring(0, 3));  // ✅ USD
+            AppendElement(xmlDoc, fxFixingNode, "currency2", ccyPair.Substring(3, 3));  // ✅ CNY
 
-            // fxRateSource
             var fxRateSourceNode = xmlDoc.CreateElement("fxRateSource");
             fxFixingNode.AppendChild(fxRateSourceNode);
             AppendElement(xmlDoc, fxRateSourceNode, "sourceLabel", fixingSource ?? "NDF_group");
@@ -330,7 +351,15 @@ namespace FxTradeHub.Services.Mx3Export
 
             // ndfEstimationDate
             AppendElement(xmlDoc, ndfNode, "ndfEstimationDate", "fixingValueDate");
+
+            // ✅ Lägg till obligatoriska fält för fxSpotForward
+            AppendElement(xmlDoc, fxSpotForwardNode, "fxAsianAverageRounding", "Disabled");
+            AppendElement(xmlDoc, fxSpotForwardNode, "forwardDelivery", "forward");
+            AppendElement(xmlDoc, fxSpotForwardNode, "fxQuantitiesInputMode", "oneQuantity");
+            AppendElement(xmlDoc, fxSpotForwardNode, "riskSection", ccyPair);
+            AppendElement(xmlDoc, fxSpotForwardNode, "offsettingBuySellContribution", "false");
         }
+
 
         private void BuildTradeInputConditions(XmlDocument xmlDoc, XmlNode tradeNode, string trader, string tradedate)
         {

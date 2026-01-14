@@ -1459,7 +1459,7 @@
                                                                                         </Ellipse.Style>
                                                                                     </Ellipse>
                                                                                     <TextBlock Text="{Binding Status, TargetNullValue=Unknown}" 
-           Style="{StaticResource Style.BlotterStatusBadgeText}"/>
+                                                                                               Style="{StaticResource Style.BlotterStatusBadgeText}"/>
 
                                                                                 </StackPanel>
                                                                             </Border>
@@ -1671,7 +1671,7 @@
                                                                             <ItemsControl Grid.Row="1" Grid.Column="4"
                                                                                           ItemsSource="{Binding Details, Converter={StaticResource DetailsToLines}}"
                                                                                           Margin="0,6,0,0">
-                                                                                
+
                                                                                 <ItemsControl.ItemTemplate>
                                                                                     <DataTemplate>
                                                                                         <TextBlock Text="{Binding}"
@@ -1680,9 +1680,17 @@
                                                                                                    TextWrapping="Wrap"
                                                                                                    MaxWidth="400">
                                                                                             <TextBlock.ToolTip>
-                                                                                                <ToolTip Content="{Binding}" MaxWidth="600"/>
+                                                                                                <ToolTip Content="{Binding}" MaxWidth="600">
+                                                                                                    <ToolTip.ContentTemplate>
+                                                                                                        <DataTemplate>
+                                                                                                            <TextBlock Text="{Binding}" 
+                                                                                                                       TextWrapping="Wrap"
+                                                                                                                       MaxWidth="600"/>
+                                                                                                        </DataTemplate>
+                                                                                                    </ToolTip.ContentTemplate>
+                                                                                                </ToolTip>
                                                                                             </TextBlock.ToolTip>
-                                                                                        </TextBlock>
+            </TextBlock>
                                                                                     </DataTemplate>
                                                                                 </ItemsControl.ItemTemplate>
                                                                             </ItemsControl>

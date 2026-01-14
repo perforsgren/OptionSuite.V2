@@ -184,7 +184,17 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                 return ToProperCase(status);
             }
 
-            // För Linear: beräkna från båda system med case-normalisering
+            // För NDF: endast MX3, ingen Calypso-länk
+            // Om Calypso är null/empty, använd endast MX3 status
+            var hasCalypsoLink = !string.IsNullOrEmpty(calypsoStatus) && calypsoStatus.ToUpper() != "NEW";
+
+            if (!hasCalypsoLink)
+            {
+                // Endast MX3 - använd den statusen direkt
+                return ToProperCase(mx3Status ?? "New");
+            }
+
+            // För Linear med båda system: beräkna från båda system med case-normalisering
             var mx3 = ToProperCase(mx3Status ?? "New");
             var caly = ToProperCase(calypsoStatus ?? "New");
 
@@ -192,9 +202,11 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             if (mx3 == "Booked" && caly == "Booked")
                 return "Booked";
 
-            // Något system failed = overall failed
-            if (mx3 == "Failed" || caly == "Failed")
-                return "Failed";
+            // ✅ Något system ERROR eller FAILED = overall error
+            if (mx3 == "Error" || caly == "Error" ||
+                mx3 == "Failed" || caly == "Failed" ||
+                mx3 == "Rejected" || caly == "Rejected")
+                return "Error";
 
             // Ett system booked, ett inte = partial
             if ((mx3 == "Booked" && caly != "Booked") ||
@@ -208,6 +220,7 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             // Annars new
             return "New";
         }
+
 
 
         private string ToProperCase(string status)
