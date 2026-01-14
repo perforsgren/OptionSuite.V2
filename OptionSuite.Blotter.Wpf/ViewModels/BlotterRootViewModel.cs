@@ -1404,7 +1404,7 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                 portfolioMx3: trade.PortfolioMx3,
                 trader: trade.TraderId,
                 status: trade.Status,
-                time: trade.TradeDate ?? existing?.Time ?? DateTime.UtcNow,  
+                time: trade.ExecutionTimeUtc ?? existing?.Time ?? DateTime.UtcNow,
                 system: trade.SystemCode,
                 product: trade.ProductType,
                 spotRate: trade.SpotRate,
