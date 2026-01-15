@@ -559,14 +559,20 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
         {
             var currentUser = Environment.UserName.ToUpper();
 
-            // Filtrera: endast Options (för nu), Status=New, mitt TraderID
-            var tradesToBook = OptionTrades
+            // Filtrera: Options OCH Linear, Status=New, mitt TraderID
+            var optionTradesToBook = OptionTrades
                 .Where(t => t.Status == "New" &&
-                            t.Trader == currentUser &&
-                            !string.IsNullOrEmpty(t.CallPut))
+                            string.Equals(t.Trader, currentUser, StringComparison.OrdinalIgnoreCase))
                 .ToList();
 
-            if (tradesToBook.Count == 0)
+            var linearTradesToBook = LinearTrades
+                .Where(t => t.Status == "New" &&
+                            string.Equals(t.Trader, currentUser, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+            var allTradesToBook = optionTradesToBook.Concat(linearTradesToBook).ToList();
+
+            if (allTradesToBook.Count == 0)
             {
                 MessageBox.Show("No trades to book.", "Bulk Book",
                     MessageBoxButton.OK, MessageBoxImage.Information);
@@ -574,7 +580,7 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             }
 
             // Book alla trades asynkront
-            _ = ExecuteBulkBookAsync(tradesToBook);
+            _ = ExecuteBulkBookAsync(allTradesToBook);
         }
 
         private async Task ExecuteBulkBookAsync(List<TradeRowViewModel> trades)
@@ -586,14 +592,36 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             {
                 try
                 {
-                    await ExecuteBookTradeAsync(trade.StpTradeId, "MX3").ConfigureAwait(true);
+                    // Hämta systemlinks för att veta vilka system som ska bokas
+                    var links = await _readService.GetTradeSystemLinksAsync(trade.StpTradeId).ConfigureAwait(true);
+
+                    var systemsToBook = links
+                        .Where(l => l.BookFlag == true &&
+                                    (string.Equals(l.Status, "New", StringComparison.OrdinalIgnoreCase) ||
+                                     string.Equals(l.Status, "Error", StringComparison.OrdinalIgnoreCase)))
+                        .ToList();
+
+                    if (systemsToBook.Count == 0)
+                    {
+                        Debug.WriteLine($"[BulkBook] Trade {trade.TradeId}: No systems configured for booking");
+                        continue;
+                    }
+
+                    foreach (var link in systemsToBook)
+                    {
+                        await ExecuteBookTradeAsync(trade.StpTradeId, link.SystemCode).ConfigureAwait(true);
+                    }
+
                     successCount++;
                 }
-                catch
+                catch (Exception ex)
                 {
+                    Debug.WriteLine($"[BulkBook] Failed to book trade {trade.TradeId}: {ex.Message}");
                     failCount++;
                 }
             }
+
+            Debug.WriteLine($"[BulkBook] Completed: {successCount} success, {failCount} failed");
         }
 
         public async Task InitialLoadAsync()
