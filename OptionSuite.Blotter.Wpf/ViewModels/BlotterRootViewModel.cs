@@ -825,10 +825,6 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                             isUpdated: isUpdated
                         );
 
-                        // Subscribe to edit events (inline editing)
-                        trade.OnPortfolioMx3Changed += OnInlineEdit_PortfolioMx3Changed;
-                        trade.OnCalypsoPortfolioChanged += OnInlineEdit_CalypsoPortfolioChanged;
-
                         if (isNew && !_isNewFlags.ContainsKey(tradeId))
                         {
                             _isNewFlags[tradeId] = true;
@@ -1686,76 +1682,53 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
         }
 
         /// <summary>
-        /// Hanterar inline edit av Portfolio MX3.
+        /// Anropas från View när en cell edit är klar (CellEditEnding event).
+        /// Sparar ändringarna till databasen.
         /// </summary>
-        private async void OnInlineEdit_PortfolioMx3Changed(object sender, string newValue)
+        public async Task OnCellEditEndingAsync(TradeRowViewModel row, string columnHeader)
         {
-            if (sender is not TradeRowViewModel row)
+            if (row == null || !row.HasEditChanges())
                 return;
-
-            if (_isBusy || _isUserInteracting)
-            {
-                Debug.WriteLine($"[BlotterVM] Skipping inline edit save - busy or user interacting");
-                return;
-            }
 
             try
             {
-                Debug.WriteLine($"[BlotterVM] Saving inline edit: StpTradeId={row.StpTradeId}, PortfolioMx3={newValue}");
+                Debug.WriteLine($"[BlotterVM] Cell edit ending for {columnHeader}: StpTradeId={row.StpTradeId}");
+
+                string newPortfolio = null;
+                string newCalypso = null;
+
+                if (columnHeader == "Portfolio MX3")
+                {
+                    newPortfolio = row.PortfolioMx3;
+                }
+                else if (columnHeader == "Book Calypso")
+                {
+                    newCalypso = row.CalypsoPortfolio;
+                }
 
                 await _commandService.UpdateTradeRoutingFieldsAsync(
                     stpTradeId: row.StpTradeId,
-                    portfolioMx3: newValue,
-                    calypsoBook: null,  // Only update Portfolio MX3
+                    portfolioMx3: newPortfolio,
+                    calypsoBook: newCalypso,
                     userId: Environment.UserName);
 
-                Debug.WriteLine($"[BlotterVM] Inline edit saved successfully");
+                row.EndEdit();
+
+                Debug.WriteLine($"[BlotterVM] Cell edit saved successfully");
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[BlotterVM] Inline edit save failed: {ex.Message}");
-                LastError = $"Failed to save Portfolio MX3: {ex.Message}";
+                Debug.WriteLine($"[BlotterVM] Cell edit save failed: {ex.Message}");
+                LastError = $"Failed to save: {ex.Message}";
 
-                // Trigger refresh to revert UI
+                // Revert changes
+                row.CancelEdit();
+
+                // Trigger refresh to reload from DB
                 _ = Task.Run(async () => await RefreshAsync());
             }
         }
 
-        /// <summary>
-        /// Hanterar inline edit av Book Calypso.
-        /// </summary>
-        private async void OnInlineEdit_CalypsoPortfolioChanged(object sender, string newValue)
-        {
-            if (sender is not TradeRowViewModel row)
-                return;
-
-            if (_isBusy || _isUserInteracting)
-            {
-                Debug.WriteLine($"[BlotterVM] Skipping inline edit save - busy or user interacting");
-                return;
-            }
-
-            try
-            {
-                Debug.WriteLine($"[BlotterVM] Saving inline edit: StpTradeId={row.StpTradeId}, CalypsoBook={newValue}");
-
-                await _commandService.UpdateTradeRoutingFieldsAsync(
-                    stpTradeId: row.StpTradeId,
-                    portfolioMx3: null,  // Only update Calypso Book
-                    calypsoBook: newValue,
-                    userId: Environment.UserName);
-
-                Debug.WriteLine($"[BlotterVM] Inline edit saved successfully");
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"[BlotterVM] Inline edit save failed: {ex.Message}");
-                LastError = $"Failed to save Book Calypso: {ex.Message}";
-
-                // Trigger refresh to revert UI
-                _ = Task.Run(async () => await RefreshAsync());
-            }
-        }
 
 
         public void Dispose()

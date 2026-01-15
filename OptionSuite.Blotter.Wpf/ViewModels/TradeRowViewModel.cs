@@ -10,17 +10,24 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
         private bool _isNew;
         private bool _isUpdated;
 
+        // Flagga för om raden är i edit-mode
+        private bool _isEditing;
+
         public bool HasMargin => Margin != null && Margin != 0;
 
         public event PropertyChangedEventHandler PropertyChanged;
-        public event EventHandler<string> OnPortfolioMx3Changed;
-        public event EventHandler<string> OnCalypsoPortfolioChanged;
+        //public event EventHandler<string> OnPortfolioMx3Changed;
+        //public event EventHandler<string> OnCalypsoPortfolioChanged;
 
         // Primärnyckel i STP (behövs för att hämta links/events per trade)
         public long StpTradeId { get; }
 
         private string _portfolioMx3;
         private string _calypsoPortfolio;
+
+        // Originalvärden för rollback
+        private string _originalPortfolioMx3;
+        private string _originalCalypsoPortfolio;
 
         // Options-specifika kolumner
         public string TradeId { get; }
@@ -46,7 +53,6 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                 {
                     _portfolioMx3 = value;
                     OnPropertyChanged();
-                    OnPortfolioMx3Changed?.Invoke(this, value);
                 }
             }
         }
@@ -79,7 +85,6 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                 {
                     _calypsoPortfolio = value;
                     OnPropertyChanged();
-                    OnCalypsoPortfolioChanged?.Invoke(this, value);
                 }
             }
         }
@@ -123,6 +128,34 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                     OnPropertyChanged();
                 }
             }
+        }
+
+        // Metod för att spara ändringar
+        public bool HasEditChanges()
+        {
+            return _originalPortfolioMx3 != _portfolioMx3 ||
+                   _originalCalypsoPortfolio != _calypsoPortfolio;
+        }
+
+        public void BeginEdit()
+        {
+            _isEditing = true;
+            _originalPortfolioMx3 = _portfolioMx3;
+            _originalCalypsoPortfolio = _calypsoPortfolio;
+        }
+
+        public void CancelEdit()
+        {
+            _isEditing = false;
+            _portfolioMx3 = _originalPortfolioMx3;
+            _calypsoPortfolio = _originalCalypsoPortfolio;
+            OnPropertyChanged(nameof(PortfolioMx3));
+            OnPropertyChanged(nameof(CalypsoPortfolio));
+        }
+
+        public void EndEdit()
+        {
+            _isEditing = false;
         }
 
         public TradeRowViewModel(
