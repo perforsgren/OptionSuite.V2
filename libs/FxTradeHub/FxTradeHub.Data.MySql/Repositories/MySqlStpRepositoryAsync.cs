@@ -737,28 +737,26 @@ VALUES
             }
         }
 
+        /// <summary>
+        /// Uppdaterar routing-fält på Trade-tabellen (inline editing).
+        /// Uppdaterar PortfolioMx3 och/eller CalypsoBook med optimistic concurrency check.
+        /// </summary>
         public async Task<bool> UpdateTradeRoutingFieldsAsync(
-    long stpTradeId,
-    string portfolioMx3,
-    string calypsoBook,
-    DateTime expectedLastUpdatedUtc)
+            long stpTradeId,
+            string portfolioMx3,
+            string calypsoBook,
+            DateTime expectedLastUpdatedUtc)
         {
             var setParts = new List<string>();
-            var parameters = new DynamicParameters();
-
-            parameters.Add("@StpTradeId", stpTradeId);
-            parameters.Add("@ExpectedLastUpdatedUtc", expectedLastUpdatedUtc);
 
             if (portfolioMx3 != null)
             {
                 setParts.Add("PortfolioMx3 = @PortfolioMx3");
-                parameters.Add("@PortfolioMx3", portfolioMx3);
             }
 
             if (calypsoBook != null)
             {
                 setParts.Add("CalypsoBook = @CalypsoBook");
-                parameters.Add("@CalypsoBook", calypsoBook);
             }
 
             if (setParts.Count == 0)
@@ -768,6 +766,7 @@ VALUES
             }
 
             setParts.Add("LastUpdatedUtc = UTC_TIMESTAMP()");
+            setParts.Add("LastUpdatedBy = @UserId");
 
             var sql = $@"
         UPDATE trade_stp.trade
@@ -776,13 +775,32 @@ VALUES
           AND LastUpdatedUtc = @ExpectedLastUpdatedUtc
           AND IsDeleted = 0";
 
-            using (var conn = new MySqlConnection(_connectionString))
+            using (var conn = CreateConnection())
             {
-                await conn.OpenAsync();
-                var rowsAffected = await conn.ExecuteAsync(sql, parameters);
-                return rowsAffected > 0;
+                await conn.OpenAsync().ConfigureAwait(false);
+
+                using (var cmd = new MySqlCommand(sql, conn))
+                {
+                    cmd.Parameters.AddWithValue("@StpTradeId", stpTradeId);
+                    cmd.Parameters.AddWithValue("@ExpectedLastUpdatedUtc", expectedLastUpdatedUtc);
+                    cmd.Parameters.AddWithValue("@UserId", Environment.UserName);
+
+                    if (portfolioMx3 != null)
+                    {
+                        cmd.Parameters.AddWithValue("@PortfolioMx3", portfolioMx3);
+                    }
+
+                    if (calypsoBook != null)
+                    {
+                        cmd.Parameters.AddWithValue("@CalypsoBook", calypsoBook);
+                    }
+
+                    var rowsAffected = await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+                    return rowsAffected > 0;
+                }
             }
         }
+
 
 
         /// <summary>

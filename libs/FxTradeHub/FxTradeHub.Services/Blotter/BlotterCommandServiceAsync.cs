@@ -116,7 +116,7 @@ namespace FxTradeHub.Services.Blotter
                 stpTradeId,
                 portfolioMx3,
                 calypsoBook,
-                trade.LastUpdatedUtc);
+                trade.TradeLastUpdatedUtc ?? DateTime.UtcNow); // TradeLastUpdatedUtc
 
             if (!success)
             {

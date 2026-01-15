@@ -833,16 +833,25 @@
 
                                         <!-- EDITABLE: Portfolio MX3 -->
                                         <DataGridComboBoxColumn Header="Portfolio MX3" 
-                                                                SelectedItemBinding="{Binding PortfolioMx3, UpdateSourceTrigger=PropertyChanged}" 
-                                                                Width="110">
+                        SelectedItemBinding="{Binding PortfolioMx3, UpdateSourceTrigger=PropertyChanged}" 
+                        Width="110">
                                             <DataGridComboBoxColumn.ElementStyle>
                                                 <Style TargetType="ComboBox">
                                                     <Setter Property="ItemsSource" Value="{Binding DataContext.PortfolioMx3Values, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
+                                                    <Setter Property="Background" Value="Transparent"/>
+                                                    <Setter Property="BorderThickness" Value="0"/>
+                                                    <Setter Property="Padding" Value="8,4"/>
+                                                    <Setter Property="Foreground" Value="{StaticResource Brush.Text}"/>
                                                 </Style>
                                             </DataGridComboBoxColumn.ElementStyle>
                                             <DataGridComboBoxColumn.EditingElementStyle>
                                                 <Style TargetType="ComboBox">
                                                     <Setter Property="ItemsSource" Value="{Binding DataContext.PortfolioMx3Values, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
+                                                    <Setter Property="Background" Value="{StaticResource Brush.Panel2}"/>
+                                                    <Setter Property="BorderBrush" Value="{StaticResource Brush.Border}"/>
+                                                    <Setter Property="BorderThickness" Value="1"/>
+                                                    <Setter Property="Padding" Value="8,4"/>
+                                                    <Setter Property="Foreground" Value="{StaticResource Brush.Text}"/>
                                                 </Style>
                                             </DataGridComboBoxColumn.EditingElementStyle>
                                         </DataGridComboBoxColumn>
