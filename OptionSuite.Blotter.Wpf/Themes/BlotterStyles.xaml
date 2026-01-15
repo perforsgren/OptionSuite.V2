@@ -178,6 +178,145 @@
     </Style>
 
 
+    <!-- =========================================================
+     BLOTTER COMBOBOX STYLE - INLINE (för DataGrid celler)
+     Transparent bakgrund, samma font som övriga celler,
+     pilen alltid höger-alignerad i cellen
+     ========================================================= -->
+
+    <Style x:Key="Style.BlotterComboBox" TargetType="ComboBox">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Foreground" Value="{StaticResource Brush.Text}"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="MinHeight" Value="0"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+        <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Auto"/>
+        <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto"/>
+        <Setter Property="ScrollViewer.CanContentScroll" Value="True"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ComboBox">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Selected content -->
+                        <ContentPresenter Grid.Column="0"
+                                      Content="{TemplateBinding SelectionBoxItem}"
+                                      ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                      ContentStringFormat="{TemplateBinding SelectionBoxItemStringFormat}"
+                                      VerticalAlignment="Center"
+                                      HorizontalAlignment="Left"
+                                      IsHitTestVisible="False"/>
+
+                        <!-- Dropdown arrow - alltid i höger kolumn -->
+                        <Path x:Name="Arrow"
+                          Grid.Column="1"
+                          Data="M 0 0 L 3 3 L 6 0 Z"
+                          Fill="{StaticResource Brush.TextMuted}"
+                          HorizontalAlignment="Center"
+                          VerticalAlignment="Center"
+                          Margin="8,0,4,0"/>
+
+                        <!-- Toggle button (invisible, covers entire area) -->
+                        <ToggleButton Grid.ColumnSpan="2"
+                                  IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
+                                  Focusable="False"
+                                  ClickMode="Press"
+                                  Background="Transparent"
+                                  BorderThickness="0"
+                                  IsEnabled="{TemplateBinding IsEnabled}">
+                            <ToggleButton.Template>
+                                <ControlTemplate TargetType="ToggleButton">
+                                    <Border Background="Transparent"/>
+                                </ControlTemplate>
+                            </ToggleButton.Template>
+                        </ToggleButton>
+
+                        <!-- Dropdown popup -->
+                        <Popup x:Name="PART_Popup"
+                           Placement="Bottom"
+                           IsOpen="{TemplateBinding IsDropDownOpen}"
+                           AllowsTransparency="True"
+                           Focusable="False"
+                           PopupAnimation="Slide">
+                            <Border x:Name="DropDownBorder"
+                                MinWidth="{TemplateBinding ActualWidth}"
+                                MaxHeight="{TemplateBinding MaxDropDownHeight}"
+                                Background="{StaticResource Brush.Panel}"
+                                BorderBrush="{StaticResource Brush.Border}"
+                                BorderThickness="1"
+                                CornerRadius="{StaticResource Radius.Button}"
+                                Margin="0,2,0,0">
+                                <Border.Effect>
+                                    <DropShadowEffect Color="Black" 
+                                                  BlurRadius="12" 
+                                                  ShadowDepth="4" 
+                                                  Opacity="0.4"/>
+                                </Border.Effect>
+                                <ScrollViewer Margin="4">
+                                    <ItemsPresenter/>
+                                </ScrollViewer>
+                            </Border>
+                        </Popup>
+                    </Grid>
+
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Arrow" Property="Fill" Value="{StaticResource Brush.Text}"/>
+                        </Trigger>
+                        <Trigger Property="IsDropDownOpen" Value="True">
+                            <Setter TargetName="Arrow" Property="Fill" Value="#3B82F6"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="Arrow" Property="Visibility" Value="Collapsed"/>
+                            <Setter Property="Cursor" Value="Arrow"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ComboBoxItem style -->
+    <Style x:Key="Style.BlotterComboBoxItem" TargetType="ComboBoxItem">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Foreground" Value="{StaticResource Brush.Text}"/>
+        <Setter Property="Padding" Value="10,6"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ComboBoxItem">
+                    <Border x:Name="Bd"
+                        Background="{TemplateBinding Background}"
+                        Padding="{TemplateBinding Padding}"
+                        CornerRadius="4">
+                        <ContentPresenter VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsHighlighted" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="#1A3B82F6"/>
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="#333B82F6"/>
+                            <Setter Property="Foreground" Value="#3B82F6"/>
+                            <Setter Property="FontWeight" Value="SemiBold"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+
     <!-- =========================
          BLOTTER: SEGMENTED STRIP
          ========================= -->

@@ -132,6 +132,11 @@ namespace FxTradeHub.Domain.Interfaces
             string calypsoBook,
             DateTime expectedLastUpdatedUtc);
 
+        /// <summary>
+        /// Uppdaterar PortfolioCode för en specifik TradeSystemLink.
+        /// </summary>
+        Task UpdateTradeSystemLinkPortfolioCodeAsync(long stpTradeId, string systemCode, string portfolioCode);
+
         // ==========================================
         // LEADER ELECTION METHODS
         // ==========================================

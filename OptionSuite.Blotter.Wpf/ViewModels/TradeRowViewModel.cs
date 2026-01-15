@@ -130,6 +130,33 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             }
         }
 
+        // Ändra _isEditing till public property
+        public bool IsEditing
+        {
+            get => _isEditing;
+            private set
+            {
+                if (_isEditing != value)
+                {
+                    _isEditing = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        /// <summary>
+        /// True om traden kan editeras (Status = "New" eller "Error").
+        /// Används för att visa/dölja dropdown-pil och enable/disable ComboBox.
+        /// </summary>
+        public bool CanEdit
+        {
+            get
+            {
+                var status = Status?.ToUpperInvariant() ?? "";
+                return status == "NEW" || status == "ERROR";
+            }
+        }
+
         // Metod för att spara ändringar
         public bool HasEditChanges()
         {
@@ -139,14 +166,14 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
 
         public void BeginEdit()
         {
-            _isEditing = true;
+            IsEditing = true;  // Använd property istället för field
             _originalPortfolioMx3 = _portfolioMx3;
             _originalCalypsoPortfolio = _calypsoPortfolio;
         }
 
         public void CancelEdit()
         {
-            _isEditing = false;
+            IsEditing = false;  // Använd property
             _portfolioMx3 = _originalPortfolioMx3;
             _calypsoPortfolio = _originalCalypsoPortfolio;
             OnPropertyChanged(nameof(PortfolioMx3));
@@ -155,7 +182,7 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
 
         public void EndEdit()
         {
-            _isEditing = false;
+            IsEditing = false;  // Använd property
         }
 
         public TradeRowViewModel(

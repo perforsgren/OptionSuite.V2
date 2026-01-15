@@ -116,11 +116,22 @@ namespace FxTradeHub.Services.Blotter
                 stpTradeId,
                 portfolioMx3,
                 calypsoBook,
-                trade.TradeLastUpdatedUtc ?? DateTime.UtcNow); // TradeLastUpdatedUtc
+                trade.TradeLastUpdatedUtc ?? DateTime.UtcNow);
 
             if (!success)
             {
                 throw new InvalidOperationException("Concurrency conflict - trade was updated by another user");
+            }
+
+            // ✅ NY: Uppdatera TradeSystemLink.PortfolioCode för respektive system
+            if (portfolioMx3 != null)
+            {
+                await _repository.UpdateTradeSystemLinkPortfolioCodeAsync(stpTradeId, "MX3", portfolioMx3);
+            }
+
+            if (calypsoBook != null)
+            {
+                await _repository.UpdateTradeSystemLinkPortfolioCodeAsync(stpTradeId, "CALYPSO", calypsoBook);
             }
 
             // Audit event

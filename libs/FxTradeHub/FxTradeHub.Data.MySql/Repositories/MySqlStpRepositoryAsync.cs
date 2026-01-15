@@ -41,6 +41,36 @@ namespace FxTradeHub.Data.MySql.Repositories
         }
 
         /// <summary>
+        /// Uppdaterar PortfolioCode för en specifik TradeSystemLink.
+        /// Används vid inline-editing av routing-fält i blottern.
+        /// </summary>
+        public async Task UpdateTradeSystemLinkPortfolioCodeAsync(long stpTradeId, string systemCode, string portfolioCode)
+        {
+            const string sql = @"
+UPDATE trade_stp.TradeSystemLink
+SET PortfolioCode = @PortfolioCode,
+    LastStatusUtc = UTC_TIMESTAMP()
+WHERE StpTradeId = @StpTradeId
+  AND SystemCode = @SystemCode
+  AND IsDeleted = 0;
+";
+
+            using (var conn = CreateConnection())
+            {
+                await conn.OpenAsync().ConfigureAwait(false);
+
+                using (var cmd = new MySqlCommand(sql, conn))
+                {
+                    cmd.Parameters.AddWithValue("@StpTradeId", stpTradeId);
+                    cmd.Parameters.AddWithValue("@SystemCode", systemCode);
+                    cmd.Parameters.AddWithValue("@PortfolioCode", portfolioCode ?? string.Empty);
+
+                    await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+                }
+            }
+        }
+
+        /// <summary>
         /// Asynkront hämtar en lista av TradeSystemSummary-rader baserat på filtreringsparametrar.
         /// Joinar Trade + TradeSystemLink på serversidan och filtrerar bort soft-deletade
         /// trades (Trade.IsDeleted = 0). Sorterar på TradeDate DESC, StpTradeId DESC, SystemCode ASC

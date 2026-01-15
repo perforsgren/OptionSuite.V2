@@ -534,9 +534,9 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             _pollTimer.Interval = TimeSpan.FromSeconds(2);
             _pollTimer.Tick += async (s, e) =>
             {
-                // defensiva gates direkt i tick (snabb exit)
                 if (IsBusy) return;
                 if (IsUserInteracting) return;
+                if (IsAnyRowEditing()) return;  // ✅ Skippa om någon ComboBox är öppen
                 if (Volatile.Read(ref _refreshInFlight) != 0) return;
 
                 await RefreshAsync().ConfigureAwait(true);
@@ -697,6 +697,13 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             _userInteractionDebounceTimer.Start();
         }
 
+        // Lägg till denna helper-metod
+        private bool IsAnyRowEditing()
+        {
+            return OptionTrades.Any(t => t.IsEditing) ||
+                   LinearTrades.Any(t => t.IsEditing);
+        }
+
         /// <summary>
         /// Hämtar nya trades från backend och uppdaterar OptionTrades/LinearTrades collections.
         /// D2.2D-fix: Använder _isRefreshing flagga för att förhindra detail-clear under collection rebuild.
@@ -716,6 +723,7 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                 // defensiva gates (även om knappen trycks)
                 if (IsBusy) return;
                 if (IsUserInteracting) return;
+                if (IsAnyRowEditing()) return;  // ✅ NY: Skippa om någon cell editeras
 
                 // kom ihåg selection (id + vilken grid)
                 var selectedOptionId = SelectedOptionTrade?.TradeId;
