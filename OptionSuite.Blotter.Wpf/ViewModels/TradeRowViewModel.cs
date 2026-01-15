@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
@@ -12,9 +13,14 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
         public bool HasMargin => Margin != null && Margin != 0;
 
         public event PropertyChangedEventHandler PropertyChanged;
+        public event EventHandler<string> OnPortfolioMx3Changed;
+        public event EventHandler<string> OnCalypsoPortfolioChanged;
 
         // Primärnyckel i STP (behövs för att hämta links/events per trade)
         public long StpTradeId { get; }
+
+        private string _portfolioMx3;
+        private string _calypsoPortfolio;
 
         // Options-specifika kolumner
         public string TradeId { get; }
@@ -29,7 +35,23 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
         public decimal? Premium { get; }
         public string PremiumCcy { get; }
         public DateTime? PremiumDate { get; }
-        public string PortfolioMx3 { get; }
+
+        // EDITABLE FIELDS
+        public string PortfolioMx3
+        {
+            get => _portfolioMx3;
+            set
+            {
+                if (_portfolioMx3 != value)
+                {
+                    _portfolioMx3 = value;
+                    OnPropertyChanged();
+                    OnPortfolioMx3Changed?.Invoke(this, value);
+                }
+            }
+        }
+
+        //public string PortfolioMx3 { get; }
         public string Trader { get; }
         public string Status { get; }
         public string Mx3Status { get; }
@@ -46,7 +68,23 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
         public DateTime? SettlementDate { get; }
         public decimal? HedgeRate { get; }
         public string HedgeType { get; }
-        public string CalypsoPortfolio { get; }
+
+        // EDITABLE FIELDS
+        public string CalypsoPortfolio
+        {
+            get => _calypsoPortfolio;
+            set
+            {
+                if (_calypsoPortfolio != value)
+                {
+                    _calypsoPortfolio = value;
+                    OnPropertyChanged();
+                    OnCalypsoPortfolioChanged?.Invoke(this, value);
+                }
+            }
+        }
+
+        //public string CalypsoPortfolio { get; }
         public string SettlementCurrency { get; }
         public bool? IsNonDeliverable { get; }
         public DateTime? FixingDate { get; }
@@ -142,7 +180,11 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             Premium = premium;
             PremiumCcy = premiumCcy ?? string.Empty;
             PremiumDate = premiumDate;
-            PortfolioMx3 = portfolioMx3 ?? string.Empty;
+
+            // EDITABLE - initialize backing field directly (no event firing in ctor)
+            _portfolioMx3 = portfolioMx3 ?? string.Empty;
+            //PortfolioMx3 = portfolioMx3 ?? string.Empty;
+            
             Trader = trader ?? string.Empty;
 
             // Beräkna aggregerad status från system-status
@@ -158,7 +200,11 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             SettlementDate = settlementDate;
             HedgeRate = hedgeRate;
             HedgeType = hedgeType ?? string.Empty;
-            CalypsoPortfolio = calypsoPortfolio ?? string.Empty;
+
+            // EDITABLE - initialize backing field directly
+            _calypsoPortfolio = calypsoPortfolio ?? string.Empty;
+            //CalypsoPortfolio = calypsoPortfolio ?? string.Empty;
+            
             SettlementCurrency = settlementCurrency ?? string.Empty;
             IsNonDeliverable = isNonDeliverable;
             FixingDate = fixingDate;

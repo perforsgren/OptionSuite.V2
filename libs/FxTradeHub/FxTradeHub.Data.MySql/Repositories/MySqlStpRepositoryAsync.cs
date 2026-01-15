@@ -737,6 +737,54 @@ VALUES
             }
         }
 
+        public async Task<bool> UpdateTradeRoutingFieldsAsync(
+    long stpTradeId,
+    string portfolioMx3,
+    string calypsoBook,
+    DateTime expectedLastUpdatedUtc)
+        {
+            var setParts = new List<string>();
+            var parameters = new DynamicParameters();
+
+            parameters.Add("@StpTradeId", stpTradeId);
+            parameters.Add("@ExpectedLastUpdatedUtc", expectedLastUpdatedUtc);
+
+            if (portfolioMx3 != null)
+            {
+                setParts.Add("PortfolioMx3 = @PortfolioMx3");
+                parameters.Add("@PortfolioMx3", portfolioMx3);
+            }
+
+            if (calypsoBook != null)
+            {
+                setParts.Add("CalypsoBook = @CalypsoBook");
+                parameters.Add("@CalypsoBook", calypsoBook);
+            }
+
+            if (setParts.Count == 0)
+            {
+                // Nothing to update
+                return true;
+            }
+
+            setParts.Add("LastUpdatedUtc = UTC_TIMESTAMP()");
+
+            var sql = $@"
+        UPDATE trade_stp.trade
+        SET {string.Join(", ", setParts)}
+        WHERE StpTradeId = @StpTradeId
+          AND LastUpdatedUtc = @ExpectedLastUpdatedUtc
+          AND IsDeleted = 0";
+
+            using (var conn = new MySqlConnection(_connectionString))
+            {
+                await conn.OpenAsync();
+                var rowsAffected = await conn.ExecuteAsync(sql, parameters);
+                return rowsAffected > 0;
+            }
+        }
+
+
         /// <summary>
         /// Helper för att mappa DataReader till BlotterTradeRow.
         /// </summary>

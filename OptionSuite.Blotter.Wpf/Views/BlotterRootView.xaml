@@ -778,7 +778,8 @@
                                           ColumnHeaderStyle="{StaticResource Style.BlotterDataGridHeader}"
                                           CellStyle="{StaticResource Style.BlotterDataGridCell.Booked}"      
                                           RowStyle="{StaticResource Style.BlotterDataGridRow.Options}"
-                                          AutoGenerateColumns="False">
+                                          AutoGenerateColumns="False"
+                                          CanUserSortColumns="False">
 
                                     <DataGrid.ContextMenu>
                                         <ContextMenu Style="{StaticResource Style.BlotterContextMenu}">
@@ -803,32 +804,51 @@
                                     </DataGrid.ContextMenu>
 
                                     <DataGrid.Columns>
-                                        <DataGridTextColumn Header="TradeID" Binding="{Binding TradeId}" Width="120"/>
-                                        <DataGridTextColumn Header="Counterpart" Binding="{Binding Counterparty}" Width="110"/>
-                                        <DataGridTextColumn Header="Ccy Pair" Binding="{Binding CcyPair}" Width="80"/>
-                                        <DataGridTextColumn Header="Buy/Sell" Binding="{Binding BuySell}" Width="70"/>
-                                        <DataGridTextColumn Header="Call/Put" Binding="{Binding CallPut}" Width="70"/>
+                                        <DataGridTextColumn Header="TradeID" Binding="{Binding TradeId}" Width="120" IsReadOnly="True"/>
+                                        <DataGridTextColumn Header="Counterpart" Binding="{Binding Counterparty}" Width="110" IsReadOnly="True"/>
+                                        <DataGridTextColumn Header="Ccy Pair" Binding="{Binding CcyPair}" Width="80" IsReadOnly="True"/>
+                                        <DataGridTextColumn Header="Buy/Sell" Binding="{Binding BuySell}" Width="70" IsReadOnly="True"/>
+                                        <DataGridTextColumn Header="Call/Put" Binding="{Binding CallPut}" Width="70" IsReadOnly="True"/>
                                         <DataGridTextColumn Header="Strike" 
                                                             Binding="{Binding Strike, StringFormat=F4}" 
                                                             Width="65"
                                                             CellStyle="{StaticResource Style.BlotterDataGridCell.Numeric}"
-                                                            HeaderStyle="{StaticResource Style.BlotterDataGridHeader.Numeric}"/>
-                                        <DataGridTextColumn Header="Expiry Date" Binding="{Binding ExpiryDate, StringFormat=yyyy-MM-dd}" Width="100"/>
+                                                            HeaderStyle="{StaticResource Style.BlotterDataGridHeader.Numeric}"
+                                                            IsReadOnly="True"/>
+                                        <DataGridTextColumn Header="Expiry Date" Binding="{Binding ExpiryDate, StringFormat=yyyy-MM-dd}" Width="100" IsReadOnly="True"/>
                                         <DataGridTextColumn Header="Notional" 
                                                             Binding="{Binding Notional, StringFormat=N0}" 
                                                             Width="90"
                                                             CellStyle="{StaticResource Style.BlotterDataGridCell.Numeric}"
-                                                            HeaderStyle="{StaticResource Style.BlotterDataGridHeader.Numeric}"/>
-                                        <DataGridTextColumn Header="Notional Ccy" Binding="{Binding NotionalCcy}" Width="100"/>
+                                                            HeaderStyle="{StaticResource Style.BlotterDataGridHeader.Numeric}" 
+                                                            IsReadOnly="True"/>
+                                        <DataGridTextColumn Header="Notional Ccy" Binding="{Binding NotionalCcy}" Width="100" IsReadOnly="True"/>
                                         <DataGridTextColumn Header="Premium" 
                                                             Binding="{Binding Premium, StringFormat=N2}" 
                                                             Width="90"
                                                             CellStyle="{StaticResource Style.BlotterDataGridCell.Numeric}"
-                                                            HeaderStyle="{StaticResource Style.BlotterDataGridHeader.Numeric}"/>
-                                        <DataGridTextColumn Header="Premium Ccy" Binding="{Binding PremiumCcy}" Width="100"/>
-                                        <DataGridTextColumn Header="Portfolio MX3" Binding="{Binding PortfolioMx3}" Width="110"/>
-                                        <DataGridTextColumn Header="Trader" Binding="{Binding Trader}" Width="80"/>
-                                        <DataGridTemplateColumn Header="Status" Width="150" CellTemplate="{StaticResource StatusPillTemplate}" CellStyle="{StaticResource Style.BlotterDataGridCell.Status}" />
+                                                            HeaderStyle="{StaticResource Style.BlotterDataGridHeader.Numeric}" 
+                                                            IsReadOnly="True"/>
+                                        <DataGridTextColumn Header="Premium Ccy" Binding="{Binding PremiumCcy}" Width="100" IsReadOnly="True"/>
+
+                                        <!-- EDITABLE: Portfolio MX3 -->
+                                        <DataGridComboBoxColumn Header="Portfolio MX3" 
+                                                                SelectedItemBinding="{Binding PortfolioMx3, UpdateSourceTrigger=PropertyChanged}" 
+                                                                Width="110">
+                                            <DataGridComboBoxColumn.ElementStyle>
+                                                <Style TargetType="ComboBox">
+                                                    <Setter Property="ItemsSource" Value="{Binding DataContext.PortfolioMx3Values, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
+                                                </Style>
+                                            </DataGridComboBoxColumn.ElementStyle>
+                                            <DataGridComboBoxColumn.EditingElementStyle>
+                                                <Style TargetType="ComboBox">
+                                                    <Setter Property="ItemsSource" Value="{Binding DataContext.PortfolioMx3Values, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
+                                                </Style>
+                                            </DataGridComboBoxColumn.EditingElementStyle>
+                                        </DataGridComboBoxColumn>
+
+                                        <DataGridTextColumn Header="Trader" Binding="{Binding Trader}" Width="80" IsReadOnly="True"/>
+                                        <DataGridTemplateColumn Header="Status" Width="150" CellTemplate="{StaticResource StatusPillTemplate}" CellStyle="{StaticResource Style.BlotterDataGridCell.Status}" IsReadOnly="True"/>
 
                                     </DataGrid.Columns>
                                 </DataGrid>
@@ -847,7 +867,8 @@
                                           ColumnHeaderStyle="{StaticResource Style.BlotterDataGridHeader}"
                                           CellStyle="{StaticResource Style.BlotterDataGridCell.Booked}"                                          
                                           RowStyle="{StaticResource Style.BlotterDataGridRow.Linear}"
-                                          AutoGenerateColumns="False">
+                                          AutoGenerateColumns="False"
+                                          CanUserSortColumns="False">
 
                                     <DataGrid.ContextMenu>
                                         <ContextMenu Style="{StaticResource Style.BlotterContextMenu}">
@@ -878,27 +899,60 @@
                                     </DataGrid.ContextMenu>
 
                                     <DataGrid.Columns>
-                                        <DataGridTextColumn Header="TradeID" Binding="{Binding TradeId}" Width="120"/>
-                                        <DataGridTextColumn Header="Counterpart" Binding="{Binding Counterparty}" Width="110"/>
-                                        <DataGridTextColumn Header="Ccy Pair" Binding="{Binding CcyPair}" Width="80"/>
-                                        <DataGridTextColumn Header="Buy/Sell" Binding="{Binding BuySell}" Width="70"/>
+                                        <DataGridTextColumn Header="TradeID" Binding="{Binding TradeId}" Width="120" IsReadOnly="True"/>
+                                        <DataGridTextColumn Header="Counterpart" Binding="{Binding Counterparty}" Width="110" IsReadOnly="True"/>
+                                        <DataGridTextColumn Header="Ccy Pair" Binding="{Binding CcyPair}" Width="80" IsReadOnly="True"/>
+                                        <DataGridTextColumn Header="Buy/Sell" Binding="{Binding BuySell}" Width="70" IsReadOnly="True"/>
                                         <DataGridTextColumn Header="Notional" 
                                                             Binding="{Binding Notional, StringFormat=N0}"
                                                             CellStyle="{StaticResource Style.BlotterDataGridCell.Numeric}"
                                                             HeaderStyle="{StaticResource Style.BlotterDataGridHeader.Numeric}"
-                                                            Width="90"/>
-                                        <DataGridTextColumn Header="Notional Ccy" Binding="{Binding NotionalCcy}" Width="100"/>
+                                                            Width="90" 
+                                                            IsReadOnly="True"/>
+                                        <DataGridTextColumn Header="Notional Ccy" Binding="{Binding NotionalCcy}" Width="100" IsReadOnly="True"/>
                                         <DataGridTextColumn Header="Hedge Rate" 
                                                             Binding="{Binding HedgeRate, StringFormat=F6}" 
                                                             CellStyle="{StaticResource Style.BlotterDataGridCell.Numeric}"
                                                             HeaderStyle="{StaticResource Style.BlotterDataGridHeader.Numeric}"
-                                                            Width="100"/>
-                                        <DataGridTextColumn Header="Hedge Type" Binding="{Binding HedgeType}" Width="95"/>
-                                        <DataGridTextColumn Header="Settlement Date" Binding="{Binding SettlementDate, StringFormat=yyyy-MM-dd}" Width="120"/>
-                                        <DataGridTextColumn Header="Book Calypso" Binding="{Binding CalypsoPortfolio}" Width="110"/>
-                                        <DataGridTextColumn Header="Portfolio MX3" Binding="{Binding PortfolioMx3}" Width="110"/>
-                                        <DataGridTextColumn Header="Trader" Binding="{Binding Trader}" Width="80"/>
-                                        <DataGridTemplateColumn Header="Status" Width="150" CellTemplate="{StaticResource StatusPillTemplate}" CellStyle="{StaticResource Style.BlotterDataGridCell.Status}" />
+                                                            Width="100" 
+                                                            IsReadOnly="True"/>
+                                        <DataGridTextColumn Header="Hedge Type" Binding="{Binding HedgeType}" Width="95" IsReadOnly="True"/>
+                                        <DataGridTextColumn Header="Settlement Date" Binding="{Binding SettlementDate, StringFormat=yyyy-MM-dd}" Width="120" IsReadOnly="True"/>
+
+                                        <!-- EDITABLE: Book Calypso -->
+                                        <DataGridComboBoxColumn Header="Book Calypso" 
+                                SelectedItemBinding="{Binding CalypsoPortfolio, UpdateSourceTrigger=PropertyChanged}" 
+                                Width="110">
+                                            <DataGridComboBoxColumn.ElementStyle>
+                                                <Style TargetType="ComboBox">
+                                                    <Setter Property="ItemsSource" Value="{Binding DataContext.BookCalypsoValues, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
+                                                </Style>
+                                            </DataGridComboBoxColumn.ElementStyle>
+                                            <DataGridComboBoxColumn.EditingElementStyle>
+                                                <Style TargetType="ComboBox">
+                                                    <Setter Property="ItemsSource" Value="{Binding DataContext.BookCalypsoValues, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
+                                                </Style>
+                                            </DataGridComboBoxColumn.EditingElementStyle>
+                                        </DataGridComboBoxColumn>
+
+                                        <!-- EDITABLE: Portfolio MX3 -->
+                                        <DataGridComboBoxColumn Header="Portfolio MX3" 
+                                SelectedItemBinding="{Binding PortfolioMx3, UpdateSourceTrigger=PropertyChanged}" 
+                                Width="110">
+                                            <DataGridComboBoxColumn.ElementStyle>
+                                                <Style TargetType="ComboBox">
+                                                    <Setter Property="ItemsSource" Value="{Binding DataContext.PortfolioMx3Values, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
+                                                </Style>
+                                            </DataGridComboBoxColumn.ElementStyle>
+                                            <DataGridComboBoxColumn.EditingElementStyle>
+                                                <Style TargetType="ComboBox">
+                                                    <Setter Property="ItemsSource" Value="{Binding DataContext.PortfolioMx3Values, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
+                                                </Style>
+                                            </DataGridComboBoxColumn.EditingElementStyle>
+                                        </DataGridComboBoxColumn>
+
+                                        <DataGridTextColumn Header="Trader" Binding="{Binding Trader}" Width="80" IsReadOnly="True"/>
+                                        <DataGridTemplateColumn Header="Status" Width="150" CellTemplate="{StaticResource StatusPillTemplate}" CellStyle="{StaticResource Style.BlotterDataGridCell.Status}" IsReadOnly="True"/>
                                         <DataGridTextColumn  Header="STP" Width="50" Binding="{Binding StpFlag, Converter={StaticResource BoolToYesNoConverter}}" IsReadOnly="True"/>
                                     </DataGrid.Columns>
 

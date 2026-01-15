@@ -96,6 +96,55 @@ namespace FxTradeHub.Services.Blotter
             }
         }
 
+        public async Task UpdateTradeRoutingFieldsAsync(long stpTradeId, string portfolioMx3, string calypsoBook, string userId)
+        {
+            if (portfolioMx3 == null && calypsoBook == null)
+            {
+                // Nothing to update
+                return;
+            }
+
+            // Hämta nuvarande trade för concurrency check
+            var trade = await _repository.GetTradeByIdAsync(stpTradeId);
+            if (trade == null)
+            {
+                throw new InvalidOperationException($"Trade {stpTradeId} not found");
+            }
+
+            // Update trade with optimistic concurrency
+            var success = await _repository.UpdateTradeRoutingFieldsAsync(
+                stpTradeId,
+                portfolioMx3,
+                calypsoBook,
+                trade.LastUpdatedUtc);
+
+            if (!success)
+            {
+                throw new InvalidOperationException("Concurrency conflict - trade was updated by another user");
+            }
+
+            // Audit event
+            var changedFields = new System.Text.StringBuilder();
+            if (portfolioMx3 != null)
+            {
+                changedFields.Append($"PortfolioMx3: {trade.PortfolioMx3} → {portfolioMx3}");
+            }
+            if (calypsoBook != null)
+            {
+                if (changedFields.Length > 0)
+                    changedFields.Append("; ");
+                changedFields.Append($"CalypsoBook: {trade.CalypsoPortfolio} → {calypsoBook}");
+            }
+
+            await _repository.InsertTradeWorkflowEventAsync(
+                stpTradeId,
+                eventType: "TradeInlineEdited",
+                systemCode: "BLOTTER",
+                userId: userId,
+                details: changedFields.ToString());
+        }
+
+
         /// <summary>
         /// Bokar en linear trade till MX3.
         /// </summary>

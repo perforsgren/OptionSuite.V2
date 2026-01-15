@@ -33,6 +33,19 @@ namespace FxTradeHub.Services.Blotter
         /// Skapar XML-fil, uppdaterar TradeSystemLink till PENDING, och loggar TradeWorkflowEvent.
         /// </summary>
         Task<BookTradeResult> BookNdfToMx3Async(long stpTradeId);
+
+        /// <summary>
+        /// Uppdaterar routing-fält för en trade (inline editing från blotter).
+        /// Uppdaterar Trade.PortfolioMx3 och/eller Trade.CalypsoBook.
+        /// Skapar audit event TradeInlineEdited.
+        /// </summary>
+        /// <param name="stpTradeId">StpTradeId för traden</param>
+        /// <param name="portfolioMx3">Nytt värde för PortfolioMx3, eller null för att inte ändra</param>
+        /// <param name="calypsoBook">Nytt värde för CalypsoBook, eller null för att inte ändra</param>
+        /// <param name="userId">Användare som gör ändringen</param>
+        /// <returns>Task</returns>
+        Task UpdateTradeRoutingFieldsAsync(long stpTradeId, string portfolioMx3, string calypsoBook, string userId);
+
     }
 
     /// <summary>

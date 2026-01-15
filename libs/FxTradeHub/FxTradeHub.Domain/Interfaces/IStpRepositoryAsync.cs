@@ -117,8 +117,23 @@ namespace FxTradeHub.Domain.Interfaces
         /// <param name="details">Detaljer om eventet (t.ex. filnamn, portfolio)</param>
         Task InsertTradeWorkflowEventAsync(long stpTradeId, string eventType, string systemCode, string userId, string details);
 
+        /// <summary>
+        /// Uppdaterar routing-fält på Trade-tabellen (inline editing).
+        /// Uppdaterar PortfolioMx3 och/eller CalypsoBook med optimistic concurrency check.
+        /// </summary>
+        /// <param name="stpTradeId">StpTradeId</param>
+        /// <param name="portfolioMx3">Nytt värde för PortfolioMx3, eller null för att inte ändra</param>
+        /// <param name="calypsoBook">Nytt värde för CalypsoBook, eller null för att inte ändra</param>
+        /// <param name="expectedLastUpdatedUtc">Förväntat LastUpdatedUtc för concurrency check</param>
+        /// <returns>True om uppdateringen lyckades, false om concurrency conflict</returns>
+        Task<bool> UpdateTradeRoutingFieldsAsync(
+            long stpTradeId,
+            string portfolioMx3,
+            string calypsoBook,
+            DateTime expectedLastUpdatedUtc);
+
         // ==========================================
-        // LEADER ELECTION METHODS (D4.3)
+        // LEADER ELECTION METHODS
         // ==========================================
 
         /// <summary>
