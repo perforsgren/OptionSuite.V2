@@ -3,12 +3,23 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="{Binding WindowTitle}"
         Width="640"
-        Height="920 "
+        Height="920"
         MinWidth="550"
         MinHeight="600"
         WindowStartupLocation="CenterOwner"
         Background="{StaticResource Brush.Panel}"
+        WindowStyle="None"
+        AllowsTransparency="False"
         ResizeMode="CanResize">
+
+    <!-- Custom window chrome for borderless but resizable window -->
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="60"
+                      ResizeBorderThickness="6"
+                      GlassFrameThickness="0"
+                      CornerRadius="0"
+                      UseAeroCaptionButtons="False"/>
+    </WindowChrome.WindowChrome>
 
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
@@ -27,8 +38,8 @@
             <Setter Property="Background">
                 <Setter.Value>
                     <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                        <GradientStop Color="#0CFFFFFF" Offset="0.0"/>
-                        <GradientStop Color="#06FFFFFF" Offset="1.0"/>
+                        <GradientStop Color="#08304C6A" Offset="0.0"/>
+                        <GradientStop Color="#04304C6A" Offset="1.0"/>
                     </LinearGradientBrush>
                 </Setter.Value>
             </Setter>
@@ -40,7 +51,7 @@
                 <Trigger Property="IsReadOnly" Value="True">
                     <Setter Property="Background">
                         <Setter.Value>
-                            <SolidColorBrush Color="#08FFFFFF"/>
+                            <SolidColorBrush Color="#05253545"/>
                         </Setter.Value>
                     </Setter>
                     <Setter Property="BorderBrush" Value="{StaticResource Brush.BorderSoft}"/>
@@ -59,8 +70,8 @@
             <Setter Property="Background">
                 <Setter.Value>
                     <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                        <GradientStop Color="#0CFFFFFF" Offset="0.0"/>
-                        <GradientStop Color="#06FFFFFF" Offset="1.0"/>
+                        <GradientStop Color="#08304C6A" Offset="0.0"/>
+                        <GradientStop Color="#04304C6A" Offset="1.0"/>
                     </LinearGradientBrush>
                 </Setter.Value>
             </Setter>
@@ -178,6 +189,56 @@
             </Setter>
         </Style>
 
+        <!-- Window control button style -->
+        <Style x:Key="Style.WindowButton" TargetType="Button">
+            <Setter Property="Width" Value="46"/>
+            <Setter Property="Height" Value="32"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Foreground" Value="{StaticResource Brush.TextMuted}"/>
+            <Setter Property="WindowChrome.IsHitTestVisibleInChrome" Value="True"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd" Background="{TemplateBinding Background}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#1AFFFFFF"/>
+                                <Setter Property="Foreground" Value="{StaticResource Brush.Text}"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#0AFFFFFF"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Close button style (red on hover) -->
+        <Style x:Key="Style.CloseButton" TargetType="Button" BasedOn="{StaticResource Style.WindowButton}">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd" Background="{TemplateBinding Background}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#E81123"/>
+                                <Setter Property="Foreground" Value="White"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#B31019"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <!-- Expander Section Header - Card style with border -->
         <Style x:Key="Style.SectionExpander" TargetType="Expander">
             <Setter Property="IsExpanded" Value="True"/>
@@ -190,7 +251,7 @@
                                 BorderThickness="1">
                             <Border.Background>
                                 <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                                    <GradientStop Color="#14FFFFFF" Offset="0.0"/>
+                                    <GradientStop Color="#0A1F3A52" Offset="0.0"/>
                                     <GradientStop Color="#0AFFFFFF" Offset="1.0"/>
                                 </LinearGradientBrush>
                             </Border.Background>
@@ -291,464 +352,455 @@
         </Style>
     </Window.Resources>
 
-    <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>
 
-        <!-- HEADER - Enhanced title bar -->
-        <Border Grid.Row="0" 
-                BorderBrush="{StaticResource Brush.Border}"
-                BorderThickness="0,0,0,1">
-            <Border.Background>
-                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                    <GradientStop Color="#1CFFFFFF" Offset="0.0"/>
-                    <GradientStop Color="#10FFFFFF" Offset="1.0"/>
-                </LinearGradientBrush>
-            </Border.Background>
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
+    <!-- Main border for window edge -->
+    <Border BorderBrush="{StaticResource Brush.Border}" BorderThickness="1">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
 
-                <!-- Icon + Title -->
-                <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="16,14">
-                    <!-- Trade icon -->
-                    <Border Width="32" Height="32" 
-                            CornerRadius="6" 
-                            Margin="0,0,12,0"
-                            VerticalAlignment="Center">
-                        <Border.Background>
-                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                <GradientStop Color="#2DD4BF" Offset="0.0"/>
-                                <GradientStop Color="#14B8A6" Offset="1.0"/>
-                            </LinearGradientBrush>
-                        </Border.Background>
-                        <TextBlock Text="T" 
-                                   FontSize="16" 
-                                   FontWeight="Bold" 
-                                   Foreground="#0F172A"
-                                   HorizontalAlignment="Center" 
-                                   VerticalAlignment="Center"/>
-                    </Border>
-                    
-                    <StackPanel VerticalAlignment="Center">
-                        <TextBlock Text="{Binding WindowTitle}" 
-                                   FontSize="16" 
-                                   FontWeight="SemiBold"
-                                   Foreground="{StaticResource Brush.Text}"/>
-                        <TextBlock Text="{Binding WindowSubtitle}"
-                                   FontSize="11"
-                                   Foreground="{StaticResource Brush.TextMuted}"
-                                   Margin="0,2,0,0"/>
+            <!-- CUSTOM TITLE BAR -->
+            <Border Grid.Row="0" 
+                    Background="{StaticResource Brush.Panel}"
+                    BorderBrush="{StaticResource Brush.Border}"
+                    BorderThickness="0,0,0,1">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Icon + Title (draggable area) -->
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="16,12">
+                        <!-- Trade icon -->
+                        <Border Width="32" Height="32" 
+                                CornerRadius="6" 
+                                Margin="0,0,12,0"
+                                VerticalAlignment="Center">
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                    <GradientStop Color="#2DD4BF" Offset="0.0"/>
+                                    <GradientStop Color="#14B8A6" Offset="1.0"/>
+                                </LinearGradientBrush>
+                            </Border.Background>
+                            <TextBlock Text="T" 
+                                       FontSize="16" 
+                                       FontWeight="Bold" 
+                                       Foreground="#0F172A"
+                                       HorizontalAlignment="Center" 
+                                       VerticalAlignment="Center"/>
+                        </Border>
+                        
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="{Binding WindowTitle}" 
+                                       FontSize="14" 
+                                       FontWeight="SemiBold"
+                                       Foreground="{StaticResource Brush.Text}"/>
+                            <TextBlock Text="{Binding WindowSubtitle}"
+                                       FontSize="11"
+                                       Foreground="{StaticResource Brush.TextMuted}"
+                                       Margin="0,1,0,0"/>
+                        </StackPanel>
                     </StackPanel>
+
+                    <!-- Window control buttons -->
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top">
+                        <!-- Minimize -->
+                        <Button Style="{StaticResource Style.WindowButton}" Click="MinimizeButton_Click">
+                            <Path Data="M 0 0 H 10" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="1"/>
+                        </Button>
+                        <!-- Maximize/Restore -->
+                        <Button Style="{StaticResource Style.WindowButton}" Click="MaximizeButton_Click">
+                            <Path x:Name="MaximizeIcon" Data="M 0 0 H 10 V 10 H 0 Z" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="1" Fill="Transparent"/>
+                        </Button>
+                        <!-- Close -->
+                        <Button Style="{StaticResource Style.CloseButton}" Click="CloseButton_Click">
+                            <Path Data="M 0 0 L 10 10 M 10 0 L 0 10" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="1"/>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- CONTENT -->
+            <ScrollViewer Grid.Row="1" 
+                          VerticalScrollBarVisibility="Auto"
+                          Padding="16,14">
+                <StackPanel>
+
+                    <!-- TRADE IDENTITY - Collapsed by default -->
+                    <Expander Style="{StaticResource Style.SectionExpander}" Header="TRADE IDENTITY" IsExpanded="False">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="12"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="12"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="12"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="Trade ID" Style="{StaticResource Style.FormLabel}"/>
+                                <TextBox Text="{Binding TradeId, Mode=OneWay}" Style="{StaticResource Style.FormTextBox}" IsReadOnly="True"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="Status" Style="{StaticResource Style.FormLabel}"/>
+                                <TextBox Text="{Binding Status, Mode=OneWay}" Style="{StaticResource Style.FormTextBox}" IsReadOnly="True"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="4">
+                                <TextBlock Text="Product" Style="{StaticResource Style.FormLabel}"/>
+                                <TextBox Text="{Binding Product, Mode=OneWay}" Style="{StaticResource Style.FormTextBox}" IsReadOnly="True"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="6">
+                                <TextBlock Text="Trader" Style="{StaticResource Style.FormLabel}"/>
+                                <TextBox Text="{Binding Trader, Mode=OneWay}" Style="{StaticResource Style.FormTextBox}" IsReadOnly="True"/>
+                            </StackPanel>
+                        </Grid>
+                    </Expander>
+
+                    <!-- COUNTERPARTY -->
+                    <Expander Style="{StaticResource Style.SectionExpander}" Header="COUNTERPARTY">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="12"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="Counterparty Code" Style="{StaticResource Style.FormLabel}"/>
+                                <TextBox Text="{Binding Counterparty, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                                         Style="{StaticResource Style.FormTextBox}"
+                                         IsReadOnly="{Binding IsReadOnly}"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="Broker" Style="{StaticResource Style.FormLabel}"/>
+                                <TextBox Text="{Binding Broker, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                                         Style="{StaticResource Style.FormTextBox}"
+                                         IsReadOnly="{Binding IsReadOnly}"/>
+                            </StackPanel>
+                        </Grid>
+                    </Expander>
+
+                    <!-- ECONOMICS -->
+                    <Expander Style="{StaticResource Style.SectionExpander}" Header="ECONOMICS">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="12"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="12"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="8"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <StackPanel Grid.Column="0" Grid.Row="0">
+                                <TextBlock Text="Currency Pair" Style="{StaticResource Style.FormLabel}"/>
+                                <TextBox Text="{Binding CcyPair, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                                         Style="{StaticResource Style.FormTextBox}"
+                                         IsReadOnly="{Binding IsReadOnly}"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2" Grid.Row="0">
+                                <TextBlock Text="Buy/Sell" Style="{StaticResource Style.FormLabel}"/>
+                                <ComboBox Style="{StaticResource Style.FormComboBox}"
+                                          ItemContainerStyle="{StaticResource Style.FormComboBoxItem}"
+                                          ItemsSource="{Binding BuySellValues}"
+                                          SelectedItem="{Binding BuySell, Mode=TwoWay}"
+                                          IsEnabled="{Binding CanEdit}"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="4" Grid.Row="0">
+                                <TextBlock Text="Notional" Style="{StaticResource Style.FormLabel}"/>
+                                <TextBox Text="{Binding Notional, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, StringFormat=N0}" 
+                                         Style="{StaticResource Style.FormTextBox}"
+                                         IsReadOnly="{Binding IsReadOnly}"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="0" Grid.Row="2">
+                                <TextBlock Text="Notional Ccy" Style="{StaticResource Style.FormLabel}"/>
+                                <TextBox Text="{Binding NotionalCcy, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                                         Style="{StaticResource Style.FormTextBox}"
+                                         IsReadOnly="{Binding IsReadOnly}"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2" Grid.Row="2" Visibility="{Binding IsLinear, Converter={StaticResource BoolToVis}}">
+                                <TextBlock Text="Hedge Rate" Style="{StaticResource Style.FormLabel}"/>
+                                <TextBox Text="{Binding HedgeRate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, StringFormat=F6}" 
+                                         Style="{StaticResource Style.FormTextBox}"
+                                         IsReadOnly="{Binding IsReadOnly}"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="4" Grid.Row="2" Visibility="{Binding IsLinear, Converter={StaticResource BoolToVis}}">
+                                <TextBlock Text="Settlement Date" Style="{StaticResource Style.FormLabel}"/>
+                                <TextBox Text="{Binding SettlementDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, StringFormat=yyyy-MM-dd}" 
+                                         Style="{StaticResource Style.FormTextBox}"
+                                         IsReadOnly="{Binding IsReadOnly}"/>
+                            </StackPanel>
+                        </Grid>
+                    </Expander>
+
+                    <!-- OPTION DETAILS -->
+                    <Expander Style="{StaticResource Style.SectionExpander}" 
+                              Header="OPTION DETAILS"
+                              Visibility="{Binding IsOption, Converter={StaticResource BoolToVis}}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="12"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="12"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="8"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="8"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <StackPanel Grid.Column="0" Grid.Row="0">
+                                <TextBlock Text="Call/Put" Style="{StaticResource Style.FormLabel}"/>
+                                <ComboBox Style="{StaticResource Style.FormComboBox}"
+                                          ItemContainerStyle="{StaticResource Style.FormComboBoxItem}"
+                                          ItemsSource="{Binding CallPutValues}"
+                                          SelectedItem="{Binding CallPut, Mode=TwoWay}"
+                                          IsEnabled="{Binding CanEdit}"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2" Grid.Row="0">
+                                <TextBlock Text="Strike" Style="{StaticResource Style.FormLabel}"/>
+                                <TextBox Text="{Binding Strike, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, StringFormat=F4}" 
+                                         Style="{StaticResource Style.FormTextBox}"
+                                         IsReadOnly="{Binding IsReadOnly}"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="4" Grid.Row="0">
+                                <TextBlock Text="Expiry Date" Style="{StaticResource Style.FormLabel}"/>
+                                <TextBox Text="{Binding ExpiryDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, StringFormat=yyyy-MM-dd}" 
+                                         Style="{StaticResource Style.FormTextBox}"
+                                         IsReadOnly="{Binding IsReadOnly}"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="0" Grid.Row="2">
+                                <TextBlock Text="Settlement Date" Style="{StaticResource Style.FormLabel}"/>
+                                <TextBox Text="{Binding SettlementDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, StringFormat=yyyy-MM-dd}" 
+                                         Style="{StaticResource Style.FormTextBox}"
+                                         IsReadOnly="{Binding IsReadOnly}"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2" Grid.Row="2">
+                                <TextBlock Text="Premium" Style="{StaticResource Style.FormLabel}"/>
+                                <TextBox Text="{Binding Premium, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, StringFormat=N2}" 
+                                         Style="{StaticResource Style.FormTextBox}"
+                                         IsReadOnly="{Binding IsReadOnly}"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="4" Grid.Row="2">
+                                <TextBlock Text="Premium Ccy" Style="{StaticResource Style.FormLabel}"/>
+                                <TextBox Text="{Binding PremiumCcy, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                                         Style="{StaticResource Style.FormTextBox}"
+                                         IsReadOnly="{Binding IsReadOnly}"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="0" Grid.Row="4">
+                                <TextBlock Text="Premium Date" Style="{StaticResource Style.FormLabel}"/>
+                                <TextBox Text="{Binding PremiumDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, StringFormat=yyyy-MM-dd}" 
+                                         Style="{StaticResource Style.FormTextBox}"
+                                         IsReadOnly="{Binding IsReadOnly}"/>
+                            </StackPanel>
+                        </Grid>
+                    </Expander>
+
+                    <!-- ROUTING -->
+                    <Expander Style="{StaticResource Style.SectionExpander}" Header="ROUTING">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="12"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="Portfolio MX3" Style="{StaticResource Style.FormLabel}"/>
+                                <ComboBox Style="{StaticResource Style.FormComboBox}"
+                                          ItemContainerStyle="{StaticResource Style.FormComboBoxItem}"
+                                          ItemsSource="{Binding PortfolioMx3Values}"
+                                          SelectedItem="{Binding PortfolioMx3, Mode=TwoWay}"
+                                          IsEnabled="{Binding CanEdit}"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2" Visibility="{Binding IsLinear, Converter={StaticResource BoolToVis}}">
+                                <TextBlock Text="Calypso Book" Style="{StaticResource Style.FormLabel}"/>
+                                <ComboBox Style="{StaticResource Style.FormComboBox}"
+                                          ItemContainerStyle="{StaticResource Style.FormComboBoxItem}"
+                                          ItemsSource="{Binding CalypsoBookValues}"
+                                          SelectedItem="{Binding CalypsoBook, Mode=TwoWay}"
+                                          IsEnabled="{Binding CanEdit}"/>
+                            </StackPanel>
+                        </Grid>
+                    </Expander>
+
+                    <!-- REGULATORY FIELDS -->
+                    <Expander Style="{StaticResource Style.SectionExpander}" Header="REGULATORY FIELDS" IsExpanded="False">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="12"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="8"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="8"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="8"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <StackPanel Grid.Column="0" Grid.Row="0">
+                                <TextBlock Text="Execution Time" Style="{StaticResource Style.FormLabel}"/>
+                                <TextBox Text="{Binding ExecutionTime, Mode=OneWay, StringFormat=yyyy-MM-dd HH:mm:ss}" 
+                                         Style="{StaticResource Style.FormTextBox}" IsReadOnly="True"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2" Grid.Row="0">
+                                <TextBlock Text="MIC" Style="{StaticResource Style.FormLabel}"/>
+                                <TextBox Text="{Binding Mic, Mode=OneWay}" 
+                                         Style="{StaticResource Style.FormTextBox}" IsReadOnly="True"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="0" Grid.Row="2">
+                                <TextBlock Text="TVTIC" Style="{StaticResource Style.FormLabel}"/>
+                                <TextBox Text="{Binding Tvtic, Mode=OneWay}" 
+                                         Style="{StaticResource Style.FormTextBox}" IsReadOnly="True"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2" Grid.Row="2">
+                                <TextBlock Text="ISIN" Style="{StaticResource Style.FormLabel}"/>
+                                <TextBox Text="{Binding Isin, Mode=OneWay}" 
+                                         Style="{StaticResource Style.FormTextBox}" IsReadOnly="True"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="0" Grid.Row="4">
+                                <TextBlock Text="Inv. Decision ID" Style="{StaticResource Style.FormLabel}"/>
+                                <TextBox Text="{Binding InvDecisionId, Mode=OneWay}" 
+                                         Style="{StaticResource Style.FormTextBox}" IsReadOnly="True"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2" Grid.Row="4">
+                                <TextBlock Text="Inv. Decision Name" Style="{StaticResource Style.FormLabel}"/>
+                                <TextBox Text="{Binding InvDecisionName, Mode=OneWay}" 
+                                         Style="{StaticResource Style.FormTextBox}" IsReadOnly="True"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="0" Grid.Row="6">
+                                <TextBlock Text="Reporting Entity" Style="{StaticResource Style.FormLabel}"/>
+                                <TextBox Text="{Binding ReportingEntity, Mode=OneWay}" 
+                                         Style="{StaticResource Style.FormTextBox}" IsReadOnly="True"/>
+                            </StackPanel>
+                        </Grid>
+                    </Expander>
+
+                    <!-- Error message -->
+                    <Border Background="#1AEF4444"
+                            BorderBrush="#EF4444"
+                            BorderThickness="1"
+                            CornerRadius="4"
+                            Padding="12,8"
+                            Margin="0,4,0,0"
+                            Visibility="{Binding HasError, Converter={StaticResource BoolToVis}}">
+                        <TextBlock Text="{Binding ErrorMessage}"
+                                   Foreground="#EF4444"
+                                   FontSize="11"
+                                   TextWrapping="Wrap"/>
+                    </Border>
+
                 </StackPanel>
+            </ScrollViewer>
 
-                <!-- Trade ID badge -->
-                <Border Grid.Column="2" 
-                        Margin="16,0"
-                        VerticalAlignment="Center"
-                        Padding="12,6"
-                        CornerRadius="4"
-                        BorderThickness="1"
-                        BorderBrush="{StaticResource Brush.Border}">
-                    <Border.Background>
-                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                            <GradientStop Color="#0CFFFFFF" Offset="0.0"/>
-                            <GradientStop Color="#06FFFFFF" Offset="1.0"/>
-                        </LinearGradientBrush>
-                    </Border.Background>
-                    <TextBlock Text="{Binding TradeId}" 
-                               FontSize="11"
-                               FontFamily="Consolas"
-                               Foreground="{StaticResource Brush.TextMuted}"/>
-                </Border>
-            </Grid>
-        </Border>
+            <!-- FOOTER -->
+            <Border Grid.Row="2"
+                    BorderBrush="{StaticResource Brush.Border}"
+                    BorderThickness="0,1,0,0"
+                    Padding="16,12">
+                <Border.Background>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                        <GradientStop Color="#14FFFFFF" Offset="0.0"/>
+                        <GradientStop Color="#0AFFFFFF" Offset="1.0"/>
+                    </LinearGradientBrush>
+                </Border.Background>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
 
-        <!-- CONTENT -->
-        <ScrollViewer Grid.Row="1" 
-                      VerticalScrollBarVisibility="Auto"
-                      Padding="16,14">
-            <StackPanel>
+                    <!-- Mode indicator -->
+                    <Border Grid.Column="0"
+                            Background="{Binding ModeBackground}"
+                            BorderBrush="{Binding ModeBorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="4"
+                            Padding="10,5"
+                            VerticalAlignment="Center">
+                        <TextBlock Text="{Binding ModeText}"
+                                   FontSize="10"
+                                   FontWeight="SemiBold"
+                                   Foreground="{Binding ModeForeground}"/>
+                    </Border>
 
-                <!-- TRADE IDENTITY - Collapsed by default -->
-                <Expander Style="{StaticResource Style.SectionExpander}" Header="TRADE IDENTITY" IsExpanded="False">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="12"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="12"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="12"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
+                    <!-- Cancel -->
+                    <Button x:Name="CancelButton"
+                            Grid.Column="2"
+                            Content="Cancel"
+                            Click="CancelButton_Click"
+                            Style="{StaticResource Style.BlotterToolbarButton}"
+                            Padding="18,8"
+                            Margin="0,0,10,0"
+                            MinWidth="90"/>
 
-                        <StackPanel Grid.Column="0">
-                            <TextBlock Text="Trade ID" Style="{StaticResource Style.FormLabel}"/>
-                            <TextBox Text="{Binding TradeId, Mode=OneWay}" Style="{StaticResource Style.FormTextBox}" IsReadOnly="True"/>
-                        </StackPanel>
-
-                        <StackPanel Grid.Column="2">
-                            <TextBlock Text="Status" Style="{StaticResource Style.FormLabel}"/>
-                            <TextBox Text="{Binding Status, Mode=OneWay}" Style="{StaticResource Style.FormTextBox}" IsReadOnly="True"/>
-                        </StackPanel>
-
-                        <StackPanel Grid.Column="4">
-                            <TextBlock Text="Product" Style="{StaticResource Style.FormLabel}"/>
-                            <TextBox Text="{Binding Product, Mode=OneWay}" Style="{StaticResource Style.FormTextBox}" IsReadOnly="True"/>
-                        </StackPanel>
-
-                        <StackPanel Grid.Column="6">
-                            <TextBlock Text="Trader" Style="{StaticResource Style.FormLabel}"/>
-                            <TextBox Text="{Binding Trader, Mode=OneWay}" Style="{StaticResource Style.FormTextBox}" IsReadOnly="True"/>
-                        </StackPanel>
-                    </Grid>
-                </Expander>
-
-                <!-- COUNTERPARTY -->
-                <Expander Style="{StaticResource Style.SectionExpander}" Header="COUNTERPARTY">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="12"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-
-                        <StackPanel Grid.Column="0">
-                            <TextBlock Text="Counterparty Code" Style="{StaticResource Style.FormLabel}"/>
-                            <TextBox Text="{Binding Counterparty, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
-                                     Style="{StaticResource Style.FormTextBox}"
-                                     IsReadOnly="{Binding IsReadOnly}"/>
-                        </StackPanel>
-
-                        <StackPanel Grid.Column="2">
-                            <TextBlock Text="Broker" Style="{StaticResource Style.FormLabel}"/>
-                            <TextBox Text="{Binding Broker, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
-                                     Style="{StaticResource Style.FormTextBox}"
-                                     IsReadOnly="{Binding IsReadOnly}"/>
-                        </StackPanel>
-                    </Grid>
-                </Expander>
-
-                <!-- ECONOMICS -->
-                <Expander Style="{StaticResource Style.SectionExpander}" Header="ECONOMICS">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="12"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="12"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="8"/>
-                            <RowDefinition Height="Auto"/>
-                        </Grid.RowDefinitions>
-
-                        <StackPanel Grid.Column="0" Grid.Row="0">
-                            <TextBlock Text="Currency Pair" Style="{StaticResource Style.FormLabel}"/>
-                            <TextBox Text="{Binding CcyPair, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
-                                     Style="{StaticResource Style.FormTextBox}"
-                                     IsReadOnly="{Binding IsReadOnly}"/>
-                        </StackPanel>
-
-                        <StackPanel Grid.Column="2" Grid.Row="0">
-                            <TextBlock Text="Buy/Sell" Style="{StaticResource Style.FormLabel}"/>
-                            <ComboBox Style="{StaticResource Style.FormComboBox}"
-                                      ItemContainerStyle="{StaticResource Style.FormComboBoxItem}"
-                                      ItemsSource="{Binding BuySellValues}"
-                                      SelectedItem="{Binding BuySell, Mode=TwoWay}"
-                                      IsEnabled="{Binding CanEdit}"/>
-                        </StackPanel>
-
-                        <StackPanel Grid.Column="4" Grid.Row="0">
-                            <TextBlock Text="Notional" Style="{StaticResource Style.FormLabel}"/>
-                            <TextBox Text="{Binding Notional, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, StringFormat=N0}" 
-                                     Style="{StaticResource Style.FormTextBox}"
-                                     IsReadOnly="{Binding IsReadOnly}"/>
-                        </StackPanel>
-
-                        <StackPanel Grid.Column="0" Grid.Row="2">
-                            <TextBlock Text="Notional Ccy" Style="{StaticResource Style.FormLabel}"/>
-                            <TextBox Text="{Binding NotionalCcy, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
-                                     Style="{StaticResource Style.FormTextBox}"
-                                     IsReadOnly="{Binding IsReadOnly}"/>
-                        </StackPanel>
-
-                        <!-- Hedge Rate - only for Linear (not Options) -->
-                        <StackPanel Grid.Column="2" Grid.Row="2" Visibility="{Binding IsLinear, Converter={StaticResource BoolToVis}}">
-                            <TextBlock Text="Hedge Rate" Style="{StaticResource Style.FormLabel}"/>
-                            <TextBox Text="{Binding HedgeRate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, StringFormat=F6}" 
-                                     Style="{StaticResource Style.FormTextBox}"
-                                     IsReadOnly="{Binding IsReadOnly}"/>
-                        </StackPanel>
-
-                        <!-- Settlement Date for Linear -->
-                        <StackPanel Grid.Column="4" Grid.Row="2" Visibility="{Binding IsLinear, Converter={StaticResource BoolToVis}}">
-                            <TextBlock Text="Settlement Date" Style="{StaticResource Style.FormLabel}"/>
-                            <TextBox Text="{Binding SettlementDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, StringFormat=yyyy-MM-dd}" 
-                                     Style="{StaticResource Style.FormTextBox}"
-                                     IsReadOnly="{Binding IsReadOnly}"/>
-                        </StackPanel>
-                    </Grid>
-                </Expander>
-
-                <!-- OPTION DETAILS (only for options) -->
-                <Expander Style="{StaticResource Style.SectionExpander}" 
-                          Header="OPTION DETAILS"
-                          Visibility="{Binding IsOption, Converter={StaticResource BoolToVis}}">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="12"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="12"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="8"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="8"/>
-                            <RowDefinition Height="Auto"/>
-                        </Grid.RowDefinitions>
-
-                        <StackPanel Grid.Column="0" Grid.Row="0">
-                            <TextBlock Text="Call/Put" Style="{StaticResource Style.FormLabel}"/>
-                            <ComboBox Style="{StaticResource Style.FormComboBox}"
-                                      ItemContainerStyle="{StaticResource Style.FormComboBoxItem}"
-                                      ItemsSource="{Binding CallPutValues}"
-                                      SelectedItem="{Binding CallPut, Mode=TwoWay}"
-                                      IsEnabled="{Binding CanEdit}"/>
-                        </StackPanel>
-
-                        <StackPanel Grid.Column="2" Grid.Row="0">
-                            <TextBlock Text="Strike" Style="{StaticResource Style.FormLabel}"/>
-                            <TextBox Text="{Binding Strike, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, StringFormat=F4}" 
-                                     Style="{StaticResource Style.FormTextBox}"
-                                     IsReadOnly="{Binding IsReadOnly}"/>
-                        </StackPanel>
-
-                        <StackPanel Grid.Column="4" Grid.Row="0">
-                            <TextBlock Text="Expiry Date" Style="{StaticResource Style.FormLabel}"/>
-                            <TextBox Text="{Binding ExpiryDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, StringFormat=yyyy-MM-dd}" 
-                                     Style="{StaticResource Style.FormTextBox}"
-                                     IsReadOnly="{Binding IsReadOnly}"/>
-                        </StackPanel>
-
-                        <StackPanel Grid.Column="0" Grid.Row="2">
-                            <TextBlock Text="Settlement Date" Style="{StaticResource Style.FormLabel}"/>
-                            <TextBox Text="{Binding SettlementDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, StringFormat=yyyy-MM-dd}" 
-                                     Style="{StaticResource Style.FormTextBox}"
-                                     IsReadOnly="{Binding IsReadOnly}"/>
-                        </StackPanel>
-
-                        <StackPanel Grid.Column="2" Grid.Row="2">
-                            <TextBlock Text="Premium" Style="{StaticResource Style.FormLabel}"/>
-                            <TextBox Text="{Binding Premium, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, StringFormat=N2}" 
-                                     Style="{StaticResource Style.FormTextBox}"
-                                     IsReadOnly="{Binding IsReadOnly}"/>
-                        </StackPanel>
-
-                        <StackPanel Grid.Column="4" Grid.Row="2">
-                            <TextBlock Text="Premium Ccy" Style="{StaticResource Style.FormLabel}"/>
-                            <TextBox Text="{Binding PremiumCcy, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
-                                     Style="{StaticResource Style.FormTextBox}"
-                                     IsReadOnly="{Binding IsReadOnly}"/>
-                        </StackPanel>
-
-                        <!-- Premium Date - new row -->
-                        <StackPanel Grid.Column="0" Grid.Row="4">
-                            <TextBlock Text="Premium Date" Style="{StaticResource Style.FormLabel}"/>
-                            <TextBox Text="{Binding PremiumDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, StringFormat=yyyy-MM-dd}" 
-                                     Style="{StaticResource Style.FormTextBox}"
-                                     IsReadOnly="{Binding IsReadOnly}"/>
-                        </StackPanel>
-                    </Grid>
-                </Expander>
-
-                <!-- ROUTING -->
-                <Expander Style="{StaticResource Style.SectionExpander}" Header="ROUTING">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="12"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-
-                        <StackPanel Grid.Column="0">
-                            <TextBlock Text="Portfolio MX3" Style="{StaticResource Style.FormLabel}"/>
-                            <ComboBox Style="{StaticResource Style.FormComboBox}"
-                                      ItemContainerStyle="{StaticResource Style.FormComboBoxItem}"
-                                      ItemsSource="{Binding PortfolioMx3Values}"
-                                      SelectedItem="{Binding PortfolioMx3, Mode=TwoWay}"
-                                      IsEnabled="{Binding CanEdit}"/>
-                        </StackPanel>
-
-                        <StackPanel Grid.Column="2" Visibility="{Binding IsLinear, Converter={StaticResource BoolToVis}}">
-                            <TextBlock Text="Calypso Book" Style="{StaticResource Style.FormLabel}"/>
-                            <ComboBox Style="{StaticResource Style.FormComboBox}"
-                                      ItemContainerStyle="{StaticResource Style.FormComboBoxItem}"
-                                      ItemsSource="{Binding CalypsoBookValues}"
-                                      SelectedItem="{Binding CalypsoBook, Mode=TwoWay}"
-                                      IsEnabled="{Binding CanEdit}"/>
-                        </StackPanel>
-                    </Grid>
-                </Expander>
-
-                <!-- REGULATORY FIELDS - New section -->
-                <Expander Style="{StaticResource Style.SectionExpander}" Header="REGULATORY FIELDS" IsExpanded="False">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="12"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="8"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="8"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="8"/>
-                            <RowDefinition Height="Auto"/>
-                        </Grid.RowDefinitions>
-
-                        <StackPanel Grid.Column="0" Grid.Row="0">
-                            <TextBlock Text="Execution Time" Style="{StaticResource Style.FormLabel}"/>
-                            <TextBox Text="{Binding ExecutionTime, Mode=OneWay, StringFormat=yyyy-MM-dd HH:mm:ss}" 
-                                     Style="{StaticResource Style.FormTextBox}" IsReadOnly="True"/>
-                        </StackPanel>
-
-                        <StackPanel Grid.Column="2" Grid.Row="0">
-                            <TextBlock Text="MIC" Style="{StaticResource Style.FormLabel}"/>
-                            <TextBox Text="{Binding Mic, Mode=OneWay}" 
-                                     Style="{StaticResource Style.FormTextBox}" IsReadOnly="True"/>
-                        </StackPanel>
-
-                        <StackPanel Grid.Column="0" Grid.Row="2">
-                            <TextBlock Text="TVTIC" Style="{StaticResource Style.FormLabel}"/>
-                            <TextBox Text="{Binding Tvtic, Mode=OneWay}" 
-                                     Style="{StaticResource Style.FormTextBox}" IsReadOnly="True"/>
-                        </StackPanel>
-
-                        <StackPanel Grid.Column="2" Grid.Row="2">
-                            <TextBlock Text="ISIN" Style="{StaticResource Style.FormLabel}"/>
-                            <TextBox Text="{Binding Isin, Mode=OneWay}" 
-                                     Style="{StaticResource Style.FormTextBox}" IsReadOnly="True"/>
-                        </StackPanel>
-
-                        <StackPanel Grid.Column="0" Grid.Row="4">
-                            <TextBlock Text="Inv. Decision ID" Style="{StaticResource Style.FormLabel}"/>
-                            <TextBox Text="{Binding InvDecisionId, Mode=OneWay}" 
-                                     Style="{StaticResource Style.FormTextBox}" IsReadOnly="True"/>
-                        </StackPanel>
-
-                        <StackPanel Grid.Column="2" Grid.Row="4">
-                            <TextBlock Text="Inv. Decision Name" Style="{StaticResource Style.FormLabel}"/>
-                            <TextBox Text="{Binding InvDecisionName, Mode=OneWay}" 
-                                     Style="{StaticResource Style.FormTextBox}" IsReadOnly="True"/>
-                        </StackPanel>
-
-                        <StackPanel Grid.Column="0" Grid.Row="6">
-                            <TextBlock Text="Reporting Entity" Style="{StaticResource Style.FormLabel}"/>
-                            <TextBox Text="{Binding ReportingEntity, Mode=OneWay}" 
-                                     Style="{StaticResource Style.FormTextBox}" IsReadOnly="True"/>
-                        </StackPanel>
-                    </Grid>
-                </Expander>
-
-                <!-- Error message -->
-                <Border Background="#1AEF4444"
-                        BorderBrush="#EF4444"
-                        BorderThickness="1"
-                        CornerRadius="4"
-                        Padding="12,8"
-                        Margin="0,4,0,0"
-                        Visibility="{Binding HasError, Converter={StaticResource BoolToVis}}">
-                    <TextBlock Text="{Binding ErrorMessage}"
-                               Foreground="#EF4444"
-                               FontSize="11"
-                               TextWrapping="Wrap"/>
-                </Border>
-
-            </StackPanel>
-        </ScrollViewer>
-
-        <!-- FOOTER -->
-        <Border Grid.Row="2"
-                BorderBrush="{StaticResource Brush.Border}"
-                BorderThickness="0,1,0,0"
-                Padding="16,12">
-            <Border.Background>
-                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                    <GradientStop Color="#14FFFFFF" Offset="0.0"/>
-                    <GradientStop Color="#0AFFFFFF" Offset="1.0"/>
-                </LinearGradientBrush>
-            </Border.Background>
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-
-                <!-- Mode indicator -->
-                <Border Grid.Column="0"
-                        Background="{Binding ModeBackground}"
-                        BorderBrush="{Binding ModeBorderBrush}"
-                        BorderThickness="1"
-                        CornerRadius="4"
-                        Padding="10,5"
-                        VerticalAlignment="Center">
-                    <TextBlock Text="{Binding ModeText}"
-                               FontSize="10"
-                               FontWeight="SemiBold"
-                               Foreground="{Binding ModeForeground}"/>
-                </Border>
-
-                <!-- Cancel - using Click event as backup -->
-                <Button x:Name="CancelButton"
-                        Grid.Column="2"
-                        Content="Cancel"
-                        Click="CancelButton_Click"
-                        Style="{StaticResource Style.BlotterToolbarButton}"
-                        Padding="18,8"
-                        Margin="0,0,10,0"
-                        MinWidth="90"/>
-
-                <!-- Save -->
-                <Button Grid.Column="3"
-                        Content="{Binding SaveButtonText}"
-                        Command="{Binding SaveCommand}"
-                        IsEnabled="{Binding CanSave}"
-                        Padding="18,8"
-                        MinWidth="110">
-                    <Button.Style>
-                        <Style TargetType="Button" BasedOn="{StaticResource Style.BlotterToolbarButton}">
-                            <Setter Property="Background" Value="#1A2DD4BF"/>
-                            <Setter Property="BorderBrush" Value="#2DD4BF"/>
-                            <Setter Property="Foreground" Value="#2DD4BF"/>
-                            <Style.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter Property="Background" Value="#332DD4BF"/>
-                                </Trigger>
-                                <Trigger Property="IsEnabled" Value="False">
-                                    <Setter Property="Opacity" Value="0.4"/>
-                                </Trigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Button.Style>
-                </Button>
-            </Grid>
-        </Border>
-    </Grid>
+                    <!-- Save -->
+                    <Button Grid.Column="3"
+                            Content="{Binding SaveButtonText}"
+                            Command="{Binding SaveCommand}"
+                            IsEnabled="{Binding CanSave}"
+                            Padding="18,8"
+                            MinWidth="110">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource Style.BlotterToolbarButton}">
+                                <Setter Property="Background" Value="#1A2DD4BF"/>
+                                <Setter Property="BorderBrush" Value="#2DD4BF"/>
+                                <Setter Property="Foreground" Value="#2DD4BF"/>
+                                <Style.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="#332DD4BF"/>
+                                    </Trigger>
+                                    <Trigger Property="IsEnabled" Value="False">
+                                        <Setter Property="Opacity" Value="0.4"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                </Grid>
+            </Border>
+        </Grid>
+    </Border>
 </Window>
