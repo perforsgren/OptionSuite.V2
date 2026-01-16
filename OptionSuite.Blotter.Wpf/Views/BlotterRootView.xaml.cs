@@ -21,12 +21,33 @@ namespace OptionSuite.Blotter.Wpf.Views
         {
             HookGrid(OptionGrid);
             HookGrid(LinearGrid);
+
+            // Subscribe to FocusSearchRequested event from ViewModel
+            if (ViewModel != null)
+            {
+                ViewModel.FocusSearchRequested += OnFocusSearchRequested;
+            }
         }
 
         private void OnUnloaded(object sender, RoutedEventArgs e)
         {
             UnhookGrid(OptionGrid);
             UnhookGrid(LinearGrid);
+
+            // Unsubscribe from FocusSearchRequested event
+            if (ViewModel != null)
+            {
+                ViewModel.FocusSearchRequested -= OnFocusSearchRequested;
+            }
+        }
+
+        /// <summary>
+        /// Focuses the search TextBox when requested by the ViewModel.
+        /// </summary>
+        private void OnFocusSearchRequested(object sender, System.EventArgs e)
+        {
+            SearchTextBox?.Focus();
+            SearchTextBox?.SelectAll();
         }
 
         private void HookGrid(DataGrid grid)
@@ -224,6 +245,37 @@ namespace OptionSuite.Blotter.Wpf.Views
             if (comboBox?.IsDropDownOpen == true)
             {
                 PulseUserInteraction();
+            }
+        }
+
+        /// <summary>
+        /// Rensar sökfältet.
+        /// </summary>
+        private void ClearSearch_Click(object sender, RoutedEventArgs e)
+        {
+            if (ViewModel != null)
+            {
+                ViewModel.SearchText = string.Empty;
+            }
+            SearchTextBox?.Focus();
+        }
+
+        /// <summary>
+        /// Handles Escape key in search box to clear the search text.
+        /// </summary>
+        private void SearchTextBox_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Escape)
+            {
+                if (!string.IsNullOrEmpty(SearchTextBox.Text))
+                {
+                    // Clear the search text
+                    if (ViewModel != null)
+                    {
+                        ViewModel.SearchText = string.Empty;
+                    }
+                    e.Handled = true;
+                }
             }
         }
     }

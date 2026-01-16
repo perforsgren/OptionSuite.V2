@@ -5,6 +5,7 @@
 
     <UserControl.InputBindings>
         <KeyBinding Key="B" Modifiers="Control" Command="{Binding BulkBookCommand}"/>
+        <KeyBinding Key="F" Modifiers="Control" Command="{Binding FocusSearchCommand}"/>
     </UserControl.InputBindings>
 
 
@@ -240,10 +241,10 @@
                                         </Button.Style>
                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                             <TextBlock Text="▶"
-                       Margin="0,1,8,0"
-                       FontSize="11"
-                       Foreground="#2DD4BF"
-                       VerticalAlignment="Center"/>
+                                                       Margin="0,1,8,0"
+                                                       FontSize="11"
+                                                       Foreground="#2DD4BF"
+                                                       VerticalAlignment="Center"/>
                                             <TextBlock Text="Book" VerticalAlignment="Center"/>
                                             <Border Style="{StaticResource Style.BlotterShortcutPill}" Margin="10,0,0,0">
                                                 <TextBlock Style="{StaticResource Style.BlotterShortcutPillText}" Text="Ctrl+B"/>
@@ -252,8 +253,8 @@
                                     </Button>
 
                                     <Button Style="{StaticResource Style.BlotterToolbarButton}"
-            Command="{Binding RefreshCommand}"
-            Margin="10,0,0,0">
+                                            Command="{Binding RefreshCommand}"
+                                            Margin="10,0,0,0">
                                         <Grid>
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="Auto"/>
@@ -263,11 +264,11 @@
 
                                             <!-- Pulserande grön prick -->
                                             <Ellipse Grid.Column="0"
-                     Width="6" 
-                     Height="6" 
-                     Fill="#2DD4BF"
-                     VerticalAlignment="Center"
-                     Margin="0,1,0,0">
+                                                     Width="6" 
+                                                     Height="6" 
+                                                     Fill="#2DD4BF"
+                                                     VerticalAlignment="Center"
+                                                     Margin="0,1,0,0">
                                                 <Ellipse.Style>
                                                     <Style TargetType="Ellipse">
                                                         <Style.Triggers>
@@ -289,8 +290,8 @@
 
                                             <!-- Text -->
                                             <TextBlock Grid.Column="2" 
-                       Text="Refresh"
-                       VerticalAlignment="Center"/>
+                                                       Text="Refresh"
+                                                       VerticalAlignment="Center"/>
                                         </Grid>
                                     </Button>
 
@@ -298,55 +299,126 @@
                                     <Border Style="{StaticResource Style.BlotterToolbarSeparator}"/>
 
                                     <Button Style="{StaticResource Style.BlotterToolbarButton}"
-            Content="Manual Input"
-            Margin="0,0,0,0"/>
+                                            Content="Manual Input"
+                                            Command="{Binding ManualInputCommand}"
+                                            Margin="0,0,0,0"/>
                                     <!-- Ändrat margin från 10,0,0,0 -->
 
                                 </StackPanel>
 
                                 <!-- Right tools -->
                                 <StackPanel Grid.Column="1"
-            Orientation="Horizontal"
-            Margin="12"
-            VerticalAlignment="Center">
+                                            Orientation="Horizontal"
+                                            Margin="12"
+                                            VerticalAlignment="Center">
 
                                     <!-- Search -->
                                     <Border CornerRadius="{StaticResource Radius.Button}"
-            BorderBrush="{StaticResource Brush.Border}"
-            BorderThickness="1"
-            Background="{StaticResource Brush.PanelChromeTitle}"
-            Padding="10,7"
-            MinWidth="300">
+                                            BorderBrush="{StaticResource Brush.Border}"
+                                            BorderThickness="1"
+                                            Background="{StaticResource Brush.PanelChromeTitle}"
+                                            Padding="10,7"
+                                            MinWidth="300">
                                         <Grid>
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="Auto"/>
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
 
-                                            <TextBlock Text="Search"
-                       Foreground="{StaticResource Brush.TextMuted}"
-                       VerticalAlignment="Center"/>
+                                            <!-- Search icon -->
+                                            <TextBlock Text="🔍"
+                                                       FontSize="12"
+                                                       Foreground="{StaticResource Brush.TextMuted}"
+                                                       VerticalAlignment="Center"
+                                                       Margin="0,0,8,0"/>
 
+                                            <!-- Search TextBox -->
                                             <TextBox Grid.Column="1"
-                     Margin="10,0"
-                     Background="Transparent"
-                     BorderThickness="0"
-                     Foreground="{StaticResource Brush.Text}"
-                     FontSize="12"
-                     VerticalContentAlignment="Center"/>
+                                                     x:Name="SearchTextBox"
+                                                     Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                                                     Background="Transparent"
+                                                     BorderThickness="0"
+                                                     Foreground="{StaticResource Brush.Text}"
+                                                     FontSize="12"
+                                                     VerticalContentAlignment="Center"
+                                                     CaretBrush="{StaticResource Brush.Text}"
+                                                     PreviewKeyDown="SearchTextBox_PreviewKeyDown"/>
 
-                                            <Border Grid.Column="2"
-                    CornerRadius="7"
-                    BorderBrush="{StaticResource Brush.BorderSoft}"
-                    BorderThickness="1"
-                    Background="{StaticResource Brush.PanelChromeTitle}"
-                    Padding="6,2"
-                    VerticalAlignment="Center">
+                                            <!-- Placeholder text (visas när tom) -->
+                                            <TextBlock Grid.Column="1"
+                                                       Text="Search trades..."
+                                                       Foreground="{StaticResource Brush.TextMuted}"
+                                                       FontSize="12"
+                                                       VerticalAlignment="Center"
+                                                       IsHitTestVisible="False">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding Text, ElementName=SearchTextBox}" Value="">
+                                                                <Setter Property="Visibility" Value="Visible"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+
+                                            <!-- Clear button -->
+                                            <Button Grid.Column="2"
+                                                    Command="{Binding ClearSearchCommand}"
+                                                    Cursor="Hand"
+                                                    Padding="6,2"
+                                                    VerticalAlignment="Center"
+                                                    Background="Transparent"
+                                                    BorderThickness="0">
+                                                <Button.Style>
+                                                    <Style TargetType="Button">
+                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                        <Setter Property="Template">
+                                                            <Setter.Value>
+                                                                <ControlTemplate TargetType="Button">
+                                                                    <Border x:Name="Bd" Background="Transparent" Padding="{TemplateBinding Padding}">
+                                                                        <ContentPresenter/>
+                                                                    </Border>
+                                                                    <ControlTemplate.Triggers>
+                                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                                            <Setter TargetName="Bd" Property="Background" Value="#20FFFFFF"/>
+                                                                        </Trigger>
+                                                                    </ControlTemplate.Triggers>
+                                                                </ControlTemplate>
+                                                            </Setter.Value>
+                                                        </Setter>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding SearchText}" Value="">
+                                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding SearchText}" Value="{x:Null}">
+                                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Button.Style>
+                                                <TextBlock Text="✕" 
+                                                           FontSize="10" 
+                                                           Foreground="{StaticResource Brush.TextMuted}"/>
+                                            </Button>
+
+                                            <!-- Keyboard shortcut badge - NO hover effect -->
+                                            <Border Grid.Column="3"
+                                                    CornerRadius="7"
+                                                    BorderBrush="{StaticResource Brush.BorderSoft}"
+                                                    BorderThickness="1"
+                                                    Background="{StaticResource Brush.PanelChromeTitle}"
+                                                    Padding="6,2"
+                                                    Margin="8,0,0,0"
+                                                    VerticalAlignment="Center"
+                                                    IsHitTestVisible="False">
                                                 <TextBlock Text="Ctrl+F"
-                           FontFamily="{StaticResource Font.Mono}"
-                           FontSize="11"
-                           Foreground="{StaticResource Brush.TextMuted}"/>
+                                                           FontFamily="{StaticResource Font.Mono}"
+                                                           FontSize="11"
+                                                           Foreground="{StaticResource Brush.TextMuted}"/>
                                             </Border>
                                         </Grid>
                                     </Border>
@@ -355,74 +427,21 @@
                                     <Border Style="{StaticResource Style.BlotterToolbarSeparator}"/>
 
                                     <Button Style="{StaticResource Style.BlotterToolbarButton}"
-            Content="Columns"
-            Margin="0,0,10,0"/>
+                                            Content="Columns"
+                                            Margin="0,0,10,0"/>
                                     <!-- Ändrat margin från 10,0,0,0 -->
 
                                     <Button Style="{StaticResource Style.BlotterToolbarButton}"
-            Content="Settings"
-            Margin="0,0,0,0"/>
+                                            Content="Settings"
+                                            Margin="0,0,0,0"/>
                                     <!-- Ändrat margin från 10,0,0,0 -->
                                 </StackPanel>
 
                                 <!-- Right tools -->
                                 <StackPanel Grid.Column="1"
-            Orientation="Horizontal"
-            Margin="12"
-            VerticalAlignment="Center">
-
-                                    <!-- Search -->
-                                    <Border CornerRadius="{StaticResource Radius.Button}"
-            BorderBrush="{StaticResource Brush.Border}"
-            BorderThickness="1"
-            Background="{StaticResource Brush.PanelChromeTitle}"
-            Padding="10,7"
-            MinWidth="300">
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="Auto"/>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="Auto"/>
-                                            </Grid.ColumnDefinitions>
-
-                                            <TextBlock Text="Search"
-                       Foreground="{StaticResource Brush.TextMuted}"
-                       VerticalAlignment="Center"/>
-
-                                            <TextBox Grid.Column="1"
-                     Margin="10,0"
-                     Background="Transparent"
-                     BorderThickness="0"
-                     Foreground="{StaticResource Brush.Text}"
-                     FontSize="12"
-                     VerticalContentAlignment="Center"/>
-
-                                            <Border Grid.Column="2"
-                    CornerRadius="7"
-                    BorderBrush="{StaticResource Brush.BorderSoft}"
-                    BorderThickness="1"
-                    Background="{StaticResource Brush.PanelChromeTitle}"
-                    Padding="6,2"
-                    VerticalAlignment="Center">
-                                                <TextBlock Text="Ctrl+F"
-                           FontFamily="{StaticResource Font.Mono}"
-                           FontSize="11"
-                           Foreground="{StaticResource Brush.TextMuted}"/>
-                                            </Border>
-                                        </Grid>
-                                    </Border>
-
-                                    <!-- NY: Separator mellan search och settings -->
-                                    <Border Style="{StaticResource Style.BlotterToolbarSeparator}"/>
-
-                                    <Button Style="{StaticResource Style.BlotterToolbarButton}"
-            Content="Columns"
-            Margin="0,0,10,0"/>
-
-                                    <Button Style="{StaticResource Style.BlotterToolbarButton}"
-            Content="Settings"
-            Margin="0,0,0,0"/>
-                                </StackPanel>
+                                            Orientation="Horizontal"
+                                            Margin="12"
+                                            VerticalAlignment="Center"/>
 
                             </Grid>
 
@@ -1872,8 +1891,8 @@
                 <TextBlock Grid.Column="0"
                    FontSize="10"
                    Foreground="{StaticResource Brush.TextMuted2}">
-            <Run Text="Next Calypso import: "/>
-            <Run Text="{Binding CalypsoCountdown, Mode=OneWay}" 
+                    <Run Text="Next Calypso import: "/>
+                    <Run Text="{Binding CalypsoCountdown, Mode=OneWay}" 
                  FontFamily="{StaticResource Font.Mono}"/>
                 </TextBlock>
 

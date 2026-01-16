@@ -17,7 +17,8 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
     {
         Edit,
         Duplicate,
-        View
+        View,
+        Create
     }
 
     /// <summary>
@@ -354,6 +355,55 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             InvDecisionId = source.InvDecisionId;
             InvDecisionName = "N/A"; // Not available in TradeRowViewModel - can be added if needed
             ReportingEntity = source.ReportingEntityId;
+
+            SaveCommand = new RelayCommand(ExecuteSave, () => CanSave);
+            CancelCommand = new RelayCommand(ExecuteCancel);
+        }
+
+        // Konstruktor för Create mode (tom trade)
+        public TradeEditViewModel(
+            TradeEditMode mode,  // Måste vara Create
+            ObservableCollection<string> portfolioMx3Values,
+            ObservableCollection<string> calypsoBookValues,
+            Func<TradeEditViewModel, Task<bool>> saveAction,
+            Action<bool> closeAction)
+        {
+            _mode = mode;
+            _saveAction = saveAction;
+            _closeAction = closeAction;
+            
+            // Default values för ny trade
+            StpTradeId = 0;  // Kommer genereras vid save
+            TradeId = "(New)";
+            Status = "New";
+            Trader = Environment.UserName;
+            
+            // Alla fält tomma/default
+            _counterparty = _originalCounterparty = string.Empty;
+            _ccyPair = _originalCcyPair = string.Empty;
+            _buySell = _originalBuySell = "Buy";
+            _notional = _originalNotional = 0;
+            _settlementDate = _originalSettlementDate = DateTime.Today.AddDays(2);
+            _callPut = _originalCallPut = "Call";
+            _strike = _originalStrike = 0;
+            _expiryDate = _originalExpiryDate = DateTime.Today.AddDays(30);
+            _premium = _originalPremium = 0;
+            _premiumCcy = _originalPremiumCcy = string.Empty;
+            _premiumDate = _originalPremiumDate = DateTime.Today;
+            _portfolioMx3 = _originalPortfolioMx3 = string.Empty;
+            _calypsoBook = _originalCalypsoBook = string.Empty;
+
+            PortfolioMx3Values = portfolioMx3Values ?? new ObservableCollection<string>();
+            CalypsoBookValues = calypsoBookValues ?? new ObservableCollection<string>();
+
+            // Regulatory fields (read-only)
+            ExecutionTime = null;
+            Mic = string.Empty;
+            Tvtic = string.Empty;
+            Isin = string.Empty;
+            InvDecisionId = string.Empty;
+            InvDecisionName = "N/A"; // Not available in TradeRowViewModel - can be added if needed
+            ReportingEntity = string.Empty;
 
             SaveCommand = new RelayCommand(ExecuteSave, () => CanSave);
             CancelCommand = new RelayCommand(ExecuteCancel);

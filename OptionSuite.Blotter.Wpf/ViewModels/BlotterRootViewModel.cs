@@ -94,6 +94,32 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
         //private readonly HashSet<long> _inFlightBookings = new HashSet<long>();
         private readonly HashSet<string> _inFlightBookings = new HashSet<string>(StringComparer.Ordinal);
 
+        // Lägg till fältet bland andra privata fält (nära _currentStatusFilter)
+        private string _searchText = string.Empty;
+
+        /// <summary>
+        /// Söktext för filtrering av trades. Söker i TradeId, Counterparty, CcyPair, Trader.
+        /// </summary>
+        public string SearchText
+        {
+            get => _searchText;
+            set
+            {
+                if (!string.Equals(_searchText, value, StringComparison.Ordinal))
+                {
+                    _searchText = value ?? string.Empty;
+                    OnPropertyChanged(nameof(SearchText));
+                    
+                    // Debounce sökningen för att undvika för många refreshes
+                    _searchDebounceTimer?.Stop();
+                    _searchDebounceTimer?.Start();
+                }
+            }
+        }
+
+        // Lägg till timer-fält
+        private readonly DispatcherTimer _searchDebounceTimer;
+
         public event PropertyChangedEventHandler PropertyChanged;
 
         public string Title { get; set; } = "Trade Blotter";
@@ -383,6 +409,8 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
 
         public ObservableCollection<TradeWorkflowEventRow> SelectedTradeWorkflowEvents => _selectedTradeWorkflowEvents;
 
+        public event EventHandler FocusSearchRequested;
+
         public ICommand RefreshCommand { get; }
 
         // Context Menu Commands
@@ -395,12 +423,16 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
         public ICommand DeleteRowCommand { get; }
         public ICommand CheckIfBookedCommand { get; }
         public ICommand OpenErrorLogCommand { get; }
+        public ICommand ManualInputCommand { get; }
 
         public ICommand SetFilterAllCommand { get; }
         public ICommand SetFilterNewCommand { get; }
         public ICommand SetFilterPendingCommand { get; }
         public ICommand SetFilterBookedCommand { get; }
         public ICommand SetFilterErrorsCommand { get; }
+
+        public ICommand ClearSearchCommand { get; }
+        public ICommand FocusSearchCommand { get; }
 
         public TradeRowViewModel SelectedOptionTrade
         {
@@ -507,12 +539,16 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             DeleteRowCommand = new RelayCommand(() => ExecuteDeleteRow(), () => CanExecuteDeleteRow());
             CheckIfBookedCommand = new RelayCommand(() => ExecuteCheckIfBooked(), () => CanExecuteCheckIfBooked());
             OpenErrorLogCommand = new RelayCommand(() => ExecuteOpenErrorLog(), () => CanExecuteOpenErrorLog());
+            ManualInputCommand = new RelayCommand(OpenManualInputWindow);
 
             SetFilterAllCommand = new RelayCommand(() => SetStatusFilter("ALL"));
             SetFilterNewCommand = new RelayCommand(() => SetStatusFilter("NEW"));
             SetFilterPendingCommand = new RelayCommand(() => SetStatusFilter("PENDING"));
             SetFilterBookedCommand = new RelayCommand(() => SetStatusFilter("BOOKED"));
             SetFilterErrorsCommand = new RelayCommand(() => SetStatusFilter("ERRORS"));
+
+            FocusSearchCommand = new RelayCommand(() => FocusSearchRequested?.Invoke(this, EventArgs.Empty));
+            ClearSearchCommand = new RelayCommand(() => SearchText = string.Empty);
 
             // Skapa collection views för filtrering
             _optionTradesView = CollectionViewSource.GetDefaultView(OptionTrades);
@@ -547,6 +583,18 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             _calypsoCountdownTimer.Interval = TimeSpan.FromSeconds(1);
             _calypsoCountdownTimer.Tick += OnCalypsoCountdownTick;
             _calypsoCountdownTimer.Start();
+
+            // Lägg till i konstruktorn (efter _userInteractionDebounceTimer setup)
+            
+            // Search debounce timer (väntar 300ms efter sista knapptryckning)
+            _searchDebounceTimer = new DispatcherTimer(DispatcherPriority.Background);
+            _searchDebounceTimer.Interval = TimeSpan.FromMilliseconds(300);
+            _searchDebounceTimer.Tick += (s, e) =>
+            {
+                _searchDebounceTimer.Stop();
+                _optionTradesView?.Refresh();
+                _linearTradesView?.Refresh();
+            };
 
             InitializeEditCommands();
         }
@@ -1550,7 +1598,93 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[BlotterRootViewModel] SaveTradeEditAsync failed: {ex.Message}");
+                Debug.WriteLine($"[BlotterRootViewModel] SaveTradeEditAsync failed: {ex.Message}");
+                throw;
+            }
+        }
+
+        private void OpenManualInputWindow()
+        {
+            TradeEditWindow editWindow = null;
+
+            var editVm = new TradeEditViewModel(
+                mode: TradeEditMode.Create,
+                portfolioMx3Values: PortfolioMx3Values,
+                calypsoBookValues: BookCalypsoValues,
+                saveAction: CreateNewTradeAsync,
+                closeAction: (saved) =>
+                {
+                    if (editWindow != null)
+                    {
+                        editWindow.DialogResult = saved;
+                        editWindow.Close();
+                    }
+                }
+            );
+
+            editWindow = new TradeEditWindow
+            {
+                DataContext = editVm,
+                Owner = Application.Current.MainWindow
+            };
+
+            var result = editWindow.ShowDialog();
+
+            if (result == true)
+            {
+                // Refresh efter lyckad skapning
+                _ = RefreshAsync();
+            }
+        }
+
+        /// <summary>
+        /// Skapar en ny trade från Manual Input-fönstret.
+        /// </summary>
+        private async Task<bool> CreateNewTradeAsync(TradeEditViewModel vm)
+        {
+            if (vm == null)
+                return false;
+
+            try
+            {
+                Debug.WriteLine($"[BlotterVM] Creating new trade from manual input");
+
+                // TODO: Implementera faktisk skapning via _commandService
+                // När CreateTradeAsync finns i IBlotterCommandServiceAsync:
+                //
+                // var result = await _commandService.CreateTradeAsync(
+                //     counterpartyCode: vm.Counterparty,
+                //     currencyPair: vm.CcyPair,
+                //     buySell: vm.BuySell,
+                //     notional: vm.Notional,
+                //     notionalCurrency: vm.NotionalCcy,
+                //     hedgeRate: vm.HedgeRate,
+                //     settlementDate: vm.SettlementDate,
+                //     callPut: vm.CallPut,
+                //     strike: vm.Strike,
+                //     expiryDate: vm.ExpiryDate,
+                //     premium: vm.Premium,
+                //     premiumCurrency: vm.PremiumCcy,
+                //     premiumDate: vm.PremiumDate,
+                //     portfolioMx3: vm.PortfolioMx3,
+                //     calypsoBook: vm.CalypsoBook,
+                //     userId: Environment.UserName
+                // ).ConfigureAwait(true);
+                //
+                // return result.Success;
+
+                // Placeholder tills CreateTradeAsync implementeras
+                MessageBox.Show(
+                    "Create new trade not yet fully implemented.\nRepository method needed.",
+                    "Not Implemented",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+
+                return false;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[BlotterVM] CreateNewTradeAsync failed: {ex.Message}");
                 throw;
             }
         }
@@ -1691,12 +1825,32 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
         {
             if (obj is not TradeRowViewModel trade) return false;
 
+            // Sök-filter (case-insensitive)
+            if (!string.IsNullOrWhiteSpace(_searchText))
+            {
+                var search = _searchText.Trim();
+                var matchesSearch = 
+                    (trade.TradeId?.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0) ||
+                    (trade.Counterparty?.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0) ||
+                    (trade.CcyPair?.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0) ||
+                    (trade.Trader?.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0) ||
+                    (trade.Status?.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0) ||
+                    (trade.PortfolioMx3?.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0) ||
+                    (trade.CalypsoPortfolio?.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0) ||
+                    (trade.Product?.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0);
+
+                if (!matchesSearch)
+                    return false;
+            }
+
+            // My trades filter
             if (_filterMyTradesOnly)
             {
                 if (!string.Equals(trade.Trader, _currentUserTraderId, StringComparison.OrdinalIgnoreCase))
                     return false;
             }
 
+            // Status filter
             if (_currentStatusFilter == "ALL") return true;
 
             var status = trade.Status?.ToUpperInvariant() ?? "";
@@ -1719,6 +1873,13 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
 
             // ✅ FIX: Uppdatera Book-knappen efter status-filter ändring
             RaiseCanExecuteForBookCommands();
+        }
+
+        private void PerformSearchFilter()
+        {
+            // Utför sökningen och filtrera OptionTrades och LinearTrades
+            _optionTradesView.Refresh();
+            _linearTradesView.Refresh();
         }
 
         private void OnCalypsoCountdownTick(object sender, EventArgs e)
@@ -1797,8 +1958,6 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             }
         }
 
-
-
         public void Dispose()
         {
             if (_disposed)
@@ -1829,6 +1988,15 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                 if (_calypsoCountdownTimer != null && _calypsoCountdownTimer.IsEnabled)
                 {
                     _calypsoCountdownTimer.Stop();
+                }
+            }
+            catch { /* no-op */ }
+
+            try
+            {
+                if (_searchDebounceTimer != null && _searchDebounceTimer.IsEnabled)
+                {
+                    _searchDebounceTimer.Stop();
                 }
             }
             catch { /* no-op */ }
