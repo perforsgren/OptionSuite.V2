@@ -4,8 +4,152 @@
         Title="Blotter Host"
         Width="1775"
         Height="1000"
-        WindowStartupLocation="CenterScreen">
+        WindowStartupLocation="CenterScreen"
+        Background="{StaticResource Brush.Panel2}"
+        WindowStyle="None"
+        AllowsTransparency="False"
+        ResizeMode="CanResize">
 
-    <!-- Window har redan en global Style i Theme.Styles.xaml som sätter Background/Foreground -->
-    <ContentPresenter Content="{Binding}" />
+    <!-- Custom window chrome for borderless but resizable window -->
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="60"
+                      ResizeBorderThickness="6"
+                      GlassFrameThickness="0"
+                      CornerRadius="0"
+                      UseAeroCaptionButtons="False"/>
+    </WindowChrome.WindowChrome>
+
+    <Window.Resources>
+        <!-- Blue fog overlay matching blotter style -->
+        <LinearGradientBrush x:Key="ContentFog" StartPoint="0,0" EndPoint="0,1">
+            <GradientStop Color="{StaticResource Color.BorderSoft}" Offset="0.0"/>
+            <GradientStop Color="{StaticResource Color.Glow.Accent}" Offset="0.35"/>
+            <GradientStop Color="{StaticResource Color.Transparent}" Offset="1.0"/>
+        </LinearGradientBrush>
+
+        <!-- Window control button style -->
+        <Style x:Key="Style.WindowButton" TargetType="Button">
+            <Setter Property="Width" Value="46"/>
+            <Setter Property="Height" Value="32"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Foreground" Value="{StaticResource Brush.TextMuted}"/>
+            <Setter Property="WindowChrome.IsHitTestVisibleInChrome" Value="True"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd" Background="{TemplateBinding Background}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#1AFFFFFF"/>
+                                <Setter Property="Foreground" Value="{StaticResource Brush.Text}"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#0AFFFFFF"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Close button style (red on hover) -->
+        <Style x:Key="Style.CloseButton" TargetType="Button" BasedOn="{StaticResource Style.WindowButton}">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd" Background="{TemplateBinding Background}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#E81123"/>
+                                <Setter Property="Foreground" Value="White"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#B31019"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <!-- Main border for window edge -->
+    <Border BorderBrush="{StaticResource Brush.Border}" BorderThickness="1">
+        <Grid Background="{StaticResource ContentFog}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <!-- CUSTOM TITLE BAR -->
+            <Border Grid.Row="0" 
+                    Background="Transparent" 
+                    BorderBrush="{StaticResource Brush.Border}"
+                    BorderThickness="0,0,0,1">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Icon + Title (draggable area) -->
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="16,12">
+                        <!-- Blotter icon -->
+                        <Border Width="32" Height="32" 
+                                CornerRadius="6" 
+                                Margin="0,0,12,0"
+                                VerticalAlignment="Center">
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                    <GradientStop Color="#2DD4BF" Offset="0.0"/>
+                                    <GradientStop Color="#14B8A6" Offset="1.0"/>
+                                </LinearGradientBrush>
+                            </Border.Background>
+                            <TextBlock Text="B" 
+                                       FontSize="16" 
+                                       FontWeight="Bold" 
+                                       Foreground="#0F172A"
+                                       HorizontalAlignment="Center" 
+                                       VerticalAlignment="Center"/>
+                        </Border>
+
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="Blotter Host" 
+                                       FontSize="14" 
+                                       FontWeight="SemiBold"
+                                       Foreground="{StaticResource Brush.Text}"/>
+                            <TextBlock Text="Trade STP Dashboard"
+                                       FontSize="11"
+                                       Foreground="{StaticResource Brush.TextMuted}"
+                                       Margin="0,1,0,0"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Window control buttons -->
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top">
+                        <!-- Minimize -->
+                        <Button Style="{StaticResource Style.WindowButton}" Click="MinimizeButton_Click">
+                            <Path Data="M 0 0 H 10" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="1"/>
+                        </Button>
+                        <!-- Maximize/Restore -->
+                        <Button Style="{StaticResource Style.WindowButton}" Click="MaximizeButton_Click">
+                            <Path x:Name="MaximizeIcon" Data="M 0 0 H 10 V 10 H 0 Z" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="1" Fill="Transparent"/>
+                        </Button>
+                        <!-- Close -->
+                        <Button Style="{StaticResource Style.CloseButton}" Click="CloseButton_Click">
+                            <Path Data="M 0 0 L 10 10 M 10 0 L 0 10" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="1"/>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- CONTENT -->
+            <ContentPresenter Grid.Row="1" Content="{Binding}" />
+        </Grid>
+    </Border>
 </Window>

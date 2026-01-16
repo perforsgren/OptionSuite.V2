@@ -3,11 +3,11 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="{Binding WindowTitle}"
         Width="640"
-        Height="920"
+        Height="870"
         MinWidth="550"
         MinHeight="600"
         WindowStartupLocation="CenterOwner"
-        Background="{StaticResource Brush.Panel}"
+        Background="{StaticResource Brush.Panel2}"
         WindowStyle="None"
         AllowsTransparency="False"
         ResizeMode="CanResize">
@@ -23,6 +23,13 @@
 
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+
+        <!-- Blue fog overlay matching blotter style -->
+        <LinearGradientBrush x:Key="ContentFog" StartPoint="0,0" EndPoint="0,1">
+            <GradientStop Color="{StaticResource Color.BorderSoft}" Offset="0.0"/>
+            <GradientStop Color="{StaticResource Color.Glow.Accent}" Offset="0.35"/>
+            <GradientStop Color="{StaticResource Color.Transparent}" Offset="1.0"/>
+        </LinearGradientBrush>
 
         <!-- Compact form field label -->
         <Style x:Key="Style.FormLabel" TargetType="TextBlock">
@@ -58,7 +65,7 @@
                     <Setter Property="Foreground" Value="{StaticResource Brush.TextMuted}"/>
                 </Trigger>
                 <Trigger Property="IsFocused" Value="True">
-                    <Setter Property="BorderBrush" Value="#2DD4BF"/>
+                    <Setter Property="BorderBrush" Value="#3B82F6"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
@@ -153,8 +160,8 @@
                                 <Setter TargetName="Arrow" Property="Fill" Value="{StaticResource Brush.Text}"/>
                             </Trigger>
                             <Trigger Property="IsDropDownOpen" Value="True">
-                                <Setter TargetName="Border" Property="BorderBrush" Value="#2DD4BF"/>
-                                <Setter TargetName="Arrow" Property="Fill" Value="#2DD4BF"/>
+                                <Setter TargetName="Border" Property="BorderBrush" Value="#3B82F6"/>
+                                <Setter TargetName="Arrow" Property="Fill" Value="#3B82F6"/>
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter Property="Opacity" Value="0.5"/>
@@ -177,11 +184,11 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsHighlighted" Value="True">
-                                <Setter TargetName="Bd" Property="Background" Value="#1A2DD4BF"/>
+                                <Setter TargetName="Bd" Property="Background" Value="#1A3B82F6"/>
                             </Trigger>
                             <Trigger Property="IsSelected" Value="True">
-                                <Setter TargetName="Bd" Property="Background" Value="#332DD4BF"/>
-                                <Setter Property="Foreground" Value="#2DD4BF"/>
+                                <Setter TargetName="Bd" Property="Background" Value="#333B82F6"/>
+                                <Setter Property="Foreground" Value="#3B82F6"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -248,18 +255,14 @@
                     <ControlTemplate TargetType="Expander">
                         <Border CornerRadius="6"
                                 BorderBrush="{StaticResource Brush.Border}"
-                                BorderThickness="1">
-                            <Border.Background>
-                                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                                    <GradientStop Color="#0A1F3A52" Offset="0.0"/>
-                                    <GradientStop Color="#0AFFFFFF" Offset="1.0"/>
-                                </LinearGradientBrush>
-                            </Border.Background>
+                                BorderThickness="1"
+                                Background="#05FFFFFF">
                             <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="*"/>
                                 </Grid.RowDefinitions>
+
 
                                 <!-- Header -->
                                 <ToggleButton Grid.Row="0" 
@@ -319,7 +322,7 @@
                                                             </LinearGradientBrush>
                                                         </Setter.Value>
                                                     </Setter>
-                                                    <Setter TargetName="Arrow" Property="Fill" Value="#2DD4BF"/>
+                                                    <Setter TargetName="Arrow" Property="Fill" Value="#3B82F6"/>
                                                 </Trigger>
                                             </ControlTemplate.Triggers>
                                         </ControlTemplate>
@@ -353,9 +356,10 @@
     </Window.Resources>
 
 
+
     <!-- Main border for window edge -->
     <Border BorderBrush="{StaticResource Brush.Border}" BorderThickness="1">
-        <Grid>
+        <Grid Background="{StaticResource ContentFog}">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
@@ -364,7 +368,7 @@
 
             <!-- CUSTOM TITLE BAR -->
             <Border Grid.Row="0" 
-                    Background="{StaticResource Brush.Panel}"
+                    Background="Transparent" 
                     BorderBrush="{StaticResource Brush.Border}"
                     BorderThickness="0,0,0,1">
                 <Grid>

@@ -156,11 +156,8 @@
             </Grid>
         </DataTemplate>
 
-
-
-
         <!-- =========================================================
-             Detail tabs (högerpanelen) – oförändrat
+             Detail tabs (högerpanelen) 
              ========================================================= -->
         <Style x:Key="DetailTabButtonBaseStyle" TargetType="Button">
             <Setter Property="Padding" Value="10,6"/>
@@ -193,46 +190,30 @@
             <Setter Property="Background" Value="{StaticResource Brush.Panel2}"/>
             <Setter Property="BorderBrush" Value="{StaticResource Brush.BorderSoft}"/>
         </Style>
-
-
-
+        
     </UserControl.Resources>
 
-    <Grid Margin="{StaticResource Thickness.WindowPadding}">
+    <Grid Margin="0">
 
         <Border Background="{StaticResource Brush.Panel}"
                 BorderBrush="{StaticResource Brush.Border}"
-                BorderThickness="1"
+                BorderThickness="0"
                 CornerRadius="0">
 
-            <Grid Margin="{StaticResource Thickness.WindowPadding}">
+            <Grid Margin="0">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
-                <!-- Title -->
-                <StackPanel Grid.Row="0">
-                    <TextBlock Text="{Binding Title}"
-                               FontSize="16"
-                               FontWeight="SemiBold"
-                               Foreground="{StaticResource Brush.Text}" />
-
-                    <TextBlock Text="{Binding Subtitle}"
-                               Margin="0,6,0,0"
-                               FontSize="12"
-                               Foreground="{StaticResource Brush.TextMuted}" />
-                </StackPanel>
-
-                <!-- Main area -->
-                <Border Grid.Row="1"
-                        Margin="0,14,0,0"
+                <!-- Main area - nu direkt utan title-sektion -->
+                <Border Grid.Row="0"
                         BorderBrush="{StaticResource Brush.BorderSoft}"
-                        BorderThickness="1"
-                        CornerRadius="{StaticResource Radius.Button}"
+                        BorderThickness="0"
+                        CornerRadius="0"
                         Background="{StaticResource Brush.Panel2}">
 
-                    <!-- Gemensam “fog” över ALLT (toolbar + filter + grid + detail) -->
+                    <!-- Gemensam "fog" över ALLT (toolbar + filter + grid + detail) -->
                     <Grid Background="{StaticResource Blotter.Brush.ContentFog}">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
@@ -750,7 +731,7 @@
                                 <ColumnDefinition Width="360"/>
                             </Grid.ColumnDefinitions>
 
-                            <Grid>
+                            <Grid Margin="6,0,0,12">
                                 <Grid.RowDefinitions>
                                     <!-- Section header för options -->
                                     <RowDefinition Height="Auto"/>
@@ -1895,8 +1876,8 @@
         <Border Background="{StaticResource Brush.Panel2}"
         BorderBrush="{StaticResource Brush.BorderSoft}"
         BorderThickness="0,1,0,0"
-        Padding="8,4"
-        Margin="{StaticResource Thickness.WindowPadding}"                
+        Padding="8,5"
+              
         VerticalAlignment="Bottom">
 
             <Grid>
