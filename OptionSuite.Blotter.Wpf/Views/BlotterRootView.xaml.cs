@@ -37,6 +37,7 @@ namespace OptionSuite.Blotter.Wpf.Views
             grid.PreviewKeyDown += OnAnyUserInteraction_KeyDown;
             grid.BeginningEdit += OnGrid_BeginningEdit;
             grid.CellEditEnding += OnGrid_CellEditEnding;
+            grid.MouseDoubleClick += OnGrid_MouseDoubleClick;
         }
 
         private void UnhookGrid(DataGrid grid)
@@ -47,6 +48,7 @@ namespace OptionSuite.Blotter.Wpf.Views
             grid.PreviewKeyDown -= OnAnyUserInteraction_KeyDown;
             grid.BeginningEdit -= OnGrid_BeginningEdit;
             grid.CellEditEnding -= OnGrid_CellEditEnding;
+            grid.MouseDoubleClick -= OnGrid_MouseDoubleClick;
         }
 
         private void PulseUserInteraction()
@@ -56,6 +58,40 @@ namespace OptionSuite.Blotter.Wpf.Views
 
         private void OnAnyUserInteraction_MouseWheel(object sender, MouseWheelEventArgs e) => PulseUserInteraction();
         private void OnAnyUserInteraction_KeyDown(object sender, KeyEventArgs e) => PulseUserInteraction();
+
+        /// <summary>
+        /// Hanterar dubbelklick på rad - öppnar Edit/View-fönster.
+        /// </summary>
+        private void OnGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            if (sender is not DataGrid grid)
+                return;
+
+            // Kontrollera att vi klickade på en rad (inte header eller tom yta)
+            var originalSource = e.OriginalSource as DependencyObject;
+            var row = FindVisualParent<DataGridRow>(originalSource);
+
+            if (row?.Item is TradeRowViewModel trade)
+            {
+                PulseUserInteraction();
+                ViewModel?.OpenTradeEditWindow(trade);
+            }
+        }
+
+        /// <summary>
+        /// Hittar förälder av angiven typ i visual tree.
+        /// </summary>
+        private static T FindVisualParent<T>(DependencyObject child) where T : DependencyObject
+        {
+            while (child != null)
+            {
+                if (child is T parent)
+                    return parent;
+
+                child = System.Windows.Media.VisualTreeHelper.GetParent(child);
+            }
+            return null;
+        }
 
         private void OnGrid_BeginningEdit(object sender, DataGridBeginningEditEventArgs e)
         {
@@ -109,7 +145,7 @@ namespace OptionSuite.Blotter.Wpf.Views
             // Kolla om värdet faktiskt ändrades
             var newValue = e.AddedItems[0]?.ToString();
             var oldValue = e.RemovedItems.Count > 0 ? e.RemovedItems[0]?.ToString() : null;
-            
+
             if (string.Equals(newValue, oldValue, StringComparison.Ordinal))
                 return;
 
@@ -184,7 +220,7 @@ namespace OptionSuite.Blotter.Wpf.Views
         private void OnCalypsoComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             var comboBox = sender as ComboBox;
-            
+
             if (comboBox?.IsDropDownOpen == true)
             {
                 PulseUserInteraction();

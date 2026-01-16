@@ -1,15 +1,16 @@
-﻿using System;
+﻿using FxTradeHub.Contracts.Dtos;
+using FxTradeHub.Services;
+using FxTradeHub.Services.Blotter;
+using OptionSuite.Blotter.Wpf.Infrastructure;
+using OptionSuite.Blotter.Wpf.Views;
+using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Windows;
+using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Threading;
-using FxTradeHub.Contracts.Dtos;
-using FxTradeHub.Services;
-using OptionSuite.Blotter.Wpf.Infrastructure;
-using System.Windows.Data;
-using FxTradeHub.Services.Blotter;
-using System.Windows;
 
 namespace OptionSuite.Blotter.Wpf.ViewModels
 {
@@ -1494,6 +1495,64 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                 isNew: false,       
                 isUpdated: false    
             );
+        }
+
+        /// <summary>
+        /// Öppnar Trade Edit Window för angiven trade.
+        /// Om traden har status New eller Error öppnas i Edit-mode, annars i View-mode (read-only).
+        /// </summary>
+        public void OpenTradeEditWindow(TradeRowViewModel trade)
+        {
+            if (trade == null)
+                return;
+
+            // Bestäm mode baserat på status
+            var isEditable = string.Equals(trade.Status, "New", StringComparison.OrdinalIgnoreCase) ||
+                             string.Equals(trade.Status, "Error", StringComparison.OrdinalIgnoreCase);
+
+            var mode = isEditable ? TradeEditMode.Edit : TradeEditMode.View;
+
+            var window = new TradeEditWindow();
+
+            var viewModel = new TradeEditViewModel(
+                trade,
+                mode,
+                PortfolioMx3Values,
+                BookCalypsoValues,
+                async vm => await SaveTradeEditAsync(vm),
+                success => window.CloseWithResult(success));
+
+            window.DataContext = viewModel;
+            window.Owner = Application.Current.MainWindow;
+
+            var result = window.ShowDialog();
+
+            if (result == true)
+            {
+                // Refresh efter lyckad sparning
+                _ = RefreshAsync();
+            }
+        }
+
+        /// <summary>
+        /// Sparar ändringar från TradeEditViewModel till databasen.
+        /// </summary>
+        private async Task<bool> SaveTradeEditAsync(TradeEditViewModel vm)
+        {
+            // Implementera sparlogik här baserat på din command service
+            // Exempel:
+            try
+            {
+                // TODO: Implementera faktisk sparning via _commandService
+                // await _commandService.UpdateTradeAsync(vm.StpTradeId, ...);
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[BlotterRootViewModel] SaveTradeEditAsync failed: {ex.Message}");
+                throw;
+            }
         }
 
 

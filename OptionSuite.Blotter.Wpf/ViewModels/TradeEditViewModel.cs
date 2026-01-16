@@ -11,12 +11,13 @@ using OptionSuite.Blotter.Wpf.Infrastructure;
 namespace OptionSuite.Blotter.Wpf.ViewModels
 {
     /// <summary>
-    /// Edit mode: Edit existing trade or Duplicate (create new from template).
+    /// Edit mode: Edit existing trade, Duplicate (create new from template), or View (read-only).
     /// </summary>
     public enum TradeEditMode
     {
         Edit,
-        Duplicate
+        Duplicate,
+        View
     }
 
     /// <summary>
@@ -197,12 +198,69 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
         /// <summary>
         /// True if editing is allowed (Status = New or Error, and mode is Edit).
         /// Duplicate mode always allows editing since we're creating a new trade.
+        /// View mode is always read-only.
         /// </summary>
         public bool CanEdit => _mode == TradeEditMode.Duplicate ||
-                               (Status?.Equals("New", StringComparison.OrdinalIgnoreCase) == true ||
-                                Status?.Equals("Error", StringComparison.OrdinalIgnoreCase) == true);
+                               (_mode == TradeEditMode.Edit &&
+                                (Status?.Equals("New", StringComparison.OrdinalIgnoreCase) == true ||
+                                 Status?.Equals("Error", StringComparison.OrdinalIgnoreCase) == true));
 
         public bool IsReadOnly => !CanEdit;
+
+        public bool IsViewMode => _mode == TradeEditMode.View;
+
+        // Window title/subtitle
+        public string WindowTitle => _mode switch
+        {
+            TradeEditMode.Duplicate => "Duplicate Trade",
+            TradeEditMode.View => "View Trade",
+            _ => "Edit Trade"
+        };
+
+        public string WindowSubtitle => _mode switch
+        {
+            TradeEditMode.Duplicate => $"Creating new trade based on {TradeId}",
+            TradeEditMode.View => $"Viewing {TradeId} (Read-only)",
+            _ => $"Editing {TradeId}"
+        };
+
+        public string SaveButtonText => _mode switch
+        {
+            TradeEditMode.Duplicate => "Create Trade",
+            TradeEditMode.View => "Close",
+            _ => "Save Changes"
+        };
+
+        // Mode indicator styling
+        public Brush ModeBackground => _mode switch
+        {
+            TradeEditMode.Duplicate => new SolidColorBrush(Color.FromArgb(0x1A, 0x3B, 0x82, 0xF6)),  // Blue tint
+            TradeEditMode.View => new SolidColorBrush(Color.FromArgb(0x1A, 0x64, 0x74, 0x8B)),       // Gray tint
+            _ => new SolidColorBrush(Color.FromArgb(0x1A, 0x2D, 0xD4, 0xBF))                         // Cyan tint
+        };
+
+        public Brush ModeBorderBrush => _mode switch
+        {
+            TradeEditMode.Duplicate => new SolidColorBrush(Color.FromRgb(0x3B, 0x82, 0xF6)),  // Blue
+            TradeEditMode.View => new SolidColorBrush(Color.FromRgb(0x64, 0x74, 0x8B)),       // Gray
+            _ => new SolidColorBrush(Color.FromRgb(0x2D, 0xD4, 0xBF))                         // Cyan
+        };
+
+        public Brush ModeForeground => _mode switch
+        {
+            TradeEditMode.Duplicate => new SolidColorBrush(Color.FromRgb(0x3B, 0x82, 0xF6)),  // Blue
+            TradeEditMode.View => new SolidColorBrush(Color.FromRgb(0x64, 0x74, 0x8B)),       // Gray
+            _ => new SolidColorBrush(Color.FromRgb(0x2D, 0xD4, 0xBF))                         // Cyan
+        };
+
+        public string ModeText => _mode switch
+        {
+            TradeEditMode.Duplicate => "DUPLICATE MODE",
+            TradeEditMode.View => "VIEW MODE",
+            _ => "EDIT MODE"
+        };
+
+        public bool CanSave => _mode == TradeEditMode.View || (CanEdit && HasChanges && !_isSaving);
 
         public bool HasChanges
         {
@@ -230,8 +288,6 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             }
         }
 
-        public bool CanSave => CanEdit && HasChanges && !_isSaving;
-
         public string ErrorMessage
         {
             get => _errorMessage;
@@ -239,36 +295,6 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
         }
 
         public bool HasError => !string.IsNullOrEmpty(_errorMessage);
-
-        // Window title/subtitle
-        public string WindowTitle => _mode == TradeEditMode.Duplicate
-            ? "Duplicate Trade"
-            : "Edit Trade";
-
-        public string WindowSubtitle => _mode == TradeEditMode.Duplicate
-            ? $"Creating new trade based on {TradeId}"
-            : $"Editing {TradeId}";
-
-        public string SaveButtonText => _mode == TradeEditMode.Duplicate
-            ? "Create Trade"
-            : "Save Changes";
-
-        // Mode indicator styling
-        public Brush ModeBackground => _mode == TradeEditMode.Duplicate
-            ? new SolidColorBrush(Color.FromArgb(0x1A, 0x3B, 0x82, 0xF6))  // Blue tint
-            : new SolidColorBrush(Color.FromArgb(0x1A, 0x2D, 0xD4, 0xBF)); // Cyan tint
-
-        public Brush ModeBorderBrush => _mode == TradeEditMode.Duplicate
-            ? new SolidColorBrush(Color.FromRgb(0x3B, 0x82, 0xF6))  // Blue
-            : new SolidColorBrush(Color.FromRgb(0x2D, 0xD4, 0xBF)); // Cyan
-
-        public Brush ModeForeground => _mode == TradeEditMode.Duplicate
-            ? new SolidColorBrush(Color.FromRgb(0x3B, 0x82, 0xF6))  // Blue
-            : new SolidColorBrush(Color.FromRgb(0x2D, 0xD4, 0xBF)); // Cyan
-
-        public string ModeText => _mode == TradeEditMode.Duplicate
-            ? "DUPLICATE MODE"
-            : "EDIT MODE";
 
         // Commands
         public ICommand SaveCommand { get; }

@@ -98,16 +98,16 @@
                     </Grid.ColumnDefinitions>
 
                     <!-- Icon + Title (draggable area) -->
-                    <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="16,12">
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="16,6">
                         <!-- Blotter icon -->
-                        <Border Width="32" Height="32" 
+                        <Border Width="24" Height="24" 
                                 CornerRadius="6" 
-                                Margin="0,0,12,0"
+                                Margin="0,0,10,0"
                                 VerticalAlignment="Center">
                             <Border.Background>
                                 <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
                                     <GradientStop Color="#2DD4BF" Offset="0.0"/>
-                                    <GradientStop Color="#14B8A6" Offset="1.0"/>
+                                    <GradientStop Color="#2563EB" Offset="1.0"/>
                                 </LinearGradientBrush>
                             </Border.Background>
                             <TextBlock Text="B" 
@@ -119,13 +119,10 @@
                         </Border>
 
                         <StackPanel VerticalAlignment="Center">
-                            <TextBlock Text="Blotter Host" 
-                                       FontSize="14" 
-                                       FontWeight="SemiBold"
-                                       Foreground="{StaticResource Brush.Text}"/>
                             <TextBlock Text="Trade STP Dashboard"
-                                       FontSize="11"
-                                       Foreground="{StaticResource Brush.TextMuted}"
+                                       FontSize="14"
+                                       FontWeight="SemiBold"
+                                       Foreground="{StaticResource Brush.Text}"
                                        Margin="0,1,0,0"/>
                         </StackPanel>
                     </StackPanel>
