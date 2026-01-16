@@ -155,6 +155,120 @@ namespace FxTradeHub.Services.Blotter
                 details: changedFields.ToString());
         }
 
+        /// <summary>
+        /// Updates an existing trade with new values.
+        /// Only allowed for trades with Status = New or Error.
+        /// Currently only updates routing fields (portfolioMx3 and calypsoBook).
+        /// Full trade editing will be implemented later.
+        /// </summary>
+        public async Task UpdateTradeAsync(
+            long stpTradeId,
+            string counterpartyCode,
+            string currencyPair,
+            string buySell,
+            decimal notional,
+            string notionalCurrency,
+            decimal? hedgeRate,
+            DateTime? settlementDate,
+            string callPut,
+            decimal? strike,
+            DateTime? expiryDate,
+            decimal? premium,
+            string premiumCurrency,
+            string portfolioMx3,
+            string calypsoBook,
+            string userId)
+        {
+            // For now, only update routing fields
+            // Full trade editing will be added when repository methods are implemented
+            await UpdateTradeRoutingFieldsAsync(stpTradeId, portfolioMx3, calypsoBook, userId);
+
+            // TODO: Implement full trade update when repository supports it
+            // This would include updating:
+            // - counterpartyCode, currencyPair, buySell, notional, notionalCurrency
+            // - hedgeRate, settlementDate
+            // - option fields: callPut, strike, expiryDate, premium, premiumCurrency
+        }
+
+        /// <summary>
+        /// Creates a new trade based on an existing trade (duplicate).
+        /// The new trade will have:
+        /// - New StpTradeId (auto-generated)
+        /// - New TradeId (original TradeId + "_DUP_" + timestamp)
+        /// - Status = "New"
+        /// - All other fields copied from source trade
+        /// - Updated routing fields if provided
+        /// </summary>
+        public async Task<DuplicateTradeResult> DuplicateTradeAsync(
+            long sourceStpTradeId,
+            string portfolioMx3,
+            string calypsoBook,
+            string userId)
+        {
+            try
+            {
+                // 1. Hämta original trade
+                var sourceTrade = await _repository.GetTradeByIdAsync(sourceStpTradeId).ConfigureAwait(false);
+
+                if (sourceTrade == null)
+                {
+                    return new DuplicateTradeResult
+                    {
+                        Success = false,
+                        ErrorMessage = $"Source trade {sourceStpTradeId} not found"
+                    };
+                }
+
+                // 2. Generera nytt TradeId
+                var timestamp = DateTime.UtcNow.ToString("yyyyMMdd_HHmmss");
+                var newTradeId = $"{sourceTrade.TradeId}_DUP_{timestamp}";
+
+                // 3. Skapa ny trade (kopierar alla fält från source)
+                // TODO: Implementera repository.DuplicateTradeAsync när det finns
+                // För nu returnerar vi ett placeholder-resultat
+
+                // Placeholder implementation - returnera framgång men ingen riktig duplicate skapas än
+                await _repository.InsertTradeWorkflowEventAsync(
+                    sourceStpTradeId,
+                    eventType: "TradeDuplicationAttempted",
+                    systemCode: "BLOTTER",
+                    userId: userId,
+                    details: $"Attempted to duplicate as {newTradeId}. Full duplicate not yet implemented."
+                ).ConfigureAwait(false);
+
+                return new DuplicateTradeResult
+                {
+                    Success = false,
+                    ErrorMessage = "Duplicate trade not yet fully implemented. Repository method needed.",
+                    NewStpTradeId = 0,
+                    NewTradeId = newTradeId
+                };
+
+                // TODO: När repository.DuplicateTradeAsync finns:
+                // var newStpTradeId = await _repository.DuplicateTradeAsync(
+                //     sourceStpTradeId,
+                //     newTradeId,
+                //     portfolioMx3 ?? sourceTrade.PortfolioMx3,
+                //     calypsoBook ?? sourceTrade.CalypsoPortfolio,
+                //     userId
+                // ).ConfigureAwait(false);
+                //
+                // return new DuplicateTradeResult
+                // {
+                //     Success = true,
+                //     NewStpTradeId = newStpTradeId,
+                //     NewTradeId = newTradeId
+                // };
+            }
+            catch (Exception ex)
+            {
+                return new DuplicateTradeResult
+                {
+                    Success = false,
+                    ErrorMessage = $"Duplicate failed: {ex.Message}"
+                };
+            }
+        }
 
         /// <summary>
         /// Bokar en linear trade till MX3.
@@ -421,7 +535,7 @@ namespace FxTradeHub.Services.Blotter
                 Portfolio = trade.PortfolioMx3,
                 CurrencyPair = trade.CcyPair,
                 BuySell = trade.BuySell,
-                Rate = rate, 
+                Rate = rate,
                 ProductType = productType,
                 TradeDate = trade.TradeDate ?? DateTime.UtcNow.Date,
                 SettlementDate = trade.SettlementDate ?? DateTime.UtcNow.Date,
@@ -431,10 +545,8 @@ namespace FxTradeHub.Services.Blotter
             };
         }
 
-
         private CalypsoLinearExportRequest MapToCalypsoExportRequest(BlotterTradeRow trade)
         {
-
             // För linear trades: använd SpotRate för Spot, HedgeRate för Forward
             var productType = DetermineProductType(trade.ProductType);
             var rate = productType == "Spot"

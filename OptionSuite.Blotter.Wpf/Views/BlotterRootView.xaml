@@ -781,19 +781,28 @@
                                           AutoGenerateColumns="False"
                                           CanUserSortColumns="False">
 
+                                    <!-- Uppdatera ContextMenu i OptionGrid (ersätt befintlig) -->
                                     <DataGrid.ContextMenu>
                                         <ContextMenu Style="{StaticResource Style.BlotterContextMenu}">
+                                            
                                             <MenuItem Header="Book Trade" 
                                                       Command="{Binding BookTradeCommand}"
                                                       Style="{StaticResource Style.BlotterMenuItem}"/>
+                                            <MenuItem Header="Edit Trade" 
+                                                      Command="{Binding EditTradeCommand}"
+                                                      Style="{StaticResource Style.BlotterMenuItem}"/>
                                             <MenuItem Header="Duplicate Trade" 
                                                       Command="{Binding DuplicateTradeCommand}"
-                                                      Style="{StaticResource Style.BlotterMenuItem}"/>
+                                                      Style="{StaticResource Style.BlotterMenuItem}"/>                                            
+                                            
                                             <Separator Style="{StaticResource Style.BlotterMenuSeparator}"/>
+                                            
                                             <MenuItem Header="Delete Row" 
                                                       Command="{Binding DeleteRowCommand}"
                                                       Style="{StaticResource Style.BlotterMenuItem}"/>
+                                            
                                             <Separator Style="{StaticResource Style.BlotterMenuSeparator}"/>
+
                                             <MenuItem Header="Check If Trade Is Booked" 
                                                       Command="{Binding CheckIfBookedCommand}"
                                                       Style="{StaticResource Style.BlotterMenuItem}"/>

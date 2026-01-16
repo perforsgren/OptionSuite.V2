@@ -13,7 +13,7 @@ using System.Windows;
 
 namespace OptionSuite.Blotter.Wpf.ViewModels
 {
-    public sealed class BlotterRootViewModel : INotifyPropertyChanged, IDisposable
+    public sealed partial class BlotterRootViewModel : INotifyPropertyChanged, IDisposable
     {
         private bool _disposed;
 
@@ -21,7 +21,7 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
         private readonly IBlotterCommandServiceAsync _commandService;
 
         private TradeRowViewModel _selectedOptionTrade;
-        private TradeRowViewModel _selectedLinearTrade;
+        private TradeRowViewModel _selectedLinearTrade; 
 
         private bool _isBusy;
         private string _lastError;
@@ -387,7 +387,7 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
         // Context Menu Commands
         public ICommand BookTradeCommand { get; }
         public ICommand BulkBookCommand { get; }
-        public ICommand DuplicateTradeCommand { get; }
+        public ICommand DuplicateTradeCommand { get; private set; }  // ✅ Ändrad från { get; } till { get; private set; }
         public ICommand CopyToManualInputCommand { get; }
         public ICommand BookAsLiveTradeCommand { get; }
         public ICommand CancelCalypsoTradeCommand { get; }
@@ -501,7 +501,6 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                 canExecute: CanExecuteBulkBook
             );
 
-            DuplicateTradeCommand = new RelayCommand(() => ExecuteDuplicateTrade(), () => CanExecuteDuplicateTrade());
             BookAsLiveTradeCommand = new RelayCommand(() => ExecuteBookAsLiveTrade(), () => CanExecuteBookAsLiveTrade());
             CancelCalypsoTradeCommand = new RelayCommand(() => ExecuteCancelCalypsoTrade(), () => CanExecuteCancelCalypsoTrade());
             DeleteRowCommand = new RelayCommand(() => ExecuteDeleteRow(), () => CanExecuteDeleteRow());
@@ -547,6 +546,8 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             _calypsoCountdownTimer.Interval = TimeSpan.FromSeconds(1);
             _calypsoCountdownTimer.Tick += OnCalypsoCountdownTick;
             _calypsoCountdownTimer.Start();
+
+            InitializeEditCommands();
         }
 
         /// <summary>
@@ -1295,7 +1296,7 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
 
         /// <summary>
         /// Autobokar nya trades som matchar kriterierna om AutoBookEnabled = true.
-        /// Väntar en kort stund innan bokning för att ge användaren chans att avbryta.
+        /// Väntar en kort stund innan bokning för att ge användAREN chans att avbryta.
         /// Bokar endast trades som:
         /// - Status = "New"
         /// - Trader = current user

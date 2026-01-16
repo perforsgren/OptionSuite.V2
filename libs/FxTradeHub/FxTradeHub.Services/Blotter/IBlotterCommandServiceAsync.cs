@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 
 namespace FxTradeHub.Services.Blotter
 {
@@ -46,6 +47,36 @@ namespace FxTradeHub.Services.Blotter
         /// <returns>Task</returns>
         Task UpdateTradeRoutingFieldsAsync(long stpTradeId, string portfolioMx3, string calypsoBook, string userId);
 
+        /// <summary>
+        /// Updates an existing trade with new values.
+        /// Only allowed for trades with Status = New or Error.
+        /// </summary>
+        Task UpdateTradeAsync(
+            long stpTradeId,
+            string counterpartyCode,
+            string currencyPair,
+            string buySell,
+            decimal notional,
+            string notionalCurrency,
+            decimal? hedgeRate,
+            DateTime? settlementDate,
+            string callPut,
+            decimal? strike,
+            DateTime? expiryDate,
+            decimal? premium,
+            string premiumCurrency,
+            string portfolioMx3,
+            string calypsoBook,
+            string userId);
+
+        /// <summary>
+        /// Creates a new trade based on an existing trade (duplicate).
+        /// </summary>
+        Task<DuplicateTradeResult> DuplicateTradeAsync(
+            long sourceStpTradeId,
+            string portfolioMx3,
+            string calypsoBook,
+            string userId);
     }
 
     /// <summary>
@@ -62,6 +93,32 @@ namespace FxTradeHub.Services.Blotter
         /// Filnamn för den skapade XML-filen (om Success = true).
         /// </summary>
         public string XmlFileName { get; set; }
+
+        /// <summary>
+        /// Felmeddelande om Success = false.
+        /// </summary>
+        public string ErrorMessage { get; set; }
+    }
+
+    /// <summary>
+    /// Resultat från Duplicate Trade-operation.
+    /// </summary>
+    public sealed class DuplicateTradeResult
+    {
+        /// <summary>
+        /// True om dupliceringen lyckades.
+        /// </summary>
+        public bool Success { get; set; }
+
+        /// <summary>
+        /// StpTradeId för den nya traden (om Success = true).
+        /// </summary>
+        public long NewStpTradeId { get; set; }
+
+        /// <summary>
+        /// TradeId för den nya traden (om Success = true).
+        /// </summary>
+        public string NewTradeId { get; set; }
 
         /// <summary>
         /// Felmeddelande om Success = false.
