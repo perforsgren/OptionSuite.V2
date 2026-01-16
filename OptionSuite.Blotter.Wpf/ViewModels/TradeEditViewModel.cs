@@ -207,9 +207,12 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
 
         public bool IsReadOnly => !CanEdit;
 
+        /// <summary>
+        /// True if we're in View-only mode (read-only, no editing allowed).
+        /// </summary>
         public bool IsViewMode => _mode == TradeEditMode.View;
 
-        // Window title/subtitle
+        // Window title/subtitle - uppdatera med switch expression
         public string WindowTitle => _mode switch
         {
             TradeEditMode.Duplicate => "Duplicate Trade",
@@ -220,43 +223,42 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
         public string WindowSubtitle => _mode switch
         {
             TradeEditMode.Duplicate => $"Creating new trade based on {TradeId}",
-            TradeEditMode.View => $"Viewing {TradeId} (Read-only)",
+            TradeEditMode.View => $"Viewing {TradeId}",
             _ => $"Editing {TradeId}"
         };
 
         public string SaveButtonText => _mode switch
         {
             TradeEditMode.Duplicate => "Create Trade",
-            TradeEditMode.View => "Close",
             _ => "Save Changes"
         };
 
-        // Mode indicator styling
+        // Mode indicator styling - uppdatera för View mode
         public Brush ModeBackground => _mode switch
         {
             TradeEditMode.Duplicate => new SolidColorBrush(Color.FromArgb(0x1A, 0x3B, 0x82, 0xF6)),  // Blue tint
-            TradeEditMode.View => new SolidColorBrush(Color.FromArgb(0x1A, 0x64, 0x74, 0x8B)),       // Gray tint
+            TradeEditMode.View => new SolidColorBrush(Color.FromArgb(0x26, 0x94, 0xA3, 0xB8)),       // Slate 400 - mer opacity
             _ => new SolidColorBrush(Color.FromArgb(0x1A, 0x2D, 0xD4, 0xBF))                         // Cyan tint
         };
 
         public Brush ModeBorderBrush => _mode switch
         {
             TradeEditMode.Duplicate => new SolidColorBrush(Color.FromRgb(0x3B, 0x82, 0xF6)),  // Blue
-            TradeEditMode.View => new SolidColorBrush(Color.FromRgb(0x64, 0x74, 0x8B)),       // Gray
+            TradeEditMode.View => new SolidColorBrush(Color.FromRgb(0x94, 0xA3, 0xB8)),       // Slate 400 - ljusare
             _ => new SolidColorBrush(Color.FromRgb(0x2D, 0xD4, 0xBF))                         // Cyan
         };
 
         public Brush ModeForeground => _mode switch
         {
             TradeEditMode.Duplicate => new SolidColorBrush(Color.FromRgb(0x3B, 0x82, 0xF6)),  // Blue
-            TradeEditMode.View => new SolidColorBrush(Color.FromRgb(0x64, 0x74, 0x8B)),       // Gray
+            TradeEditMode.View => new SolidColorBrush(Color.FromRgb(0xCB, 0xD5, 0xE1)),       // Slate 300 - mycket ljusare
             _ => new SolidColorBrush(Color.FromRgb(0x2D, 0xD4, 0xBF))                         // Cyan
         };
 
         public string ModeText => _mode switch
         {
             TradeEditMode.Duplicate => "DUPLICATE MODE",
-            TradeEditMode.View => "VIEW MODE",
+            TradeEditMode.View => "READ-ONLY",
             _ => "EDIT MODE"
         };
 
