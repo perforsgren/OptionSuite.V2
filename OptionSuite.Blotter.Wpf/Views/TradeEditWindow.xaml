@@ -22,18 +22,9 @@
     </WindowChrome.WindowChrome>
 
     <Window.Resources>
+        
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
         
-        <!-- Inverse Boolean to Visibility Converter -->
-        <Style x:Key="InverseBoolToVisStyle" TargetType="FrameworkElement">
-            <Setter Property="Visibility" Value="Visible"/>
-            <Style.Triggers>
-                <DataTrigger Binding="{Binding IsViewMode}" Value="True">
-                    <Setter Property="Visibility" Value="Collapsed"/>
-                </DataTrigger>
-            </Style.Triggers>
-        </Style>
-
         <!-- Blue fog overlay matching blotter style -->
         <LinearGradientBrush x:Key="ContentFog" StartPoint="0,0" EndPoint="0,1">
             <GradientStop Color="{StaticResource Color.BorderSoft}" Offset="0.0"/>
@@ -786,8 +777,6 @@
                                        Foreground="{Binding ModeForeground}"/>
                         </StackPanel>
                     </Border>
-
-                    <!-- Read-only warning banner (only in View mode) -->
 
                     <!-- Cancel/Close button -->
                     <Button x:Name="CancelButton"

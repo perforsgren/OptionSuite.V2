@@ -87,74 +87,53 @@
             <Setter Property="Foreground" Value="{StaticResource Brush.TextMuted}"/>
         </Style>
 
-        <!-- Combined Status + New badge - med Grid för alignment -->
+        <!-- Status pill -->
         <DataTemplate x:Key="StatusPillTemplate">
-            <Grid HorizontalAlignment="Left" Opacity="1.0">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <!-- Status pill -->
-                    <ColumnDefinition Width="8"/>
-                    <!-- Margin -->
-                    <ColumnDefinition Width="Auto"/>
-                    <!-- New badge -->
-                </Grid.ColumnDefinitions>
+            <Border HorizontalAlignment="Left"
+            BorderBrush="{StaticResource Brush.BorderSoft}"
+            BorderThickness="1"
+            Background="{StaticResource Blotter.Brush.GlassPill}"
+            CornerRadius="{StaticResource Radius.Button}"
+            Padding="10,3"
+            MinWidth="80"
+            Opacity="1.0">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Ellipse Width="7" Height="7" Margin="0,0,8,0" VerticalAlignment="Center">
+                        <Ellipse.Style>
+                            <Style TargetType="Ellipse">
+                                <Setter Property="Fill" Value="{StaticResource Brush.TextMuted}"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Status}" Value="New">
+                                        <Setter Property="Fill" Value="#3B82F6"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Status}" Value="Booked">
+                                        <Setter Property="Fill" Value="#2DD4BF"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Status}" Value="Pending">
+                                        <Setter Property="Fill" Value="#FBBF24"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Status}" Value="Error">
+                                        <Setter Property="Fill" Value="#EF4444"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Status}" Value="Rejected">
+                                        <Setter Property="Fill" Value="#FB7185"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Status}" Value="Partial">
+                                        <Setter Property="Fill" Value="#FB923C"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Ellipse.Style>
+                    </Ellipse>
 
-                <!-- Status pill -->
-                <Border Grid.Column="0"
-                BorderBrush="{StaticResource Brush.BorderSoft}"
-                BorderThickness="1"
-                Background="{StaticResource Blotter.Brush.GlassPill}"
-                CornerRadius="{StaticResource Radius.Button}"
-                Padding="10,3"
-                MinWidth="80">
-                    <!-- Minsta bredd så alla status får samma space -->
-                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <Ellipse Width="7" Height="7" Margin="0,0,8,0" VerticalAlignment="Center">
-                            <Ellipse.Style>
-                                <Style TargetType="Ellipse">
-                                    <Setter Property="Fill" Value="{StaticResource Brush.TextMuted}"/>
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding Status}" Value="New">
-                                            <Setter Property="Fill" Value="#3B82F6"/>
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding Status}" Value="Booked">
-                                            <Setter Property="Fill" Value="#2DD4BF"/>
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding Status}" Value="Pending">
-                                            <Setter Property="Fill" Value="#FBBF24"/>
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding Status}" Value="Error">
-                                            <Setter Property="Fill" Value="#EF4444"/>
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding Status}" Value="Rejected">
-                                            <Setter Property="Fill" Value="#FB7185"/>
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding Status}" Value="Partial">
-                                            <Setter Property="Fill" Value="#FB923C"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Ellipse.Style>
-                        </Ellipse>
-
-                        <TextBlock Text="{Binding Status}"
-           Foreground="{StaticResource Brush.Text}"
-           FontSize="12"
-           VerticalAlignment="Center"/>
-
-                    </StackPanel>
-                </Border>
-
-                <!-- New badge (Grid.Column="2" så den hamnar efter marginal) -->
-                <Border Grid.Column="2"
-                Style="{StaticResource NewBadgeBorderStyle}"
-                VerticalAlignment="Center"
-                Visibility="{Binding IsNew, Converter={StaticResource BoolToVisConverter}}">
-                    <TextBlock Text="New" Style="{StaticResource NewBadgeTextStyle}"/>
-                </Border>
-
-            </Grid>
+                    <TextBlock Text="{Binding Status}"
+                       Foreground="{StaticResource Brush.Text}"
+                       FontSize="12"
+                       VerticalAlignment="Center"/>
+                </StackPanel>
+            </Border>
         </DataTemplate>
+
 
         <!-- =========================================================
              Detail tabs (högerpanelen) 
@@ -753,6 +732,7 @@
                                 <!-- OPTIONS GRID - bind till SelectedOptionTrade -->
                                 <DataGrid Grid.Row="1"
                                           x:Name="OptionGrid"
+                                          MinWidth="1335"
                                           Style="{StaticResource Style.BlotterDataGrid}"
                                           ItemsSource="{Binding OptionTradesView}"
                                           SelectedItem="{Binding SelectedOptionTrade, Mode=TwoWay}"
@@ -838,7 +818,7 @@
                                         </DataGridTemplateColumn>
 
                                         <DataGridTextColumn Header="Trader" Binding="{Binding Trader}" Width="80" IsReadOnly="True"/>
-                                        <DataGridTemplateColumn Header="Status" Width="150" CellTemplate="{StaticResource StatusPillTemplate}" CellStyle="{StaticResource Style.BlotterDataGridCell.Status}" IsReadOnly="True"/>
+                                        <DataGridTemplateColumn Header="Status" Width="100" CellTemplate="{StaticResource StatusPillTemplate}" CellStyle="{StaticResource Style.BlotterDataGridCell.Status}" IsReadOnly="True"/>
 
                                     </DataGrid.Columns>
                                 </DataGrid>
@@ -851,6 +831,7 @@
 
                                 <DataGrid Grid.Row="4"
                                           x:Name="LinearGrid"
+                                          MinWidth="1335"
                                           Style="{StaticResource Style.BlotterDataGrid}"
                                           ItemsSource="{Binding LinearTradesView}"
                                           SelectedItem="{Binding SelectedLinearTrade, Mode=TwoWay}"
@@ -942,7 +923,7 @@
                                         </DataGridTemplateColumn>
 
                                         <DataGridTextColumn Header="Trader" Binding="{Binding Trader}" Width="80" IsReadOnly="True"/>
-                                        <DataGridTemplateColumn Header="Status" Width="150" CellTemplate="{StaticResource StatusPillTemplate}" CellStyle="{StaticResource Style.BlotterDataGridCell.Status}" IsReadOnly="True"/>
+                                        <DataGridTemplateColumn Header="Status" Width="100" CellTemplate="{StaticResource StatusPillTemplate}" CellStyle="{StaticResource Style.BlotterDataGridCell.Status}" IsReadOnly="True"/>
                                         <DataGridTextColumn  Header="STP" Width="50" Binding="{Binding StpFlag, Converter={StaticResource BoolToYesNoConverter}}" IsReadOnly="True"/>
                                     </DataGrid.Columns>
 
