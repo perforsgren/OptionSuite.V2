@@ -51,16 +51,26 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                 return;
             }
 
+            TradeEditWindow editWindow = null;
+
             var editVm = new TradeEditViewModel(
                 source: selectedTrade,
                 mode: mode,
                 portfolioMx3Values: PortfolioMx3Values,
                 calypsoBookValues: BookCalypsoValues,
                 saveAction: SaveTradeFromEditWindowAsync,
-                closeAction: (saved) => { }
+                closeAction: (saved) =>
+                {
+                    // Close the window when ViewModel requests it
+                    if (editWindow != null)
+                    {
+                        editWindow.DialogResult = saved;
+                        editWindow.Close();
+                    }
+                }
             );
 
-            var editWindow = new TradeEditWindow
+            editWindow = new TradeEditWindow
             {
                 DataContext = editVm,
                 Owner = Application.Current.MainWindow
@@ -87,7 +97,7 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
 
                 // TODO: Implementera DuplicateTradeAsync i BlotterCommandServiceAsync
                 // var result = await _commandService.DuplicateTradeAsync(...).ConfigureAwait(true);
-                
+
                 MessageBox.Show("Duplicate not yet implemented", "TODO", MessageBoxButton.OK, MessageBoxImage.Information);
                 return false;
             }

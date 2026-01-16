@@ -8,26 +8,15 @@ namespace OptionSuite.Blotter.Wpf.Views
         public TradeEditWindow()
         {
             InitializeComponent();
-            DataContextChanged += OnDataContextChanged;
         }
 
-        private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
+        /// <summary>
+        /// Cancel button click handler - closes the window with DialogResult = false.
+        /// </summary>
+        private void CancelButton_Click(object sender, RoutedEventArgs e)
         {
-            if (e.OldValue is TradeEditViewModel oldVm)
-            {
-                oldVm.PropertyChanged -= OnViewModelPropertyChanged;
-            }
-
-            if (e.NewValue is TradeEditViewModel newVm)
-            {
-                newVm.PropertyChanged += OnViewModelPropertyChanged;
-            }
-        }
-
-        private void OnViewModelPropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
-        {
-            // Close window when save completes successfully
-            // The ViewModel calls closeAction which we need to handle
+            DialogResult = false;
+            Close();
         }
 
         /// <summary>

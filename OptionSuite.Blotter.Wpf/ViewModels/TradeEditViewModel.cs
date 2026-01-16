@@ -3,6 +3,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using OptionSuite.Blotter.Wpf.Infrastructure;
@@ -46,6 +47,7 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
         private readonly DateTime? _originalExpiryDate;
         private readonly decimal? _originalPremium;
         private readonly string _originalPremiumCcy;
+        private readonly DateTime? _originalPremiumDate;
         private readonly string _originalPortfolioMx3;
         private readonly string _originalCalypsoBook;
 
@@ -63,56 +65,56 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
         public string Counterparty
         {
             get => _counterparty;
-            set { _counterparty = value; OnPropertyChanged(); OnPropertyChanged(nameof(HasChanges)); }
+            set { _counterparty = value; OnPropertyChanged(); OnPropertyChanged(nameof(HasChanges)); OnPropertyChanged(nameof(CanSave)); }
         }
 
         private string _broker;
         public string Broker
         {
             get => _broker;
-            set { _broker = value; OnPropertyChanged(); OnPropertyChanged(nameof(HasChanges)); }
+            set { _broker = value; OnPropertyChanged(); OnPropertyChanged(nameof(HasChanges)); OnPropertyChanged(nameof(CanSave)); }
         }
 
         private string _ccyPair;
         public string CcyPair
         {
             get => _ccyPair;
-            set { _ccyPair = value; OnPropertyChanged(); OnPropertyChanged(nameof(HasChanges)); }
+            set { _ccyPair = value; OnPropertyChanged(); OnPropertyChanged(nameof(HasChanges)); OnPropertyChanged(nameof(CanSave)); }
         }
 
         private string _buySell;
         public string BuySell
         {
             get => _buySell;
-            set { _buySell = value; OnPropertyChanged(); OnPropertyChanged(nameof(HasChanges)); }
+            set { _buySell = value; OnPropertyChanged(); OnPropertyChanged(nameof(HasChanges)); OnPropertyChanged(nameof(CanSave)); }
         }
 
         private decimal _notional;
         public decimal Notional
         {
             get => _notional;
-            set { _notional = value; OnPropertyChanged(); OnPropertyChanged(nameof(HasChanges)); }
+            set { _notional = value; OnPropertyChanged(); OnPropertyChanged(nameof(HasChanges)); OnPropertyChanged(nameof(CanSave)); }
         }
 
         private string _notionalCcy;
         public string NotionalCcy
         {
             get => _notionalCcy;
-            set { _notionalCcy = value; OnPropertyChanged(); OnPropertyChanged(nameof(HasChanges)); }
+            set { _notionalCcy = value; OnPropertyChanged(); OnPropertyChanged(nameof(HasChanges)); OnPropertyChanged(nameof(CanSave)); }
         }
 
         private decimal? _hedgeRate;
         public decimal? HedgeRate
         {
             get => _hedgeRate;
-            set { _hedgeRate = value; OnPropertyChanged(); OnPropertyChanged(nameof(HasChanges)); }
+            set { _hedgeRate = value; OnPropertyChanged(); OnPropertyChanged(nameof(HasChanges)); OnPropertyChanged(nameof(CanSave)); }
         }
 
         private DateTime? _settlementDate;
         public DateTime? SettlementDate
         {
             get => _settlementDate;
-            set { _settlementDate = value; OnPropertyChanged(); OnPropertyChanged(nameof(HasChanges)); }
+            set { _settlementDate = value; OnPropertyChanged(); OnPropertyChanged(nameof(HasChanges)); OnPropertyChanged(nameof(CanSave)); }
         }
 
         // Option fields
@@ -120,35 +122,42 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
         public string CallPut
         {
             get => _callPut;
-            set { _callPut = value; OnPropertyChanged(); OnPropertyChanged(nameof(HasChanges)); }
+            set { _callPut = value; OnPropertyChanged(); OnPropertyChanged(nameof(HasChanges)); OnPropertyChanged(nameof(CanSave)); }
         }
 
         private decimal? _strike;
         public decimal? Strike
         {
             get => _strike;
-            set { _strike = value; OnPropertyChanged(); OnPropertyChanged(nameof(HasChanges)); }
+            set { _strike = value; OnPropertyChanged(); OnPropertyChanged(nameof(HasChanges)); OnPropertyChanged(nameof(CanSave)); }
         }
 
         private DateTime? _expiryDate;
         public DateTime? ExpiryDate
         {
             get => _expiryDate;
-            set { _expiryDate = value; OnPropertyChanged(); OnPropertyChanged(nameof(HasChanges)); }
+            set { _expiryDate = value; OnPropertyChanged(); OnPropertyChanged(nameof(HasChanges)); OnPropertyChanged(nameof(CanSave)); }
         }
 
         private decimal? _premium;
         public decimal? Premium
         {
             get => _premium;
-            set { _premium = value; OnPropertyChanged(); OnPropertyChanged(nameof(HasChanges)); }
+            set { _premium = value; OnPropertyChanged(); OnPropertyChanged(nameof(HasChanges)); OnPropertyChanged(nameof(CanSave)); }
         }
 
         private string _premiumCcy;
         public string PremiumCcy
         {
             get => _premiumCcy;
-            set { _premiumCcy = value; OnPropertyChanged(); OnPropertyChanged(nameof(HasChanges)); }
+            set { _premiumCcy = value; OnPropertyChanged(); OnPropertyChanged(nameof(HasChanges)); OnPropertyChanged(nameof(CanSave)); }
+        }
+
+        private DateTime? _premiumDate;
+        public DateTime? PremiumDate
+        {
+            get => _premiumDate;
+            set { _premiumDate = value; OnPropertyChanged(); OnPropertyChanged(nameof(HasChanges)); OnPropertyChanged(nameof(CanSave)); }
         }
 
         // Routing fields
@@ -156,19 +165,30 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
         public string PortfolioMx3
         {
             get => _portfolioMx3;
-            set { _portfolioMx3 = value; OnPropertyChanged(); OnPropertyChanged(nameof(HasChanges)); }
+            set { _portfolioMx3 = value; OnPropertyChanged(); OnPropertyChanged(nameof(HasChanges)); OnPropertyChanged(nameof(CanSave)); }
         }
 
         private string _calypsoBook;
         public string CalypsoBook
         {
             get => _calypsoBook;
-            set { _calypsoBook = value; OnPropertyChanged(); OnPropertyChanged(nameof(HasChanges)); }
+            set { _calypsoBook = value; OnPropertyChanged(); OnPropertyChanged(nameof(HasChanges)); OnPropertyChanged(nameof(CanSave)); }
         }
+
+        // Regulatory fields (read-only)
+        public DateTime? ExecutionTime { get; }
+        public string Mic { get; }
+        public string Tvtic { get; }
+        public string Isin { get; }
+        public string InvDecisionId { get; }
+        public string InvDecisionName { get; }
+        public string ReportingEntity { get; }
 
         // Dropdown values
         public ObservableCollection<string> PortfolioMx3Values { get; }
         public ObservableCollection<string> CalypsoBookValues { get; }
+        public ObservableCollection<string> BuySellValues { get; }
+        public ObservableCollection<string> CallPutValues { get; }
 
         // Computed properties
         public bool IsOption => !string.IsNullOrEmpty(_originalCallPut);
@@ -204,6 +224,7 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                        _expiryDate != _originalExpiryDate ||
                        _premium != _originalPremium ||
                        _premiumCcy != _originalPremiumCcy ||
+                       _premiumDate != _originalPremiumDate ||
                        _portfolioMx3 != _originalPortfolioMx3 ||
                        _calypsoBook != _originalCalypsoBook;
             }
@@ -263,11 +284,14 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
         {
             _mode = mode;
             _saveAction = saveAction ?? throw new ArgumentNullException(nameof(saveAction));
-            // closeAction ska sätta DialogResult och stänga fönstret
-            _closeAction = closeAction;
+            _closeAction = closeAction ?? throw new ArgumentNullException(nameof(closeAction));
 
             PortfolioMx3Values = portfolioMx3Values ?? new ObservableCollection<string>();
             CalypsoBookValues = calypsoBookValues ?? new ObservableCollection<string>();
+
+            // Populate Buy/Sell and Call/Put dropdown values
+            BuySellValues = new ObservableCollection<string> { "Buy", "Sell" };
+            CallPutValues = new ObservableCollection<string> { "Call", "Put" };
 
             // Copy values from source
             StpTradeId = source.StpTradeId;
@@ -290,11 +314,21 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
             _expiryDate = _originalExpiryDate = source.ExpiryDate;
             _premium = _originalPremium = source.Premium;
             _premiumCcy = _originalPremiumCcy = source.PremiumCcy;
+            _premiumDate = _originalPremiumDate = source.PremiumDate;
             _portfolioMx3 = _originalPortfolioMx3 = source.PortfolioMx3;
             _calypsoBook = _originalCalypsoBook = source.CalypsoPortfolio;
 
+            // Regulatory fields (read-only)
+            ExecutionTime = source.Time;
+            Mic = source.Mic;
+            Tvtic = source.Tvtic;
+            Isin = source.Isin;
+            InvDecisionId = source.InvDecisionId;
+            InvDecisionName = "N/A"; // Not available in TradeRowViewModel - can be added if needed
+            ReportingEntity = source.ReportingEntityId;
+
             SaveCommand = new RelayCommand(ExecuteSave, () => CanSave);
-            CancelCommand = new RelayCommand(() => _closeAction(false));
+            CancelCommand = new RelayCommand(ExecuteCancel);
         }
 
         private async void ExecuteSave()
@@ -324,6 +358,11 @@ namespace OptionSuite.Blotter.Wpf.ViewModels
                 _isSaving = false;
                 OnPropertyChanged(nameof(CanSave));
             }
+        }
+
+        private void ExecuteCancel()
+        {
+            _closeAction(false);
         }
 
         private void OnPropertyChanged([CallerMemberName] string propertyName = null)
